@@ -1,0 +1,132 @@
+@model Dashboard.Models.ViewModels.PurchaseReceiptEditVM
+@{
+    Layout = "~/Views/Shared/_ContentNavbarLayout.cshtml";
+    ViewData["Title"] = "Edit Purchase Receipt";
+}
+
+<div class="row">
+  <div class="col-12 col-lg-10">
+    <div class="card mb-6">
+      <div class="card-header">
+        <h5 class="mb-0">Edit Purchase Receipt</h5>
+      </div>
+      <div class="card-body pt-4">
+        @if (ViewData.ModelState.ErrorCount > 0)
+        {
+          <div class="alert alert-danger" role="alert">
+            <div asp-validation-summary="ModelOnly"></div>
+          </div>
+        }
+
+        <form asp-action="PurchaseReceiptsEdit" method="post">
+          @Html.AntiForgeryToken()
+          <input type="hidden" asp-for="ReceiptID" />
+          <input type="hidden" asp-for="CreatedAt" />
+
+          <div class="row g-6">
+            <div class="col-md-4">
+              <label asp-for="ReceiptNumber" class="form-label">Receipt Number</label>
+              <input asp-for="ReceiptNumber" class="form-control" />
+            </div>
+            <div class="col-md-4">
+              <label asp-for="PurchaseOrderID" class="form-label">Purchase Order</label>
+              <select asp-for="PurchaseOrderID" class="form-select">
+                <option value="">-- Select Purchase Order --</option>
+                @if (ViewBag.PurchaseOrders != null)
+                {
+                  @foreach (var po in ViewBag.PurchaseOrders)
+                  {
+                    <option value="@po.PurchaseOrderID">@po.OrderNumber</option>
+                  }
+                }
+              </select>
+            </div>
+            <div class="col-md-4">
+              <label asp-for="SupplierID" class="form-label">Supplier</label>
+              <select asp-for="SupplierID" class="form-select">
+                <option value="">-- Select Supplier --</option>
+                @if (ViewBag.Suppliers != null)
+                {
+                  @foreach (var supplier in ViewBag.Suppliers)
+                  {
+                    <option value="@supplier.SupplierID">@supplier.SupplierName</option>
+                  }
+                }
+              </select>
+              <span asp-validation-for="SupplierID" class="text-danger"></span>
+            </div>
+            <div class="col-md-4">
+              <label asp-for="WarehouseID" class="form-label">Warehouse</label>
+              <select asp-for="WarehouseID" class="form-select">
+                <option value="">-- Select Warehouse --</option>
+                @if (ViewBag.Warehouses != null)
+                {
+                  @foreach (var warehouse in ViewBag.Warehouses)
+                  {
+                    <option value="@warehouse.WarehouseID">@warehouse.WarehouseName</option>
+                  }
+                }
+              </select>
+            </div>
+            <div class="col-md-4">
+              <label asp-for="BranchID" class="form-label">Branch</label>
+              <select asp-for="BranchID" class="form-select">
+                <option value="">-- Select Branch --</option>
+                @if (ViewBag.Branches != null)
+                {
+                  @foreach (var branch in ViewBag.Branches)
+                  {
+                    <option value="@branch.BranchID">@branch.BranchName</option>
+                  }
+                }
+              </select>
+            </div>
+            <div class="col-md-4">
+              <label asp-for="ReceivedByEmployeeID" class="form-label">Received By</label>
+              <select asp-for="ReceivedByEmployeeID" class="form-select">
+                <option value="">-- Select Employee --</option>
+                @if (ViewBag.Employees != null)
+                {
+                  @foreach (var employee in ViewBag.Employees)
+                  {
+                    <option value="@employee.EmployeeID">@employee.FullName</option>
+                  }
+                }
+              </select>
+            </div>
+            <div class="col-md-4">
+              <label asp-for="ReceiptDate" class="form-label">Receipt Date</label>
+              <input asp-for="ReceiptDate" class="form-control" type="date" />
+            </div>
+            <div class="col-md-4">
+              <label asp-for="TotalAmount" class="form-label">Total Amount</label>
+              <input asp-for="TotalAmount" class="form-control" type="number" step="0.01" />
+            </div>
+            <div class="col-md-4">
+              <label asp-for="Status" class="form-label">Status</label>
+              <select asp-for="Status" class="form-select">
+                <option value="Pending">Pending</option>
+                <option value="Partial">Partial</option>
+                <option value="Completed">Completed</option>
+                <option value="Cancelled">Cancelled</option>
+              </select>
+            </div>
+            <div class="col-12">
+              <label asp-for="Notes" class="form-label">Notes</label>
+              <textarea asp-for="Notes" class="form-control" rows="3"></textarea>
+            </div>
+          </div>
+
+          <div class="mt-6 d-flex gap-3">
+            <button type="submit" class="btn btn-primary">
+              <i class="icon-base bx bx-save me-1"></i> Save Changes
+            </button>
+            <a asp-action="PurchaseReceiptsIndex" class="btn btn-outline-secondary">
+              <i class="icon-base bx bx-x me-1"></i> Cancel
+            </a>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>

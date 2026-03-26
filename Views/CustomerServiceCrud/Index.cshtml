@@ -1,0 +1,30 @@
+@{
+    Layout = "~/Views/Shared/_ContentNavbarLayout.cshtml";
+    ViewData["Title"] = "Customer Service CRUD";
+}
+
+<div class="row">
+  <div class="col-12 mb-4">
+    <h4 class="mb-0">Customer Service Management</h4>
+    <p class="text-muted">Manage support tickets and customer service operations</p>
+  </div>
+</div>
+
+<div class="row">
+  <div class="col-md-6 col-lg-4">
+    <div class="card border border-primary shadow-none mb-4">
+      <div class="card-body text-center py-5">
+        <div class="avatar avatar-md mx-auto mb-3">
+          <span class="avatar-initial rounded-circle bg-label-primary">
+            <i class="icon-base bx bx-support fs-3"></i>
+          </span>
+        </div>
+        <h5 class="mb-2">Support Tickets</h5>
+        <p class="mb-3 text-muted small">Manage customer support tickets</p>
+        <a asp-action="SupportTickets_Index" class="btn btn-primary btn-sm">
+          <i class="icon-base bx bx-list-ul me-1"></i> View Tickets
+        </a>
+      </div>
+    </div>
+  </div>
+</div>

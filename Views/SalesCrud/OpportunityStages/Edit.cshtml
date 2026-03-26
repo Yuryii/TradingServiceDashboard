@@ -1,0 +1,64 @@
+@model Dashboard.Models.ViewModels.OpportunityStageEditVM
+@{
+    Layout = "~/Views/Shared/_ContentNavbarLayout.cshtml";
+    ViewData["Title"] = "Edit Opportunity Stage";
+}
+
+<div class="row">
+    <div class="col-12 col-lg-8">
+        <div class="card mb-6">
+            <div class="card-header">
+                <h5 class="mb-0">Edit Opportunity Stage</h5>
+            </div>
+            <div class="card-body pt-4">
+                <form asp-action="OpportunityStages_Edit" method="post">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" asp-for="StageID" />
+                    <div class="row g-6">
+                        <div class="col-md-6">
+                            <label asp-for="StageCode" class="form-label">Stage Code</label>
+                            <input asp-for="StageCode" class="form-control" />
+                            <span asp-validation-for="StageCode" class="text-danger"></span>
+                        </div>
+                        <div class="col-md-6">
+                            <label asp-for="StageName" class="form-label">Stage Name</label>
+                            <input asp-for="StageName" class="form-control" />
+                            <span asp-validation-for="StageName" class="text-danger"></span>
+                        </div>
+                        <div class="col-md-6">
+                            <label asp-for="StageOrder" class="form-label">Stage Order</label>
+                            <input asp-for="StageOrder" class="form-control" type="number" />
+                            <span asp-validation-for="StageOrder" class="text-danger"></span>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-check form-switch mb-2 mt-4">
+                                <input asp-for="IsClosedStage" class="form-check-input" type="checkbox" />
+                                <label asp-for="IsClosedStage" class="form-check-label">Closed Stage</label>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-check form-switch mb-2">
+                                <input asp-for="IsWonStage" class="form-check-input" type="checkbox" />
+                                <label asp-for="IsWonStage" class="form-check-label">Won Stage</label>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-check form-switch mb-2">
+                                <input asp-for="IsLostStage" class="form-check-input" type="checkbox" />
+                                <label asp-for="IsLostStage" class="form-check-label">Lost Stage</label>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mt-6 d-flex gap-3">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="icon-base bx bx-save me-1"></i> Save Changes
+                        </button>
+                        <a asp-action="OpportunityStages_Index" class="btn btn-outline-secondary">
+                            <i class="icon-base bx bx-x me-1"></i> Cancel
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>

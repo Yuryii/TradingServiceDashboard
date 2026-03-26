@@ -1,0 +1,193 @@
+@model Dashboard.Models.ViewModels.ExcelImportModalVM
+@{
+    var mid = Model.ModalId;
+    var etype = Model.EntityType;
+    var ename = Model.EntityName;
+    var edisplay = Model.EntityDisplayName;
+    var templateUrl = Url.Action("DownloadTemplate", "ExcelCrud", new { entityType = etype, entityName = ename });
+    var previewUrl = Url.Action("Preview", "ExcelCrud", new { entityType = etype });
+    var importUrl = Url.Action("Import", "ExcelCrud", new { entityType = etype });
+}
+<div class="modal fade" id="excelImportModal-@mid" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Import @edisplay from Excel</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <a href="@templateUrl" class="btn btn-outline-primary btn-sm mb-3">
+                        <i class="icon-base bx bx-download me-1"></i> Download Template
+                    </a>
+                </div>
+                <form id="excelImportForm-@mid" enctype="multipart/form-data">
+                    <div class="mb-3">
+                        <label class="form-label">Select Excel File (.xlsx)</label>
+                        <input type="file" name="file" id="excelFile-@mid" class="form-control" accept=".xlsx,.xls" required />
+                    </div>
+                </form>
+                <div id="excelPreviewArea-@mid" class="d-none">
+                    <div class="alert alert-info">
+                        <span id="excelRowCount-@mid">0</span> row(s) found
+                        &nbsp;|&nbsp;
+                        <span id="excelInvalidCount-@mid">0</span> invalid
+                    </div>
+                    <div id="excelErrorArea-@mid" class="d-none alert alert-danger small mb-2"></div>
+                    <div class="table-responsive" style="max-height:280px;overflow:auto;border:1px solid #dee2e6;">
+                        <table class="table table-sm table-bordered mb-0" id="excelPreviewTable-@mid">
+                            <thead></thead>
+                            <tbody></tbody>
+                        </table>
+                    </div>
+                </div>
+                <div id="excelResultArea-@mid" class="d-none mt-2 alert"></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary" id="btnExcelPreview-@mid">
+                    <i class="icon-base bx bx-search me-1"></i> Preview
+                </button>
+                <button type="button" class="btn btn-success d-none" id="btnExcelImport-@mid">
+                    <i class="icon-base bx bx-upload me-1"></i> Import
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+(function() {
+    var mid = '@mid';
+    var previewUrl = '@previewUrl';
+    var importUrl = '@importUrl';
+    var validatedRows = null;
+
+    function showErrors(errors) {
+        var errArea = $('#excelErrorArea-' + mid);
+        if (errors && errors.length > 0) {
+            errArea.removeClass('d-none').html('<strong>Errors:</strong><br>' + errors.slice(0, 10).join('<br>'));
+        } else {
+            errArea.addClass('d-none');
+        }
+    }
+
+    function renderPreview(data) {
+        var table = $('#excelPreviewTable-' + mid);
+        table.find('thead').empty();
+        table.find('tbody').empty();
+
+        var headers = data.headers || [];
+        var headerRow = $('<tr>');
+        headers.forEach(function(h) { headerRow.append('<th>' + h + '</th>'); });
+        table.find('thead').append(headerRow);
+
+        var rows = data.previewRows || [];
+        rows.forEach(function(row) {
+            var tr = $('<tr>');
+            headers.forEach(function(h) { tr.append('<td>' + (row[h] || '') + '</td>'); });
+            table.find('tbody').append(tr);
+        });
+
+        $('#excelRowCount-' + mid).text(data.totalRows || 0);
+        $('#excelInvalidCount-' + mid).text(data.invalidRows || 0);
+        showErrors(data.errors);
+    }
+
+    $('#btnExcelPreview-' + mid).click(function() {
+        var fileInput = $('#excelFile-' + mid)[0];
+        if (!fileInput.files || fileInput.files.length === 0) {
+            alert('Please select a file first.');
+            return;
+        }
+
+        var formData = new FormData();
+        formData.append('file', fileInput.files[0]);
+
+        $.ajax({
+            url: previewUrl,
+            data: formData,
+            processData: false,
+            contentType: false,
+            type: 'POST',
+            success: function(data) {
+                if (data.error) {
+                    alert(data.error);
+                    return;
+                }
+                validatedRows = data;
+                $('#excelPreviewArea-' + mid).removeClass('d-none');
+                renderPreview(data);
+                if (data.invalidRows === 0 && data.totalRows > 0) {
+                    $('#btnExcelPreview-' + mid).addClass('d-none');
+                    $('#btnExcelImport-' + mid).removeClass('d-none');
+                } else if (data.totalRows > 0) {
+                    $('#btnExcelPreview-' + mid).addClass('d-none');
+                    $('#btnExcelImport-' + mid).removeClass('d-none');
+                }
+            },
+            error: function(xhr) {
+                alert('Preview failed: ' + (xhr.responseJSON && xhr.responseJSON.error || xhr.statusText));
+            }
+        });
+    });
+
+    $('#btnExcelImport-' + mid).click(function() {
+        var fileInput = $('#excelFile-' + mid)[0];
+        if (!fileInput.files || fileInput.files.length === 0) {
+            alert('Please select a file first.');
+            return;
+        }
+
+        var formData = new FormData();
+        formData.append('file', fileInput.files[0]);
+
+        $('#btnExcelImport-' + mid).prop('disabled', true).html('<span class="spinner-border spinner-border-sm me-1"></span> Importing...');
+
+        $.ajax({
+            url: importUrl,
+            data: formData,
+            processData: false,
+            contentType: false,
+            type: 'POST',
+            success: function(data) {
+                var resultArea = $('#excelResultArea-' + mid);
+                resultArea.removeClass('d-none');
+                if (data.success) {
+                    resultArea.removeClass('alert-danger').addClass('alert-success').html('<i class="icon-base bx bx-check-circle me-1"></i> ' + data.message);
+                    setTimeout(function() { window.location.reload(); }, 1500);
+                } else {
+                    resultArea.removeClass('alert-success').addClass('alert-danger').html('<i class="icon-base bx bx-x-circle me-1"></i> ' + data.message);
+                    $('#btnExcelImport-' + mid).prop('disabled', false).html('<i class="icon-base bx bx-upload me-1"></i> Import');
+                }
+            },
+            error: function(xhr) {
+                var resultArea = $('#excelResultArea-' + mid);
+                resultArea.removeClass('d-none alert-success').addClass('alert-danger')
+                    .html('<i class="icon-base bx bx-x-circle me-1"></i> Import failed: ' + (xhr.responseJSON && xhr.responseJSON.message || xhr.statusText));
+                $('#btnExcelImport-' + mid).prop('disabled', false).html('<i class="icon-base bx bx-upload me-1"></i> Import');
+            }
+        });
+    });
+
+    $('#excelFile-' + mid).change(function() {
+        $('#excelPreviewArea-' + mid).addClass('d-none');
+        $('#excelResultArea-' + mid).addClass('d-none');
+        $('#btnExcelPreview-' + mid).removeClass('d-none');
+        $('#btnExcelImport-' + mid).addClass('d-none');
+    });
+
+    var modal = document.getElementById('excelImportModal-' + mid);
+    if (modal) {
+        modal.addEventListener('hidden.bs.modal', function() {
+            $('#excelPreviewArea-' + mid).addClass('d-none');
+            $('#excelResultArea-' + mid).addClass('d-none');
+            $('#excelFile-' + mid).val('');
+            $('#btnExcelPreview-' + mid).removeClass('d-none');
+            $('#btnExcelImport-' + mid).addClass('d-none');
+        });
+    }
+})();
+</script>
+}

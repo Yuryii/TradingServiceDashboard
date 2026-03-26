@@ -1,0 +1,120 @@
+@model IEnumerable<Dashboard.Models.ViewModels.SalesOrderListVM>
+@{
+    Layout = "~/Views/Shared/_ContentNavbarLayout.cshtml";
+    ViewData["Title"] = "Sales Orders";
+}
+<div class="row">
+  <div class="col-12">
+    <div class="card">
+      <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">All Sales Orders</h5>
+        <div class="d-flex gap-1">
+          <a asp-action="SalesOrders_Export" class="btn btn-success btn-sm" title="Export Excel">
+            <i class="icon-base bx bx-download me-1"></i> Export
+          </a>
+          <button type="button" class="btn btn-info btn-sm" data-bs-toggle="modal" data-bs-target="#excelImportModal-SalesOrder" title="Import Excel">
+            <i class="icon-base bx bx-upload me-1"></i> Import
+          </button>
+          <a asp-action="SalesOrders_Create" class="btn btn-primary btn-sm">
+            <i class="icon-base bx bx-plus me-1"></i> Create New Order
+          </a>
+        </div>
+      </div>
+      <div class="table-responsive text-nowrap">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Order Number</th>
+              <th>Customer</th>
+              <th>Opportunity</th>
+              <th>Total Amount</th>
+              <th>Payment Status</th>
+              <th>Delivery Status</th>
+              <th>Order Date</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody class="table-border-bottom-0">
+            @if (!Model.Any())
+            {
+              <tr>
+                <td colspan="8" class="text-center text-muted py-4">
+                  No sales orders found.
+                </td>
+              </tr>
+            }
+            else
+            {
+              @foreach (var item in Model)
+              {
+                <tr>
+                  <td><strong>@item.OrderNumber</strong></td>
+                  <td>@(item.CustomerName ?? "-")</td>
+                  <td>@(item.OpportunityCode ?? "-")</td>
+                  <td>@item.TotalAmount.ToString("N2")</td>
+                  <td>
+                    @{
+                      var paymentClass = item.PaymentStatus switch
+                      {
+                        "Pending" => "bg-label-warning",
+                        "Partial" => "bg-label-info",
+                        "Paid" => "bg-label-success",
+                        "Cancelled" => "bg-label-secondary",
+                        _ => "bg-label-secondary"
+                      };
+                    }
+                    <span class="badge @paymentClass me-1">@item.PaymentStatus</span>
+                  </td>
+                  <td>
+                    @{
+                      var deliveryClass = item.DeliveryStatus switch
+                      {
+                        "Pending" => "bg-label-warning",
+                        "Processing" => "bg-label-info",
+                        "Shipped" => "bg-label-primary",
+                        "Delivered" => "bg-label-success",
+                        "Cancelled" => "bg-label-secondary",
+                        _ => "bg-label-secondary"
+                      };
+                    }
+                    <span class="badge @deliveryClass me-1">@item.DeliveryStatus</span>
+                  </td>
+                  <td>@item.OrderDate.ToString("yyyy-MM-dd")</td>
+                  <td>
+                    <div class="dropdown">
+                      <button type="button" class="btn p-0 dropdown-toggle hide-arrow" data-bs-toggle="dropdown">
+                        <i class="icon-base bx bx-dots-vertical-rounded"></i>
+                      </button>
+                      <div class="dropdown-menu">
+                        <a class="dropdown-item" asp-action="SalesOrders_Edit" asp-route-id="@item.SalesOrderID">
+                          <i class="icon-base bx bx-edit-alt me-1"></i> Edit
+                        </a>
+                        <form asp-action="SalesOrders_Delete" asp-route-id="@item.SalesOrderID" method="post" onsubmit="return confirm('Are you sure you want to delete order: @item.OrderNumber?');" style="display:inline;">
+                          @Html.AntiForgeryToken()
+                          <button type="submit" class="dropdown-item text-danger">
+                            <i class="icon-base bx bx-trash me-1"></i> Delete
+                          </button>
+                        </form>
+                      </div>
+                    </div>
+                  </td>
+                </tr>
+              }
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+@{
+    var salesOrderModal = new Dashboard.Models.ViewModels.ExcelImportModalVM
+    {
+        ModalId = "SalesOrder",
+        EntityType = "SalesOrder",
+        EntityName = "SalesOrder",
+        EntityDisplayName = "Don hang ban"
+    };
+}
+<partial name="~/Views/Shared/Partials/_ExcelImportModal.cshtml" model="salesOrderModal" />

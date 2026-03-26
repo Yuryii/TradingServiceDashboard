@@ -1,0 +1,249 @@
+@model List<NotificationConfigListVM>
+@{
+    Layout = "~/Views/Shared/_ContentNavbarLayout.cshtml";
+    ViewData["Title"] = "Danh sach cau hinh thong bao";
+}
+
+<div class="row">
+    <div class="col-12 mb-4">
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <h4 class="mb-0"><i class="icon-base bx bx-list-ul me-2 text-primary"></i>Quan ly Thong bao</h4>
+                <p class="text-muted mb-0">Bat/tat va cau hinh thong bao tu dong</p>
+            </div>
+            <div class="d-flex gap-2">
+                <a asp-action="Index" class="btn btn-outline-secondary btn-sm">
+                    <i class="icon-base bx bx-arrow-back me-1"></i> Tro ve
+                </a>
+                <form asp-action="Reset" method="post" onsubmit="return confirm('Reset tat ca cau hinh ve mac dinh?');">
+                    <button type="submit" class="btn btn-outline-danger btn-sm">
+                        <i class="icon-base bx bx-reset me-1"></i> Reset
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-body">
+                <!-- Filters -->
+                <div class="row mb-3">
+                    <div class="col-md-4">
+                        <select class="form-select form-select-sm" id="filterCategory">
+                            <option value="">Tat ca module</option>
+                            <option value="Finance">Finance</option>
+                            <option value="Inventory">Inventory</option>
+                            <option value="HumanResources">HumanResources</option>
+                            <option value="Sales">Sales</option>
+                            <option value="CustomerService">CustomerService</option>
+                            <option value="Marketing">Marketing</option>
+                            <option value="Executive">Executive</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <select class="form-select form-select-sm" id="filterSeverity">
+                            <option value="">Tat ca muc do</option>
+                            <option value="Critical">Critical</option>
+                            <option value="Warning">Warning</option>
+                            <option value="Info">Info</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <select class="form-select form-select-sm" id="filterEnabled">
+                            <option value="">Tat ca trang thai</option>
+                            <option value="enabled">Da bat</option>
+                            <option value="disabled">Da tat</option>
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <div class="d-flex gap-1">
+                            <button class="btn btn-primary btn-sm flex-grow-1" id="bulkEnableBtn">
+                                <i class="icon-base bx bx-check-circle me-1"></i> Bat
+                            </button>
+                            <button class="btn btn-secondary btn-sm flex-grow-1" id="bulkDisableBtn">
+                                <i class="icon-base bx bx-x-circle me-1"></i> Tat
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Table -->
+                <div class="table-responsive">
+                    <table class="table table-hover table-sm" id="configTable">
+                        <thead>
+                            <tr>
+                                <th style="width: 40px;">
+                                    <input type="checkbox" class="form-check-input" id="checkAll" />
+                                </th>
+                                <th>Module</th>
+                                <th>Ten thong bao</th>
+                                <th>Code</th>
+                                <th>Muc do</th>
+                                <th class="text-center">Chu ky</th>
+                                <th class="text-center">Nguong</th>
+                                <th class="text-center">Trang thai</th>
+                                <th class="text-center">Hanh dong</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var item in Model)
+                            {
+                                var severityClass = item.Severity switch
+                                {
+                                    "Critical" => "bg-danger",
+                                    "Warning" => "bg-warning text-dark",
+                                    "Info" => "bg-info",
+                                    _ => "bg-secondary"
+                                };
+                                var enabledClass = item.IsEnabled ? "bg-success" : "bg-secondary";
+                                var enabledText = item.IsEnabled ? "Da bat" : "Da tat";
+                                var intervalText = item.CheckIntervalMinutes >= 1440 ? "Daily" : $"{item.CheckIntervalMinutes}min";
+                                var thresholdText = item.ThresholdValue.HasValue ? item.ThresholdValue.Value.ToString("N0") : "-";
+                                <tr data-category="@item.Category" data-severity="@item.Severity" data-enabled="@(item.IsEnabled ? "enabled" : "disabled")">
+                                    <td>
+                                        <input type="checkbox" class="form-check-input row-check" value="@item.ConfigID" />
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-label-secondary">@item.Category</span>
+                                    </td>
+                                    <td>
+                                        <div class="d-flex align-items-center gap-2">
+                                            <div class="avatar avatar-xs @item.IconBgClass">
+                                                <span class="avatar-initial rounded-circle"><i class="icon-base @item.IconClass"></i></span>
+                                            </div>
+                                            <span>@item.NotificationName</span>
+                                        </div>
+                                    </td>
+                                    <td><code class="small">@item.NotificationCode</code></td>
+                                    <td><span class="badge @severityClass">@item.Severity</span></td>
+                                    <td class="text-center"><span class="badge bg-label-dark">@intervalText</span></td>
+                                    <td class="text-center small">@thresholdText</td>
+                                    <td class="text-center">
+                                        <div class="form-check form-switch d-inline-block">
+                                            <input type="checkbox" class="form-check-input toggle-switch"
+                                                data-id="@item.ConfigID"
+                                                @(item.IsEnabled ? "checked" : "") />
+                                        </div>
+                                    </td>
+                                    <td class="text-center">
+                                        <a asp-action="Edit" asp-route-id="@item.ConfigID" class="btn btn-outline-primary btn-xs">
+                                            <i class="icon-base bx bx-edit"></i>
+                                        </a>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section PageScripts {
+<script>
+    // Check all
+    document.getElementById('checkAll')?.addEventListener('change', function() {
+        document.querySelectorAll('.row-check').forEach(function(cb) {
+            cb.checked = this.checked;
+        }.bind(this));
+    });
+
+    // Filters
+    function applyFilters() {
+        var cat = document.getElementById('filterCategory').value;
+        var sev = document.getElementById('filterSeverity').value;
+        var en = document.getElementById('filterEnabled').value;
+
+        document.querySelectorAll('#configTable tbody tr').forEach(function(row) {
+            var show = true;
+            if (cat && row.dataset.category !== cat) show = false;
+            if (sev && row.dataset.severity !== sev) show = false;
+            if (en && row.dataset.enabled !== en) show = false;
+            row.style.display = show ? '' : 'none';
+        });
+    }
+
+    document.getElementById('filterCategory')?.addEventListener('change', applyFilters);
+    document.getElementById('filterSeverity')?.addEventListener('change', applyFilters);
+    document.getElementById('filterEnabled')?.addEventListener('change', applyFilters);
+
+    // Toggle switch
+    document.querySelectorAll('.toggle-switch').forEach(function(toggle) {
+        toggle.addEventListener('change', function() {
+            var id = this.dataset.id;
+            fetch('/NotificationConfig/Toggle?id=' + id, { method: 'POST' })
+                .then(function(r) { return r.json(); })
+                .then(function(data) {
+                    if (data.success) {
+                        var row = toggle.closest('tr');
+                        row.dataset.enabled = data.isEnabled ? 'enabled' : 'disabled';
+                        showToast(data.message, 'success');
+                    }
+                })
+                .catch(function() {
+                    toggle.checked = !toggle.checked;
+                });
+        });
+    });
+
+    // Bulk actions
+    function getSelectedIds() {
+        return Array.from(document.querySelectorAll('.row-check:checked')).map(function(cb) {
+            return parseInt(cb.value);
+        });
+    }
+
+    document.getElementById('bulkEnableBtn')?.addEventListener('click', function() {
+        var ids = getSelectedIds();
+        if (ids.length === 0) { showToast('Vui long chon it nhat 1 muc.', 'warning'); return; }
+        bulkToggle(ids, true);
+    });
+
+    document.getElementById('bulkDisableBtn')?.addEventListener('click', function() {
+        var ids = getSelectedIds();
+        if (ids.length === 0) { showToast('Vui long chon it nhat 1 muc.', 'warning'); return; }
+        bulkToggle(ids, false);
+    });
+
+    function bulkToggle(ids, enable) {
+        fetch('/NotificationConfig/BulkToggle', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ ids: ids, enable: enable })
+        })
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+            if (data.success) {
+                location.reload();
+            } else {
+                showToast(data.message, 'danger');
+            }
+        });
+    }
+
+    function showToast(msg, type) {
+        var container = document.getElementById('toastContainer') || createToastContainer();
+        var toast = document.createElement('div');
+        toast.className = 'toast align-items-center text-bg-' + type + ' border-0';
+        toast.setAttribute('role', 'alert');
+        toast.innerHTML = '<div class="d-flex"><div class="toast-body">' + msg + '</div><button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button></div>';
+        container.appendChild(toast);
+        var bs = new bootstrap.Toast(toast);
+        bs.show();
+        toast.addEventListener('hidden.bs.toast', function() { this.remove(); });
+    }
+
+    function createToastContainer() {
+        var c = document.createElement('div');
+        c.id = 'toastContainer';
+        c.className = 'toast-container position-fixed top-0 end-0 p-3';
+        c.style.zIndex = '11000';
+        document.body.appendChild(c);
+        return c;
+    }
+</script>
+}

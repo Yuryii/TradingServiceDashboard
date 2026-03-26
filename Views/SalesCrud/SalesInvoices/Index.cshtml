@@ -1,0 +1,109 @@
+@model IEnumerable<Dashboard.Models.ViewModels.SalesInvoiceListVM>
+@{
+    Layout = "~/Views/Shared/_ContentNavbarLayout.cshtml";
+    ViewData["Title"] = "Sales Invoices";
+}
+<div class="row">
+  <div class="col-12">
+    <div class="card">
+      <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">All Sales Invoices</h5>
+        <div class="d-flex gap-1">
+          <a asp-action="SalesInvoices_Export" class="btn btn-success btn-sm" title="Export Excel">
+            <i class="icon-base bx bx-download me-1"></i> Export
+          </a>
+          <button type="button" class="btn btn-info btn-sm" data-bs-toggle="modal" data-bs-target="#excelImportModal-SalesInvoice" title="Import Excel">
+            <i class="icon-base bx bx-upload me-1"></i> Import
+          </button>
+          <a asp-action="SalesInvoices_Create" class="btn btn-primary btn-sm">
+            <i class="icon-base bx bx-plus me-1"></i> Create New Invoice
+          </a>
+        </div>
+      </div>
+      <div class="table-responsive text-nowrap">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Invoice Number</th>
+              <th>Customer</th>
+              <th>Sales Order</th>
+              <th>Total Amount</th>
+              <th>Paid</th>
+              <th>Outstanding</th>
+              <th>Payment Status</th>
+              <th>Invoice Date</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody class="table-border-bottom-0">
+            @if (!Model.Any())
+            {
+              <tr>
+                <td colspan="9" class="text-center text-muted py-4">
+                  No sales invoices found.
+                </td>
+              </tr>
+            }
+            else
+            {
+              @foreach (var item in Model)
+              {
+                <tr>
+                  <td><strong>@item.InvoiceNumber</strong></td>
+                  <td>@(item.CustomerName ?? "-")</td>
+                  <td>@(item.SalesOrderNumber ?? "-")</td>
+                  <td>@item.TotalAmount.ToString("N2")</td>
+                  <td>@item.PaidAmount.ToString("N2")</td>
+                  <td>@item.OutstandingAmount.ToString("N2")</td>
+                  <td>
+                    @{
+                      var statusClass = item.PaymentStatus switch
+                      {
+                        "Unpaid" => "bg-label-danger",
+                        "Partial" => "bg-label-warning",
+                        "Paid" => "bg-label-success",
+                        "Overdue" => "bg-label-dark",
+                        _ => "bg-label-secondary"
+                      };
+                    }
+                    <span class="badge @statusClass me-1">@item.PaymentStatus</span>
+                  </td>
+                  <td>@item.InvoiceDate.ToString("yyyy-MM-dd")</td>
+                  <td>
+                    <div class="dropdown">
+                      <button type="button" class="btn p-0 dropdown-toggle hide-arrow" data-bs-toggle="dropdown">
+                        <i class="icon-base bx bx-dots-vertical-rounded"></i>
+                      </button>
+                      <div class="dropdown-menu">
+                        <a class="dropdown-item" asp-action="SalesInvoices_Edit" asp-route-id="@item.InvoiceID">
+                          <i class="icon-base bx bx-edit-alt me-1"></i> Edit
+                        </a>
+                        <form asp-action="SalesInvoices_Delete" asp-route-id="@item.InvoiceID" method="post" onsubmit="return confirm('Are you sure you want to delete invoice: @item.InvoiceNumber?');" style="display:inline;">
+                          @Html.AntiForgeryToken()
+                          <button type="submit" class="dropdown-item text-danger">
+                            <i class="icon-base bx bx-trash me-1"></i> Delete
+                          </button>
+                        </form>
+                      </div>
+                    </div>
+                  </td>
+                </tr>
+              }
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+@{
+    var salesInvoiceModal = new Dashboard.Models.ViewModels.ExcelImportModalVM
+    {
+        ModalId = "SalesInvoice",
+        EntityType = "SalesInvoice",
+        EntityName = "SalesInvoice",
+        EntityDisplayName = "Hoa don ban"
+    };
+}
+<partial name="~/Views/Shared/Partials/_ExcelImportModal.cshtml" model="salesInvoiceModal" />

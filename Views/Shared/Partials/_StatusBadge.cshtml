@@ -1,0 +1,15 @@
+@functions {
+    public static string GetStatusBadgeClass(string status)
+    {
+        return status?.ToLower() switch
+        {
+            "active" or "open" or "draft" or "pending" or "planned" or "new" or "applied" or "unpaid" => "bg-label-primary",
+            "approved" or "won" or "closed won" or "paid" or "completed" or "received" or "converted" or "hired" => "bg-label-success",
+            "rejected" or "lost" or "closed lost" or "cancelled" or "declined" => "bg-label-danger",
+            "in progress" or "processing" or "interview" => "bg-label-info",
+            "on hold" or "suspended" or "expired" => "bg-label-warning",
+            "resolved" or "closed" => "bg-label-secondary",
+            _ => "bg-label-secondary"
+        };
+    }
+}

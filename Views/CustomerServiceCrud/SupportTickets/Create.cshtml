@@ -1,0 +1,131 @@
+@model Dashboard.Models.ViewModels.SupportTicketCreateVM
+@{
+    Layout = "~/Views/Shared/_ContentNavbarLayout.cshtml";
+    ViewData["Title"] = "Create Support Ticket";
+}
+
+<div class="row">
+  <div class="col-12 col-lg-8">
+    <div class="card mb-6">
+      <div class="card-header">
+        <h5 class="mb-0">Create New Support Ticket</h5>
+      </div>
+      <div class="card-body pt-4">
+        @if (ViewData.ModelState.ErrorCount > 0)
+        {
+          <div class="alert alert-danger" role="alert">
+            <div asp-validation-summary="ModelOnly"></div>
+          </div>
+        }
+
+        <form asp-action="SupportTickets_Create" method="post">
+          @Html.AntiForgeryToken()
+
+          <div class="row g-6">
+            <div class="col-md-6">
+              <label asp-for="TicketNumber" class="form-label">Ticket Number</label>
+              <input asp-for="TicketNumber" class="form-control" placeholder="e.g., TKT-001" />
+              <span asp-validation-for="TicketNumber" class="text-danger"></span>
+            </div>
+            <div class="col-md-6">
+              <label asp-for="CustomerID" class="form-label">Customer</label>
+              <select asp-for="CustomerID" class="form-select">
+                <option value="">-- Select Customer --</option>
+                @if (ViewBag.Customers != null)
+                {
+                  @foreach (var item in ViewBag.Customers)
+                  {
+                    <option value="@item.CustomerID">@item.CustomerName</option>
+                  }
+                }
+              </select>
+              <span asp-validation-for="CustomerID" class="text-danger"></span>
+            </div>
+            <div class="col-md-6">
+              <label asp-for="AssignedToEmployeeID" class="form-label">Assigned To</label>
+              <select asp-for="AssignedToEmployeeID" class="form-select">
+                <option value="">-- Select Employee --</option>
+                @if (ViewBag.Employees != null)
+                {
+                  @foreach (var item in ViewBag.Employees)
+                  {
+                    <option value="@item.EmployeeID">@item.FullName</option>
+                  }
+                }
+              </select>
+              <span asp-validation-for="AssignedToEmployeeID" class="text-danger"></span>
+            </div>
+            <div class="col-md-6">
+              <label asp-for="BranchID" class="form-label">Branch</label>
+              <select asp-for="BranchID" class="form-select">
+                <option value="">-- Select Branch --</option>
+                @if (ViewBag.Branches != null)
+                {
+                  @foreach (var item in ViewBag.Branches)
+                  {
+                    <option value="@item.BranchID">@item.BranchName</option>
+                  }
+                }
+              </select>
+              <span asp-validation-for="BranchID" class="text-danger"></span>
+            </div>
+            <div class="col-12">
+              <label asp-for="Subject" class="form-label">Subject</label>
+              <input asp-for="Subject" class="form-control" placeholder="Enter ticket subject" />
+              <span asp-validation-for="Subject" class="text-danger"></span>
+            </div>
+            <div class="col-md-6">
+              <label asp-for="TicketType" class="form-label">Ticket Type</label>
+              <select asp-for="TicketType" class="form-select">
+                <option value="">-- Select Type --</option>
+                <option value="Bug">Bug</option>
+                <option value="Feature">Feature Request</option>
+                <option value="Support">Technical Support</option>
+                <option value="Billing">Billing</option>
+                <option value="General">General Inquiry</option>
+              </select>
+              <span asp-validation-for="TicketType" class="text-danger"></span>
+            </div>
+            <div class="col-md-6">
+              <label asp-for="Priority" class="form-label">Priority</label>
+              <select asp-for="Priority" class="form-select">
+                <option value="">-- Select Priority --</option>
+                <option value="Low">Low</option>
+                <option value="Medium">Medium</option>
+                <option value="High">High</option>
+                <option value="Critical">Critical</option>
+              </select>
+              <span asp-validation-for="Priority" class="text-danger"></span>
+            </div>
+            <div class="col-md-6">
+              <label asp-for="Status" class="form-label">Status</label>
+              <select asp-for="Status" class="form-select">
+                <option value="">-- Select Status --</option>
+                <option value="Open">Open</option>
+                <option value="InProgress">In Progress</option>
+                <option value="Pending">Pending</option>
+                <option value="Resolved">Resolved</option>
+                <option value="Closed">Closed</option>
+              </select>
+              <span asp-validation-for="Status" class="text-danger"></span>
+            </div>
+            <div class="col-12">
+              <label asp-for="Description" class="form-label">Description</label>
+              <textarea asp-for="Description" class="form-control" rows="5" placeholder="Enter detailed description of the issue..."></textarea>
+              <span asp-validation-for="Description" class="text-danger"></span>
+            </div>
+          </div>
+
+          <div class="mt-6 d-flex gap-3">
+            <button type="submit" class="btn btn-primary">
+              <i class="icon-base bx bx-save me-1"></i> Create Ticket
+            </button>
+            <a asp-action="SupportTickets" class="btn btn-outline-secondary">
+              <i class="icon-base bx bx-x me-1"></i> Cancel
+            </a>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>

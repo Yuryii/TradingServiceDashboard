@@ -1,0 +1,190 @@
+@{
+  Layout = "~/Views/Shared/_ContentNavbarLayout.cshtml";
+  ViewData["Title"] = "Sales Management";
+}
+
+<div class="row">
+  <div class="col-12 mb-4">
+    <h4 class="fw-bold py-3 mb-0"><span class="text-muted fw-light">Sales /</span> Sales Management</h4>
+  </div>
+
+  <div class="col-lg-3 col-md-6 col-sm-6 mb-4">
+    <div class="card">
+      <div class="card-body text-center">
+        <div class="avatar avatar-md mx-auto mb-3">
+          <span class="avatar-initial rounded-circle bg-label-primary">
+            <i class="icon-base bx bxs-user-detail fs-3"></i>
+          </span>
+        </div>
+        <h5 class="mb-1">Customers</h5>
+        <span class="badge bg-label-secondary mb-2">CRM</span>
+        <p class="mb-0 text-muted small">Manage customer records and information</p>
+        <a asp-area="" asp-controller="Customers" asp-action="Customers_Index" class="btn btn-sm btn-primary mt-3">
+          <i class="icon-base bx bx-right-arrow-alt me-1"></i> Manage
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-3 col-md-6 col-sm-6 mb-4">
+    <div class="card">
+      <div class="card-body text-center">
+        <div class="avatar avatar-md mx-auto mb-3">
+          <span class="avatar-initial rounded-circle bg-label-info">
+            <i class="icon-base bx bxs-group fs-3"></i>
+          </span>
+        </div>
+        <h5 class="mb-1">Customer Groups</h5>
+        <span class="badge bg-label-secondary mb-2">Organization</span>
+        <p class="mb-0 text-muted small">Organize customers into groups</p>
+        <a asp-area="" asp-controller="CustomerGroups" asp-action="CustomerGroups_Index" class="btn btn-sm btn-info mt-3">
+          <i class="icon-base bx bx-right-arrow-alt me-1"></i> Manage
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-3 col-md-6 col-sm-6 mb-4">
+    <div class="card">
+      <div class="card-body text-center">
+        <div class="avatar avatar-md mx-auto mb-3">
+          <span class="avatar-initial rounded-circle bg-label-success">
+            <i class="icon-base bx bxs-channel-share fs-3"></i>
+          </span>
+        </div>
+        <h5 class="mb-1">Sales Channels</h5>
+        <span class="badge bg-label-secondary mb-2">Distribution</span>
+        <p class="mb-0 text-muted small">Manage sales distribution channels</p>
+        <a asp-area="" asp-controller="SalesChannels" asp-action="SalesChannels_Index" class="btn btn-sm btn-success mt-3">
+          <i class="icon-base bx bx-right-arrow-alt me-1"></i> Manage
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-3 col-md-6 col-sm-6 mb-4">
+    <div class="card">
+      <div class="card-body text-center">
+        <div class="avatar avatar-md mx-auto mb-3">
+          <span class="avatar-initial rounded-circle bg-label-warning">
+            <i class="icon-base bx bxs-flag-alt fs-3"></i>
+          </span>
+        </div>
+        <h5 class="mb-1">Opportunity Stages</h5>
+        <span class="badge bg-label-secondary mb-2">Pipeline</span>
+        <p class="mb-0 text-muted small">Define sales pipeline stages</p>
+        <a asp-area="" asp-controller="OpportunityStages" asp-action="OpportunityStages_Index" class="btn btn-sm btn-warning mt-3">
+          <i class="icon-base bx bx-right-arrow-alt me-1"></i> Manage
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-3 col-md-6 col-sm-6 mb-4">
+    <div class="card">
+      <div class="card-body text-center">
+        <div class="avatar avatar-md mx-auto mb-3">
+          <span class="avatar-initial rounded-circle bg-label-danger">
+            <i class="icon-base bx bxs-bullseye fs-3"></i>
+          </span>
+        </div>
+        <h5 class="mb-1">Opportunities</h5>
+        <span class="badge bg-label-secondary mb-2">CRM</span>
+        <p class="mb-0 text-muted small">Track sales opportunities</p>
+        <a asp-area="" asp-controller="Opportunities" asp-action="Opportunities_Index" class="btn btn-sm btn-danger mt-3">
+          <i class="icon-base bx bx-right-arrow-alt me-1"></i> Manage
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-3 col-md-6 col-sm-6 mb-4">
+    <div class="card">
+      <div class="card-body text-center">
+        <div class="avatar avatar-md mx-auto mb-3">
+          <span class="avatar-initial rounded-circle bg-label-secondary">
+            <i class="icon-base bx bxs-file-doc fs-3"></i>
+          </span>
+        </div>
+        <h5 class="mb-1">Quotes</h5>
+        <span class="badge bg-label-secondary mb-2">Documents</span>
+        <p class="mb-0 text-muted small">Create and manage quotes</p>
+        <a asp-area="" asp-controller="Quotes" asp-action="Quotes_Index" class="btn btn-sm btn-secondary mt-3">
+          <i class="icon-base bx bx-right-arrow-alt me-1"></i> Manage
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-3 col-md-6 col-sm-6 mb-4">
+    <div class="card">
+      <div class="card-body text-center">
+        <div class="avatar avatar-md mx-auto mb-3">
+          <span class="avatar-initial rounded-circle bg-label-dark">
+            <i class="icon-base bx bxs-cart fs-3"></i>
+          </span>
+        </div>
+        <h5 class="mb-1">Sales Orders</h5>
+        <span class="badge bg-label-secondary mb-2">Transactions</span>
+        <p class="mb-0 text-muted small">Process customer orders</p>
+        <a asp-area="" asp-controller="SalesOrders" asp-action="SalesOrders_Index" class="btn btn-sm btn-dark mt-3">
+          <i class="icon-base bx bx-right-arrow-alt me-1"></i> Manage
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-3 col-md-6 col-sm-6 mb-4">
+    <div class="card">
+      <div class="card-body text-center">
+        <div class="avatar avatar-md mx-auto mb-3">
+          <span class="avatar-initial rounded-circle bg-label-primary">
+            <i class="icon-base bx bxs-receipt fs-3"></i>
+          </span>
+        </div>
+        <h5 class="mb-1">Sales Invoices</h5>
+        <span class="badge bg-label-secondary mb-2">Billing</span>
+        <p class="mb-0 text-muted small">Manage sales invoices</p>
+        <a asp-area="" asp-controller="SalesInvoices" asp-action="SalesInvoices_Index" class="btn btn-sm btn-primary mt-3">
+          <i class="icon-base bx bx-right-arrow-alt me-1"></i> Manage
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-3 col-md-6 col-sm-6 mb-4">
+    <div class="card">
+      <div class="card-body text-center">
+        <div class="avatar avatar-md mx-auto mb-3">
+          <span class="avatar-initial rounded-circle bg-label-warning">
+            <i class="icon-base bx bxs-undo fs-3"></i>
+          </span>
+        </div>
+        <h5 class="mb-1">Sales Returns</h5>
+        <span class="badge bg-label-secondary mb-2">Returns</span>
+        <p class="mb-0 text-muted small">Handle product returns</p>
+        <a asp-area="" asp-controller="SalesReturns" asp-action="SalesReturns_Index" class="btn btn-sm btn-warning mt-3">
+          <i class="icon-base bx bx-right-arrow-alt me-1"></i> Manage
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-3 col-md-6 col-sm-6 mb-4">
+    <div class="card">
+      <div class="card-body text-center">
+        <div class="avatar avatar-md mx-auto mb-3">
+          <span class="avatar-initial rounded-circle bg-label-success">
+            <i class="icon-base bx bxs-wallet fs-3"></i>
+          </span>
+        </div>
+        <h5 class="mb-1">Customer Payments</h5>
+        <span class="badge bg-label-secondary mb-2">Payments</span>
+        <p class="mb-0 text-muted small">Track customer payments</p>
+        <a asp-area="" asp-controller="CustomerPayments" asp-action="CustomerPayments_Index" class="btn btn-sm btn-success mt-3">
+          <i class="icon-base bx bx-right-arrow-alt me-1"></i> Manage
+        </a>
+      </div>
+    </div>
+  </div>
+</div>

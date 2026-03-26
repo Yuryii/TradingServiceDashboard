@@ -1,0 +1,77 @@
+@model Dashboard.Models.ViewModels.PositionEditVM
+@{
+    Layout = "~/Views/Shared/_ContentNavbarLayout.cshtml";
+    ViewData["Title"] = "Edit Position";
+}
+
+<div class="row">
+  <div class="col-12 col-lg-6">
+    <div class="card mb-6">
+      <div class="card-header">
+        <h5 class="mb-0">Edit Position</h5>
+      </div>
+      <div class="card-body pt-4">
+        @if (ViewData.ModelState.ErrorCount > 0)
+        {
+          <div class="alert alert-danger" role="alert">
+            <div asp-validation-summary="ModelOnly"></div>
+          </div>
+        }
+
+        <form asp-action="Positions_Edit" method="post">
+          @Html.AntiForgeryToken()
+          <input type="hidden" asp-for="PositionID" />
+          <input type="hidden" asp-for="CreatedAt" />
+
+          <div class="row g-6">
+            <div class="col-md-6">
+              <label asp-for="PositionCode" class="form-label">Position Code</label>
+              <input asp-for="PositionCode" class="form-control" />
+              <span asp-validation-for="PositionCode" class="text-danger"></span>
+            </div>
+            <div class="col-md-6">
+              <label asp-for="PositionName" class="form-label">Position Name</label>
+              <input asp-for="PositionName" class="form-control" />
+              <span asp-validation-for="PositionName" class="text-danger"></span>
+            </div>
+            <div class="col-md-6">
+              <label asp-for="PositionLevel" class="form-label">Position Level</label>
+              <select asp-for="PositionLevel" class="form-select">
+                <option value="Entry" selected="@(Model.PositionLevel == "Entry")">Entry</option>
+                <option value="Junior" selected="@(Model.PositionLevel == "Junior")">Junior</option>
+                <option value="Mid" selected="@(Model.PositionLevel == "Mid")">Mid</option>
+                <option value="Senior" selected="@(Model.PositionLevel == "Senior")">Senior</option>
+                <option value="Lead" selected="@(Model.PositionLevel == "Lead")">Lead</option>
+                <option value="Manager" selected="@(Model.PositionLevel == "Manager")">Manager</option>
+                <option value="Director" selected="@(Model.PositionLevel == "Director")">Director</option>
+                <option value="Executive" selected="@(Model.PositionLevel == "Executive")">Executive</option>
+              </select>
+              <span asp-validation-for="PositionLevel" class="text-danger"></span>
+            </div>
+            <div class="col-md-6">
+              <label asp-for="IsActive" class="form-label">Status</label>
+              <select asp-for="IsActive" class="form-select">
+                <option value="true" selected="@(Model.IsActive)">Active</option>
+                <option value="false" selected="@(!Model.IsActive)">Inactive</option>
+              </select>
+            </div>
+            <div class="col-12">
+              <label asp-for="Description" class="form-label">Description</label>
+              <textarea asp-for="Description" class="form-control" rows="3"></textarea>
+              <span asp-validation-for="Description" class="text-danger"></span>
+            </div>
+          </div>
+
+          <div class="mt-6 d-flex gap-3">
+            <button type="submit" class="btn btn-primary">
+              <i class="icon-base bx bx-save me-1"></i> Save Changes
+            </button>
+            <a asp-action="Positions_Index" class="btn btn-outline-secondary">
+              <i class="icon-base bx bx-x me-1"></i> Cancel
+            </a>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>

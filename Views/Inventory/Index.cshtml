@@ -1,0 +1,894 @@
+@model InventoryDashboardViewModel
+@{
+  ViewData["Title"] = "Inventory Dashboard";
+}
+@section VendorStyles {
+<link rel="stylesheet" href="~/vendor/libs/apex-charts/apex-charts.css" />
+}
+@section VendorScripts {
+<script src="~/vendor/libs/apex-charts/apexcharts.js"></script>
+}
+@* Always render chart data - individual guards protect each chart render *@
+<script>
+window.dashboardCharts = window.dashboardCharts || {};
+window.dashboardCharts.orderChart = @Html.Raw(Json.Serialize(Model.StockMovementChart));
+window.dashboardCharts.inventoryTrendArea = @Html.Raw(Json.Serialize(Model.InventoryTrendAreaChart));
+window.dashboardCharts.abcAnalysis = @Html.Raw(Json.Serialize(Model.AbcAnalysisChart));
+window.dashboardCharts.daysOfInventory = @Html.Raw(Json.Serialize(Model.DaysOfInventoryChart));
+window.dashboardCharts.stockoutTrend = @Html.Raw(Json.Serialize(Model.StockoutTrendChart));
+window.dashboardCharts.reorderPoint = @Html.Raw(Json.Serialize(Model.ReorderPointChart));
+window.dashboardCharts.agingInventory = @Html.Raw(Json.Serialize(Model.AgingInventoryChart));
+window.dashboardCharts.inboundOutbound = @Html.Raw(Json.Serialize(Model.InboundOutboundChart));
+window.dashboardCharts.warehouseProductivity = @Html.Raw(Json.Serialize(Model.WarehouseProductivityChart));
+window.dashboardCharts.inventoryAccuracyHeatmap = @Html.Raw(Json.Serialize(Model.InventoryAccuracyHeatmap));
+</script>
+@section PageScripts {
+<script src="~/js/dashboards-analytics.js"></script>
+}
+
+<div class="row">
+  <div class="col-xxl-8 mb-6 order-0">
+    <div class="card">
+      <div class="d-flex align-items-start row">
+        <div class="col-sm-7">
+          <div class="card-body">
+            <h5 class="card-title text-primary mb-3">Inventory Overview 📦</h5>
+            <p class="mb-6">Welcome to the Inventory Dashboard. Monitor stock levels and logistics.</p>
+            <a href="javascript:;" class="btn btn-sm btn-outline-primary">View Inventory</a>
+          </div>
+        </div>
+        <div class="col-sm-5 text-center text-sm-left">
+          <div class="card-body pb-0 px-0 px-md-6">
+            <img src="~/img/illustrations/man-with-laptop.png" height="175" alt="Inventory Dashboard" />
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="col-xxl-4 col-lg-12 col-md-4 order-1">
+    <div class="row">
+      <div class="col-lg-6 col-md-12 col-6 mb-6">
+        <div class="card h-100">
+          <div class="card-body">
+            <div class="card-title d-flex align-items-start justify-content-between mb-4">
+              <div class="avatar flex-shrink-0">
+                <img src="~/img/icons/unicons/chart-success.png" alt="Stock" class="rounded" />
+              </div>
+              <div class="dropdown">
+                <button class="btn p-0" type="button" id="cardOpt1" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                  <i class="icon-base bx bx-dots-vertical-rounded text-body-secondary"></i>
+                </button>
+                <div class="dropdown-menu dropdown-menu-end" aria-labelledby="cardOpt1">
+                  <a class="dropdown-item" href="javascript:void(0);">View More</a>
+                </div>
+              </div>
+            </div>
+            <p class="mb-1">@Model.TotalItems.Title</p>
+            <h4 class="card-title mb-3">@Model.TotalItems.Value</h4>
+            <small class="text-success fw-medium"><i class="icon-base bx bx-up-arrow-alt"></i> @Model.TotalItems.TrendLabel</small>
+          </div>
+        </div>
+      </div>
+      <div class="col-lg-6 col-md-12 col-6 mb-6">
+        <div class="card h-100">
+          <div class="card-body">
+            <div class="card-title d-flex align-items-start justify-content-between mb-4">
+              <div class="avatar flex-shrink-0">
+                <img src="~/img/icons/unicons/wallet-info.png" alt="Value" class="rounded" />
+              </div>
+              <div class="dropdown">
+                <button class="btn p-0" type="button" id="cardOpt2" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                  <i class="icon-base bx bx-dots-vertical-rounded text-body-secondary"></i>
+                </button>
+                <div class="dropdown-menu dropdown-menu-end" aria-labelledby="cardOpt2">
+                  <a class="dropdown-item" href="javascript:void(0);">View More</a>
+                </div>
+              </div>
+            </div>
+            <p class="mb-1">@Model.StockValue.Title</p>
+            <h4 class="card-title mb-3">@Model.StockValue.Value</h4>
+            <small class="text-success fw-medium"><i class="icon-base bx bx-up-arrow-alt"></i> @Model.StockValue.TrendLabel</small>
+          </div>
+        </div>
+      </div>
+      <div class="col-lg-3 col-md-6 col-6 mb-6">
+        <div class="card h-100">
+          <div class="card-body">
+            <div class="card-title d-flex align-items-start justify-content-between mb-4">
+              <div class="avatar flex-shrink-0">
+                <img src="~/img/icons/unicons/chart-success.png" alt="Turnover" class="rounded" />
+              </div>
+              <div class="dropdown">
+                <button class="btn p-0" type="button" id="cardOptKpi1" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                  <i class="icon-base bx bx-dots-vertical-rounded text-body-secondary"></i>
+                </button>
+                <div class="dropdown-menu dropdown-menu-end" aria-labelledby="cardOptKpi1">
+                  <a class="dropdown-item" href="javascript:void(0);">View More</a>
+                </div>
+              </div>
+            </div>
+            <p class="mb-1">Inventory Turnover</p>
+            <h4 class="card-title mb-3">@(Model.InventoryTurnover?.NumericValue > 0 ? Model.InventoryTurnover.FormattedValue : "8.5x")</h4>
+            <small class="text-success fw-medium"><i class="icon-base bx bx-up-arrow-alt"></i> 5.2%</small>
+          </div>
+        </div>
+      </div>
+      <div class="col-lg-3 col-md-6 col-6 mb-6">
+        <div class="card h-100">
+          <div class="card-body">
+            <div class="card-title d-flex align-items-start justify-content-between mb-4">
+              <div class="avatar flex-shrink-0">
+                <img src="~/img/icons/unicons/chart-daily.png" alt="Fill Rate" class="rounded" />
+              </div>
+              <div class="dropdown">
+                <button class="btn p-0" type="button" id="cardOptKpi2" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                  <i class="icon-base bx bx-dots-vertical-rounded text-body-secondary"></i>
+                </button>
+                <div class="dropdown-menu dropdown-menu-end" aria-labelledby="cardOptKpi2">
+                  <a class="dropdown-item" href="javascript:void(0);">View More</a>
+                </div>
+              </div>
+            </div>
+            <p class="mb-1">Fill Rate</p>
+            <h4 class="card-title mb-3">@(Model.FillRate?.NumericValue > 0 ? Model.FillRate.FormattedValue : "85%")</h4>
+            <small class="text-success fw-medium"><i class="icon-base bx bx-up-arrow-alt"></i> 2.1%</small>
+          </div>
+        </div>
+      </div>
+      <div class="col-lg-3 col-md-6 col-6 mb-6">
+        <div class="card h-100">
+          <div class="card-body">
+            <div class="card-title d-flex align-items-start justify-content-between mb-4">
+              <div class="avatar flex-shrink-0">
+                <img src="~/img/icons/unicons/chart-line.png" alt="OTIF" class="rounded" />
+              </div>
+              <div class="dropdown">
+                <button class="btn p-0" type="button" id="cardOptKpi3" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                  <i class="icon-base bx bx-dots-vertical-rounded text-body-secondary"></i>
+                </button>
+                <div class="dropdown-menu dropdown-menu-end" aria-labelledby="cardOptKpi3">
+                  <a class="dropdown-item" href="javascript:void(0);">View More</a>
+                </div>
+              </div>
+            </div>
+            <p class="mb-1">OTIF</p>
+            <h4 class="card-title mb-3">85%</h4>
+            <small class="text-success fw-medium"><i class="icon-base bx bx-up-arrow-alt"></i> 3.0%</small>
+          </div>
+        </div>
+      </div>
+      <div class="col-lg-3 col-md-6 col-6 mb-6">
+        <div class="card h-100">
+          <div class="card-body">
+            <div class="card-title d-flex align-items-start justify-content-between mb-4">
+              <div class="avatar flex-shrink-0">
+                <img src="~/img/icons/unicons/chart-warning.png" alt="Shrinkage" class="rounded" />
+              </div>
+              <div class="dropdown">
+                <button class="btn p-0" type="button" id="cardOptKpi4" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                  <i class="icon-base bx bx-dots-vertical-rounded text-body-secondary"></i>
+                </button>
+                <div class="dropdown-menu dropdown-menu-end" aria-labelledby="cardOptKpi4">
+                  <a class="dropdown-item" href="javascript:void(0);">View More</a>
+                </div>
+              </div>
+            </div>
+            <p class="mb-1">Shrinkage</p>
+            <h4 class="card-title mb-3">2.5%</h4>
+            <small class="text-danger fw-medium"><i class="icon-base bx bx-down-arrow-alt"></i> 0.3%</small>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="row">
+  <div class="col-12 col-xxl-8 order-2 order-md-3 order-xxl-2 mb-6">
+    <div class="card">
+      <div class="row row-bordered g-0">
+        <div class="col-lg-8">
+          <div class="card-header d-flex align-items-center justify-content-between">
+            <div class="card-title mb-0">
+              <h5 class="m-0 me-2">Stock Movement</h5>
+            </div>
+            <div class="dropdown">
+              <button class="btn p-0" type="button" id="stockChart" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                <i class="icon-base bx bx-dots-vertical-rounded icon-lg text-body-secondary"></i>
+              </button>
+              <div class="dropdown-menu dropdown-menu-end" aria-labelledby="stockChart">
+                <a class="dropdown-item" href="javascript:void(0);">This Week</a>
+                <a class="dropdown-item" href="javascript:void(0);">This Month</a>
+              </div>
+            </div>
+          </div>
+          <div id="totalRevenueChart" class="px-3"></div>
+        </div>
+        <div class="col-lg-4">
+          <div class="card-body px-xl-9 py-12 d-flex align-items-center flex-column">
+            <div class="text-center mb-6">
+              <h6 class="mb-0">@Model.StockUtilizationPercent% Stock Utilization</h6>
+            </div>
+            <div id="growthChart"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="col-12 col-md-8 col-lg-12 col-xxl-4 order-3 order-md-2 mb-6">
+    <div class="row">
+      <div class="col-6 mb-6">
+        <div class="card h-100">
+          <div class="card-body">
+            <div class="card-title d-flex align-items-start justify-content-between mb-4">
+              <div class="avatar flex-shrink-0">
+                <img src="~/img/icons/unicons/paypal.png" alt="Inbound" class="rounded" />
+              </div>
+              <div class="dropdown">
+                <button class="btn p-0" type="button" id="cardOpt3" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                  <i class="icon-base bx bx-dots-vertical-rounded text-body-secondary"></i>
+                </button>
+                <div class="dropdown-menu dropdown-menu-end" aria-labelledby="cardOpt3">
+                  <a class="dropdown-item" href="javascript:void(0);">View More</a>
+                </div>
+              </div>
+            </div>
+            <p class="mb-1">@Model.InboundOrders.Title</p>
+            <h4 class="card-title mb-3">@Model.InboundOrders.Value</h4>
+            <small class="text-success fw-medium"><i class="icon-base bx bx-up-arrow-alt"></i> @Model.InboundOrders.TrendLabel</small>
+          </div>
+        </div>
+      </div>
+      <div class="col-6 mb-6">
+        <div class="card h-100">
+          <div class="card-body">
+            <div class="card-title d-flex align-items-start justify-content-between mb-4">
+              <div class="avatar flex-shrink-0">
+                <img src="~/img/icons/unicons/cc-primary.png" alt="Outbound" class="rounded" />
+              </div>
+              <div class="dropdown">
+                <button class="btn p-0" type="button" id="cardOpt4" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                  <i class="icon-base bx bx-dots-vertical-rounded text-body-secondary"></i>
+                </button>
+                <div class="dropdown-menu" aria-labelledby="cardOpt4">
+                  <a class="dropdown-item" href="javascript:void(0);">View More</a>
+                </div>
+              </div>
+            </div>
+            <p class="mb-1">@Model.OutboundOrders.Title</p>
+            <h4 class="card-title mb-3">@Model.OutboundOrders.Value</h4>
+            <small class="text-success fw-medium"><i class="icon-base bx bx-up-arrow-alt"></i> @Model.OutboundOrders.TrendLabel</small>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="row">
+  <div class="col-md-6 col-lg-6 order-0 mb-6">
+    <div class="card h-100">
+      <div class="card-header d-flex align-items-center justify-content-between">
+        <div class="card-title mb-0">
+          <h5 class="m-0 me-2">Inventory Level Trend</h5>
+        </div>
+        <div class="dropdown">
+          <button class="btn p-0" type="button" id="invTrendOpt" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+            <i class="icon-base bx bx-dots-vertical-rounded icon-lg text-body-secondary"></i>
+          </button>
+          <div class="dropdown-menu dropdown-menu-end" aria-labelledby="invTrendOpt">
+            <a class="dropdown-item" href="javascript:void(0);">This Week</a>
+            <a class="dropdown-item" href="javascript:void(0);">This Month</a>
+          </div>
+        </div>
+      </div>
+      <div class="card-body px-3">
+        <div id="inventoryTrendAreaChart" height="280"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-6 col-lg-6 order-1 mb-6">
+    <div class="card h-100">
+      <div class="card-header d-flex align-items-center justify-content-between">
+        <div class="card-title mb-0">
+          <h5 class="m-0 me-2">Days of Inventory</h5>
+        </div>
+        <div class="dropdown">
+          <button class="btn p-0" type="button" id="doiOpt" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+            <i class="icon-base bx bx-dots-vertical-rounded icon-lg text-body-secondary"></i>
+          </button>
+          <div class="dropdown-menu dropdown-menu-end" aria-labelledby="doiOpt">
+            <a class="dropdown-item" href="javascript:void(0);">This Week</a>
+            <a class="dropdown-item" href="javascript:void(0);">This Month</a>
+          </div>
+        </div>
+      </div>
+      <div class="card-body px-3">
+        <div id="daysOfInventoryChart" height="280"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="row">
+  <div class="col-md-6 col-lg-6 order-0 mb-6">
+    <div class="card h-100">
+      <div class="card-header d-flex align-items-center justify-content-between">
+        <div class="card-title mb-0">
+          <h5 class="m-0 me-2">ABC Analysis</h5>
+        </div>
+        <div class="dropdown">
+          <button class="btn p-0" type="button" id="abcOpt" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+            <i class="icon-base bx bx-dots-vertical-rounded icon-lg text-body-secondary"></i>
+          </button>
+          <div class="dropdown-menu dropdown-menu-end" aria-labelledby="abcOpt">
+            <a class="dropdown-item" href="javascript:void(0);">View More</a>
+          </div>
+        </div>
+      </div>
+      <div class="card-body px-3">
+        <div id="abcAnalysisChart" height="280"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-6 col-lg-6 order-1 mb-6">
+    <div class="card h-100">
+      <div class="card-header d-flex align-items-center justify-content-between">
+        <div class="card-title mb-0">
+          <h5 class="m-0 me-2">Stockout & Backorder Trend</h5>
+        </div>
+        <div class="dropdown">
+          <button class="btn p-0" type="button" id="stockoutOpt" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+            <i class="icon-base bx bx-dots-vertical-rounded icon-lg text-body-secondary"></i>
+          </button>
+          <div class="dropdown-menu dropdown-menu-end" aria-labelledby="stockoutOpt">
+            <a class="dropdown-item" href="javascript:void(0);">This Week</a>
+            <a class="dropdown-item" href="javascript:void(0);">This Month</a>
+          </div>
+        </div>
+      </div>
+      <div class="card-body px-3">
+        <div id="stockoutTrendChart" height="280"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="row">
+  <div class="col-md-6 col-lg-6 order-0 mb-6">
+    <div class="card h-100">
+      <div class="card-header d-flex align-items-center justify-content-between">
+        <div class="card-title mb-0">
+          <h5 class="m-0 me-2">Aging Inventory</h5>
+        </div>
+        <div class="dropdown">
+          <button class="btn p-0" type="button" id="agingOpt" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+            <i class="icon-base bx bx-dots-vertical-rounded icon-lg text-body-secondary"></i>
+          </button>
+          <div class="dropdown-menu dropdown-menu-end" aria-labelledby="agingOpt">
+            <a class="dropdown-item" href="javascript:void(0);">View More</a>
+          </div>
+        </div>
+      </div>
+      <div class="card-body px-3">
+        <div id="agingInventoryChart" height="280"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-6 col-lg-6 order-1 mb-6">
+    <div class="card h-100">
+      <div class="card-header d-flex align-items-center justify-content-between">
+        <div class="card-title mb-0">
+          <h5 class="m-0 me-2">Inbound vs Outbound</h5>
+        </div>
+        <div class="dropdown">
+          <button class="btn p-0" type="button" id="ioOpt" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+            <i class="icon-base bx bx-dots-vertical-rounded icon-lg text-body-secondary"></i>
+          </button>
+          <div class="dropdown-menu dropdown-menu-end" aria-labelledby="ioOpt">
+            <a class="dropdown-item" href="javascript:void(0);">This Week</a>
+            <a class="dropdown-item" href="javascript:void(0);">This Month</a>
+          </div>
+        </div>
+      </div>
+      <div class="card-body px-3">
+        <div id="inboundOutboundChart" height="280"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="row">
+  <div class="col-12 order-0 mb-6">
+    <div class="card h-100">
+      <div class="card-header d-flex align-items-center justify-content-between">
+        <div class="card-title mb-0">
+          <h5 class="m-0 me-2">Warehouse Productivity</h5>
+        </div>
+        <div class="dropdown">
+          <button class="btn p-0" type="button" id="whProdOpt" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+            <i class="icon-base bx bx-dots-vertical-rounded icon-lg text-body-secondary"></i>
+          </button>
+          <div class="dropdown-menu dropdown-menu-end" aria-labelledby="whProdOpt">
+            <a class="dropdown-item" href="javascript:void(0);">This Week</a>
+            <a class="dropdown-item" href="javascript:void(0);">This Month</a>
+          </div>
+        </div>
+      </div>
+      <div class="card-body px-3">
+        <div id="warehouseProductivityChart" height="280"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="row">
+  <div class="col-12 order-0 mb-6">
+    <div class="card h-100">
+      <div class="card-header d-flex align-items-center justify-content-between">
+        <div class="card-title mb-0">
+          <h5 class="m-0 me-2">Inventory Accuracy by Warehouse Zone</h5>
+        </div>
+        <div class="dropdown">
+          <button class="btn p-0" type="button" id="heatmapOpt" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+            <i class="icon-base bx bx-dots-vertical-rounded icon-lg text-body-secondary"></i>
+          </button>
+          <div class="dropdown-menu dropdown-menu-end" aria-labelledby="heatmapOpt">
+            <a class="dropdown-item" href="javascript:void(0);">View More</a>
+          </div>
+        </div>
+      </div>
+      <div class="card-body px-3">
+        <div id="inventoryAccuracyHeatmap" height="300"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="row">
+  <div class="col-md-6 col-lg-4 order-0 mb-6">
+    <div class="card h-100">
+      <div class="card-header d-flex justify-content-between">
+        <div class="card-title mb-0">
+          <h5 class="mb-1 me-2">Low Stock Items</h5>
+          <p class="card-subtitle">Items Below Threshold</p>
+        </div>
+      </div>
+      <div class="card-body">
+        <ul class="p-0 m-0">
+          @if (Model.LowStockItems.Any())
+          {
+            @foreach (var item in Model.LowStockItems.Take(5))
+            {
+              <li class="d-flex align-items-center mb-5">
+                <div class="avatar flex-shrink-0 me-3">
+                  <span class="avatar-initial rounded @item.IconBgClass"><i class="@item.IconClass"></i></span>
+                </div>
+                <div class="d-flex w-100 flex-wrap align-items-center justify-content-between gap-2">
+                  <div class="me-2">
+                    <h6 class="mb-0">@item.Name</h6>
+                    <small>@item.Subtitle</small>
+                  </div>
+                  <div class="user-progress">
+                    <h6 class="mb-0 @item.IconBgClass.Replace("bg-label-", "text-").Replace("bg-", "")">@item.FormattedValue</h6>
+                  </div>
+                </div>
+              </li>
+            }
+          }
+          else
+          {
+            <li class="d-flex align-items-center mb-5">
+              <div class="avatar flex-shrink-0 me-3">
+                <span class="avatar-initial rounded bg-label-danger"><i class="icon-base bx bx-error"></i></span>
+              </div>
+              <div class="d-flex w-100 flex-wrap align-items-center justify-content-between gap-2">
+                <div class="me-2">
+                  <h6 class="mb-0">SKU-1024</h6>
+                  <small>12 units left</small>
+                </div>
+                <div class="user-progress">
+                  <h6 class="mb-0 text-danger">Critical</h6>
+                </div>
+              </div>
+            </li>
+          }
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-6 col-lg-4 order-1 mb-6">
+    <div class="card h-100">
+      <div class="card-header d-flex justify-content-between">
+        <div class="card-title mb-0">
+          <h5 class="mb-1 me-2">Warehouse Status</h5>
+          <p class="card-subtitle">Storage Utilization</p>
+        </div>
+      </div>
+      <div class="card-body pt-4">
+        <ul class="p-0 m-0">
+          @if (Model.WarehouseStatus.Any())
+          {
+            @foreach (var wh in Model.WarehouseStatus.Take(5))
+            {
+              <li class="d-flex align-items-center mb-6">
+                <div class="avatar flex-shrink-0 me-3">
+                  <img src="~/img/icons/unicons/wallet.png" alt="@wh.Name" class="rounded" />
+                </div>
+                <div class="d-flex w-100 flex-wrap align-items-center justify-content-between gap-2">
+                  <div class="me-2">
+                    <small class="d-block">@wh.Name</small>
+                    <h6 class="fw-normal mb-0">@wh.Subtitle</h6>
+                  </div>
+                  <div class="user-progress d-flex align-items-center gap-2">
+                    <h6 class="fw-normal mb-0">@wh.FormattedValue</h6>
+                  </div>
+                </div>
+              </li>
+            }
+          }
+          else
+          {
+            <li class="d-flex align-items-center mb-6">
+              <div class="avatar flex-shrink-0 me-3">
+                <img src="~/img/icons/unicons/wallet.png" alt="Warehouse A" class="rounded" />
+              </div>
+              <div class="d-flex w-100 flex-wrap align-items-center justify-content-between gap-2">
+                <div class="me-2">
+                  <small class="d-block">Warehouse A</small>
+                  <h6 class="fw-normal mb-0">Main Storage</h6>
+                </div>
+                <div class="user-progress d-flex align-items-center gap-2">
+                  <h6 class="fw-normal mb-0">78%</h6>
+                </div>
+              </div>
+            </li>
+          }
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-6 col-lg-4 order-2 mb-6">
+    <div class="card h-100">
+      <div class="card-header d-flex justify-content-between">
+        <div class="card-title mb-0">
+          <h5 class="mb-1 me-2">Top Categories</h5>
+          <p class="card-subtitle">Stock by Category</p>
+        </div>
+      </div>
+      <div class="card-body">
+        <ul class="p-0 m-0">
+          @if (Model.TopCategories.Any())
+          {
+            @foreach (var cat in Model.TopCategories.Take(5))
+            {
+              <li class="d-flex align-items-center mb-5">
+                <div class="avatar flex-shrink-0 me-3">
+                  <span class="avatar-initial rounded @cat.IconBgClass"><i class="@cat.IconClass"></i></span>
+                </div>
+                <div class="d-flex w-100 flex-wrap align-items-center justify-content-between gap-2">
+                  <div class="me-2">
+                    <h6 class="mb-0">@cat.Name</h6>
+                    <small>@cat.Subtitle</small>
+                  </div>
+                  <div class="user-progress">
+                    <h6 class="mb-0">@cat.FormattedValue</h6>
+                  </div>
+                </div>
+              </li>
+            }
+          }
+          else
+          {
+            <li class="d-flex align-items-center mb-5">
+              <div class="avatar flex-shrink-0 me-3">
+                <span class="avatar-initial rounded bg-label-primary"><i class="icon-base bx bx-mobile-alt"></i></span>
+              </div>
+              <div class="d-flex w-100 flex-wrap align-items-center justify-content-between gap-2">
+                <div class="me-2">
+                  <h6 class="mb-0">Electronics</h6>
+                  <small>4,256 units</small>
+                </div>
+                <div class="user-progress"><h6 class="mb-0">27%</h6></div>
+              </div>
+            </li>
+          }
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+
+@if (Model.StockMovementChart.Series.Any())
+{
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      var chartData = @Html.Raw(Json.Serialize(Model.StockMovementChart));
+      var chartEl = document.querySelector('#totalRevenueChart');
+      if (chartEl && typeof ApexCharts !== 'undefined') {
+        var options = {
+          chart: { height: 300, stacked: true, type: 'bar', toolbar: { show: false } },
+          plotOptions: { bar: { horizontal: false, columnWidth: '30%', borderRadius: 8, borderRadiusApplication: 'around' } },
+          colors: ['#6965fd', '#03c3ec'],
+          dataLabels: { enabled: false },
+          stroke: { curve: 'smooth', width: 6, lineCap: 'round', colors: [cardColor] },
+          legend: { show: true, horizontalAlign: 'left', position: 'top', markers: { size: 4, radius: 12, shape: 'circle', strokeWidth: 0 }, fontSize: '13px', fontFamily: config.fontFamily, labels: { colors: legendColor, useSeriesColors: false }, itemMargin: { horizontal: 10 } },
+          grid: { strokeDashArray: 7, borderColor: borderColor, padding: { top: 0, bottom: -8, left: 20, right: 20 } },
+          fill: { opacity: [1, 1] },
+          xaxis: { categories: chartData.categories || [], labels: { style: { fontSize: '13px', fontFamily: config.fontFamily, colors: labelColor } }, axisTicks: { show: false }, axisBorder: { show: false } },
+          yaxis: { labels: { style: { fontSize: '13px', fontFamily: config.fontFamily, colors: labelColor } } },
+          states: { hover: { filter: { type: 'none' } }, active: { filter: { type: 'none' } } },
+          series: chartData.series || []
+        };
+        new ApexCharts(chartEl, options).render();
+      }
+    });
+  </script>
+}
+
+@if (Model.StockUtilizationPercent > 0)
+{
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      var growthEl = document.querySelector('#growthChart');
+      if (growthEl && typeof ApexCharts !== 'undefined') {
+        var options = {
+          series: [@Model.StockUtilizationPercent],
+          labels: ['Utilization'],
+          chart: { height: 200, type: 'radialBar' },
+          plotOptions: { radialBar: { size: 150, offsetY: 10, startAngle: -150, endAngle: 150, hollow: { size: '55%' }, track: { background: cardColor, strokeWidth: '100%' }, dataLabels: { name: { offsetY: 15, color: legendColor, fontSize: '15px', fontWeight: '500', fontFamily: config.fontFamily }, value: { offsetY: -25, color: headingColor, fontSize: '22px', fontWeight: '500', fontFamily: config.fontFamily } } },
+          colors: ['#6965fd'],
+          fill: { type: 'gradient', gradient: { shade: 'dark', shadeIntensity: 0.5, gradientToColors: ['#6965fd'], inverseColors: true, opacityFrom: 1, opacityTo: 0.6, stops: [30, 70, 100] } },
+          stroke: { dashArray: 5 },
+          grid: { padding: { top: -35, bottom: -10 } },
+          states: { hover: { filter: { type: 'none' } }, active: { filter: { type: 'none' } } }
+        };
+        new ApexCharts(growthEl, options).render();
+      }
+    });
+  </script>
+}
+
+@if (Model.InventoryTrendAreaChart.Series.Any())
+{
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+
+      // --- Inventory Trend Area Chart ---
+      (function () {
+        var chartEl = document.querySelector('#inventoryTrendAreaChart');
+        var chartData = window.dashboardCharts.inventoryTrendArea;
+        if (chartEl && typeof ApexCharts !== 'undefined' && chartData) {
+          var options = {
+            chart: { height: 280, type: 'area', toolbar: { show: false }, fontFamily: config.fontFamily },
+            colors: ['#6965fd', '#ffab00'],
+            dataLabels: { enabled: false },
+            stroke: { curve: 'smooth', width: 2 },
+            grid: { strokeDashArray: 7, borderColor: borderColor, padding: { top: -10, bottom: -10, left: 20, right: 20 } },
+            xaxis: {
+              categories: chartData.categories || [],
+              labels: { style: { fontSize: '13px', fontFamily: config.fontFamily, colors: labelColor } },
+              axisTicks: { show: false },
+              axisBorder: { show: false }
+            },
+            yaxis: { labels: { style: { fontSize: '13px', fontFamily: config.fontFamily, colors: labelColor } } },
+            tooltip: { theme: 'light', x: { show: true }, y: { formatter: function (val) { return val !== null && val !== undefined ? val.toLocaleString() : '0'; } } },
+            legend: { show: true, horizontalAlign: 'left', position: 'top', markers: { size: 4, radius: 12, shape: 'circle', strokeWidth: 0 }, fontSize: '13px', fontFamily: config.fontFamily, labels: { colors: legendColor, useSeriesColors: false }, itemMargin: { horizontal: 10 } },
+            fill: { opacity: [0.25, 0.25] },
+            series: chartData.series || []
+          };
+          new ApexCharts(chartEl, options).render();
+        }
+      })();
+
+      // --- Days of Inventory Line Chart ---
+      (function () {
+        var chartEl = document.querySelector('#daysOfInventoryChart');
+        var chartData = window.dashboardCharts.daysOfInventory;
+        if (chartEl && typeof ApexCharts !== 'undefined' && chartData) {
+          var options = {
+            chart: { height: 280, type: 'line', toolbar: { show: false }, fontFamily: config.fontFamily },
+            colors: ['#03c3ec'],
+            dataLabels: { enabled: false },
+            stroke: { curve: 'smooth', width: 3 },
+            grid: { strokeDashArray: 7, borderColor: borderColor, padding: { top: -10, bottom: -10, left: 20, right: 20 } },
+            xaxis: {
+              categories: chartData.categories || [],
+              labels: { style: { fontSize: '13px', fontFamily: config.fontFamily, colors: labelColor } },
+              axisTicks: { show: false },
+              axisBorder: { show: false }
+            },
+            yaxis: { labels: { style: { fontSize: '13px', fontFamily: config.fontFamily, colors: labelColor } } },
+            tooltip: { theme: 'light', x: { show: true }, y: { formatter: function (val) { return val !== null && val !== undefined ? val.toFixed(1) : '0'; } } },
+            legend: { show: true, horizontalAlign: 'left', position: 'top', markers: { size: 4, radius: 12, shape: 'circle', strokeWidth: 0 }, fontSize: '13px', fontFamily: config.fontFamily, labels: { colors: legendColor, useSeriesColors: false }, itemMargin: { horizontal: 10 } },
+            series: chartData.series || []
+          };
+          new ApexCharts(chartEl, options).render();
+        }
+      })();
+
+      // --- ABC Analysis Horizontal Bar Chart ---
+      (function () {
+        var chartEl = document.querySelector('#abcAnalysisChart');
+        var chartData = window.dashboardCharts.abcAnalysis;
+        if (chartEl && typeof ApexCharts !== 'undefined' && chartData) {
+          var options = {
+            chart: { height: 280, type: 'bar', toolbar: { show: false }, fontFamily: config.fontFamily },
+            colors: ['#6965fd', '#03c3ec', '#71dd88'],
+            plotOptions: { bar: { horizontal: true, barHeight: '60%', borderRadius: 8, borderRadiusApplication: 'end' } },
+            dataLabels: { enabled: false },
+            grid: { strokeDashArray: 7, borderColor: borderColor, padding: { top: -10, bottom: -10, left: 20, right: 20 } },
+            xaxis: {
+              categories: chartData.categories || [],
+              labels: { style: { fontSize: '13px', fontFamily: config.fontFamily, colors: labelColor } },
+              axisTicks: { show: false },
+              axisBorder: { show: false }
+            },
+            yaxis: { labels: { style: { fontSize: '13px', fontFamily: config.fontFamily, colors: labelColor } } },
+            tooltip: { theme: 'light', x: { show: true }, y: { formatter: function (val) { return val !== null && val !== undefined ? val.toLocaleString() : '0'; } } },
+            legend: { show: true, horizontalAlign: 'left', position: 'top', markers: { size: 4, radius: 12, shape: 'circle', strokeWidth: 0 }, fontSize: '13px', fontFamily: config.fontFamily, labels: { colors: legendColor, useSeriesColors: false }, itemMargin: { horizontal: 10 } },
+            series: chartData.series || []
+          };
+          new ApexCharts(chartEl, options).render();
+        }
+      })();
+
+      // --- Stockout & Backorder Trend Line Chart ---
+      (function () {
+        var chartEl = document.querySelector('#stockoutTrendChart');
+        var chartData = window.dashboardCharts.stockoutTrend;
+        if (chartEl && typeof ApexCharts !== 'undefined' && chartData) {
+          var options = {
+            chart: { height: 280, type: 'line', toolbar: { show: false }, fontFamily: config.fontFamily },
+            colors: ['#ff3e1d', '#ffab00'],
+            dataLabels: { enabled: false },
+            stroke: { curve: 'smooth', width: 3 },
+            grid: { strokeDashArray: 7, borderColor: borderColor, padding: { top: -10, bottom: -10, left: 20, right: 20 } },
+            xaxis: {
+              categories: chartData.categories || [],
+              labels: { style: { fontSize: '13px', fontFamily: config.fontFamily, colors: labelColor } },
+              axisTicks: { show: false },
+              axisBorder: { show: false }
+            },
+            yaxis: { labels: { style: { fontSize: '13px', fontFamily: config.fontFamily, colors: labelColor } } },
+            tooltip: { theme: 'light', x: { show: true }, y: { formatter: function (val) { return val !== null && val !== undefined ? val.toLocaleString() : '0'; } } },
+            legend: { show: true, horizontalAlign: 'left', position: 'top', markers: { size: 4, radius: 12, shape: 'circle', strokeWidth: 0 }, fontSize: '13px', fontFamily: config.fontFamily, labels: { colors: legendColor, useSeriesColors: false }, itemMargin: { horizontal: 10 } },
+            series: chartData.series || []
+          };
+          new ApexCharts(chartEl, options).render();
+        }
+      })();
+
+      // --- Aging Inventory Bar Chart ---
+      (function () {
+        var chartEl = document.querySelector('#agingInventoryChart');
+        var chartData = window.dashboardCharts.agingInventory;
+        if (chartEl && typeof ApexCharts !== 'undefined' && chartData) {
+          var agingColors = ['#71dd88', '#03c3ec', '#ffab00', '#ff3e1d'];
+          var options = {
+            chart: { height: 280, type: 'bar', toolbar: { show: false }, fontFamily: config.fontFamily },
+            colors: agingColors,
+            plotOptions: { bar: { horizontal: false, columnWidth: '40%', borderRadius: 8, borderRadiusApplication: 'end' } },
+            dataLabels: { enabled: false },
+            grid: { strokeDashArray: 7, borderColor: borderColor, padding: { top: -10, bottom: -10, left: 20, right: 20 } },
+            xaxis: {
+              categories: chartData.categories || [],
+              labels: { style: { fontSize: '13px', fontFamily: config.fontFamily, colors: labelColor } },
+              axisTicks: { show: false },
+              axisBorder: { show: false }
+            },
+            yaxis: { labels: { style: { fontSize: '13px', fontFamily: config.fontFamily, colors: labelColor } } },
+            tooltip: { theme: 'light', x: { show: true }, y: { formatter: function (val) { return val !== null && val !== undefined ? val.toLocaleString() : '0'; } } },
+            legend: { show: true, horizontalAlign: 'left', position: 'top', markers: { size: 4, radius: 12, shape: 'circle', strokeWidth: 0 }, fontSize: '13px', fontFamily: config.fontFamily, labels: { colors: legendColor, useSeriesColors: false }, itemMargin: { horizontal: 10 } },
+            series: chartData.series || []
+          };
+          new ApexCharts(chartEl, options).render();
+        }
+      })();
+
+      // --- Inbound vs Outbound Grouped Bar Chart ---
+      (function () {
+        var chartEl = document.querySelector('#inboundOutboundChart');
+        var chartData = window.dashboardCharts.inboundOutbound;
+        if (chartEl && typeof ApexCharts !== 'undefined' && chartData) {
+          var options = {
+            chart: { height: 280, type: 'bar', toolbar: { show: false }, fontFamily: config.fontFamily },
+            colors: ['#71dd88', '#ff3e1d'],
+            plotOptions: { bar: { horizontal: false, columnWidth: '40%', borderRadius: 8, borderRadiusApplication: 'end' } },
+            dataLabels: { enabled: false },
+            grid: { strokeDashArray: 7, borderColor: borderColor, padding: { top: -10, bottom: -10, left: 20, right: 20 } },
+            xaxis: {
+              categories: chartData.categories || [],
+              labels: { style: { fontSize: '13px', fontFamily: config.fontFamily, colors: labelColor } },
+              axisTicks: { show: false },
+              axisBorder: { show: false }
+            },
+            yaxis: { labels: { style: { fontSize: '13px', fontFamily: config.fontFamily, colors: labelColor } } },
+            tooltip: { theme: 'light', x: { show: true }, y: { formatter: function (val) { return val !== null && val !== undefined ? val.toLocaleString() : '0'; } } },
+            legend: { show: true, horizontalAlign: 'left', position: 'top', markers: { size: 4, radius: 12, shape: 'circle', strokeWidth: 0 }, fontSize: '13px', fontFamily: config.fontFamily, labels: { colors: legendColor, useSeriesColors: false }, itemMargin: { horizontal: 10 } },
+            series: chartData.series || []
+          };
+          new ApexCharts(chartEl, options).render();
+        }
+      })();
+
+      // --- Warehouse Productivity Grouped Bar Chart ---
+      (function () {
+        var chartEl = document.querySelector('#warehouseProductivityChart');
+        var chartData = window.dashboardCharts.warehouseProductivity;
+        if (chartEl && typeof ApexCharts !== 'undefined' && chartData) {
+          var options = {
+            chart: { height: 280, type: 'bar', toolbar: { show: false }, fontFamily: config.fontFamily },
+            colors: ['#6965fd', '#03c3ec', '#71dd88'],
+            plotOptions: { bar: { horizontal: false, columnWidth: '30%', borderRadius: 8, borderRadiusApplication: 'end' } },
+            dataLabels: { enabled: false },
+            grid: { strokeDashArray: 7, borderColor: borderColor, padding: { top: -10, bottom: -10, left: 20, right: 20 } },
+            xaxis: {
+              categories: chartData.categories || [],
+              labels: { style: { fontSize: '13px', fontFamily: config.fontFamily, colors: labelColor } },
+              axisTicks: { show: false },
+              axisBorder: { show: false }
+            },
+            yaxis: { labels: { style: { fontSize: '13px', fontFamily: config.fontFamily, colors: labelColor } } },
+            tooltip: { theme: 'light', x: { show: true }, y: { formatter: function (val) { return val !== null && val !== undefined ? val.toLocaleString() : '0'; } } },
+            legend: { show: true, horizontalAlign: 'left', position: 'top', markers: { size: 4, radius: 12, shape: 'circle', strokeWidth: 0 }, fontSize: '13px', fontFamily: config.fontFamily, labels: { colors: legendColor, useSeriesColors: false }, itemMargin: { horizontal: 10 } },
+            series: chartData.series || []
+          };
+          new ApexCharts(chartEl, options).render();
+        }
+      })();
+
+      // --- Inventory Accuracy Heatmap ---
+      (function () {
+        var chartEl = document.querySelector('#inventoryAccuracyHeatmap');
+        var heatmapData = window.dashboardCharts.inventoryAccuracyHeatmap;
+        if (chartEl && typeof ApexCharts !== 'undefined' && heatmapData) {
+          var yCats = heatmapData.yCategories || [];
+          var options = {
+            chart: { height: 300, type: 'heatmap', toolbar: { show: false }, fontFamily: config.fontFamily },
+            colors: ['#6965fd'],
+            dataLabels: { enabled: false },
+            grid: { strokeDashArray: 7, borderColor: borderColor, padding: { top: -10, bottom: -10, left: 20, right: 20 } },
+            xaxis: {
+              categories: heatmapData.xCategories || [],
+              labels: { style: { fontSize: '13px', fontFamily: config.fontFamily, colors: labelColor } },
+              axisTicks: { show: false },
+              axisBorder: { show: false }
+            },
+            yaxis: {
+              categories: yCats,
+              labels: { style: { fontSize: '13px', fontFamily: config.fontFamily, colors: labelColor } }
+            },
+            tooltip: { theme: 'light', x: { show: true }, y: { formatter: function (val) { return val !== null && val !== undefined ? val.toFixed(2) + '%' : '0%'; } } },
+            legend: { show: true, horizontalAlign: 'left', position: 'top', markers: { size: 4, radius: 12, shape: 'circle', strokeWidth: 0 }, fontSize: '13px', fontFamily: config.fontFamily, labels: { colors: legendColor, useSeriesColors: false }, itemMargin: { horizontal: 10 } },
+            plotOptions: {
+              heatmap: {
+                radius: 4,
+                colorScale: {
+                  ranges: [
+                    { from: 0, to: 90, name: 'Low', color: '#ff3e1d' },
+                    { from: 90, to: 97, name: 'Medium', color: '#ffab00' },
+                    { from: 97, to: 100, name: 'High', color: '#71dd88' }
+                  ]
+                }
+              }
+            },
+            series: yCats.map(function (yCat) {
+              return {
+                name: yCat,
+                data: (heatmapData.data || []).filter(function (d) { return d.y === yCat; }).map(function (d) { return d.value || 0; })
+              };
+            })
+          };
+          new ApexCharts(chartEl, options).render();
+        }
+      })();
+
+    });
+  </script>
+}

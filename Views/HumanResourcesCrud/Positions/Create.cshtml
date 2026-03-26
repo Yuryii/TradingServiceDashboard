@@ -1,0 +1,76 @@
+@model Dashboard.Models.ViewModels.PositionCreateVM
+@{
+    Layout = "~/Views/Shared/_ContentNavbarLayout.cshtml";
+    ViewData["Title"] = "Create Position";
+}
+
+<div class="row">
+  <div class="col-12 col-lg-6">
+    <div class="card mb-6">
+      <div class="card-header">
+        <h5 class="mb-0">Create New Position</h5>
+      </div>
+      <div class="card-body pt-4">
+        @if (ViewData.ModelState.ErrorCount > 0)
+        {
+          <div class="alert alert-danger" role="alert">
+            <div asp-validation-summary="ModelOnly"></div>
+          </div>
+        }
+
+        <form asp-action="Positions_Create" method="post">
+          @Html.AntiForgeryToken()
+
+          <div class="row g-6">
+            <div class="col-md-6">
+              <label asp-for="PositionCode" class="form-label">Position Code</label>
+              <input asp-for="PositionCode" class="form-control" placeholder="POS-001" />
+              <span asp-validation-for="PositionCode" class="text-danger"></span>
+            </div>
+            <div class="col-md-6">
+              <label asp-for="PositionName" class="form-label">Position Name</label>
+              <input asp-for="PositionName" class="form-control" placeholder="Software Engineer" />
+              <span asp-validation-for="PositionName" class="text-danger"></span>
+            </div>
+            <div class="col-md-6">
+              <label asp-for="PositionLevel" class="form-label">Position Level</label>
+              <select asp-for="PositionLevel" class="form-select">
+                <option value="">-- Select Level --</option>
+                <option value="Entry">Entry</option>
+                <option value="Junior">Junior</option>
+                <option value="Mid">Mid</option>
+                <option value="Senior">Senior</option>
+                <option value="Lead">Lead</option>
+                <option value="Manager">Manager</option>
+                <option value="Director">Director</option>
+                <option value="Executive">Executive</option>
+              </select>
+              <span asp-validation-for="PositionLevel" class="text-danger"></span>
+            </div>
+            <div class="col-md-6">
+              <label asp-for="IsActive" class="form-label">Status</label>
+              <select asp-for="IsActive" class="form-select">
+                <option value="true">Active</option>
+                <option value="false">Inactive</option>
+              </select>
+            </div>
+            <div class="col-12">
+              <label asp-for="Description" class="form-label">Description</label>
+              <textarea asp-for="Description" class="form-control" rows="3" placeholder="Enter position description"></textarea>
+              <span asp-validation-for="Description" class="text-danger"></span>
+            </div>
+          </div>
+
+          <div class="mt-6 d-flex gap-3">
+            <button type="submit" class="btn btn-primary">
+              <i class="icon-base bx bx-save me-1"></i> Create Position
+            </button>
+            <a asp-action="Positions_Index" class="btn btn-outline-secondary">
+              <i class="icon-base bx bx-x me-1"></i> Cancel
+            </a>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,105 @@
+@model Dashboard.Models.ViewModels.SupplierCreateVM
+@{
+    Layout = "~/Views/Shared/_ContentNavbarLayout.cshtml";
+    ViewData["Title"] = "Create Supplier";
+}
+
+<div class="row">
+  <div class="col-12 col-lg-8">
+    <div class="card mb-6">
+      <div class="card-header">
+        <h5 class="mb-0">Create New Supplier</h5>
+      </div>
+      <div class="card-body pt-4">
+        @if (ViewData.ModelState.ErrorCount > 0)
+        {
+          <div class="alert alert-danger" role="alert">
+            <div asp-validation-summary="ModelOnly"></div>
+          </div>
+        }
+
+        <form asp-action="SuppliersCreate" method="post">
+          @Html.AntiForgeryToken()
+
+          <div class="row g-6">
+            <div class="col-md-6">
+              <label asp-for="SupplierCode" class="form-label">Supplier Code</label>
+              <input asp-for="SupplierCode" class="form-control" placeholder="Enter supplier code" />
+              <span asp-validation-for="SupplierCode" class="text-danger"></span>
+            </div>
+            <div class="col-md-6">
+              <label asp-for="SupplierName" class="form-label">Supplier Name</label>
+              <input asp-for="SupplierName" class="form-control" placeholder="Enter supplier name" />
+              <span asp-validation-for="SupplierName" class="text-danger"></span>
+            </div>
+            <div class="col-md-6">
+              <label asp-for="SupplierType" class="form-label">Supplier Type</label>
+              <input asp-for="SupplierType" class="form-control" placeholder="e.g., Manufacturer, Distributor" />
+              <span asp-validation-for="SupplierType" class="text-danger"></span>
+            </div>
+            <div class="col-md-6">
+              <label asp-for="RegionID" class="form-label">Region</label>
+              <select asp-for="RegionID" class="form-select">
+                <option value="">-- Select Region --</option>
+                @if (ViewBag.Regions != null)
+                {
+                  @foreach (var region in ViewBag.Regions)
+                  {
+                    <option value="@region.RegionID">@region.RegionName</option>
+                  }
+                }
+              </select>
+            </div>
+            <div class="col-md-6">
+              <label asp-for="TaxCode" class="form-label">Tax Code</label>
+              <input asp-for="TaxCode" class="form-control" placeholder="Enter tax code" />
+            </div>
+            <div class="col-md-6">
+              <label asp-for="Phone" class="form-label">Phone</label>
+              <input asp-for="Phone" class="form-control" placeholder="Enter phone number" />
+            </div>
+            <div class="col-md-6">
+              <label asp-for="Email" class="form-label">Email</label>
+              <input asp-for="Email" class="form-control" type="email" placeholder="Enter email address" />
+            </div>
+            <div class="col-12">
+              <label asp-for="AddressLine" class="form-label">Address</label>
+              <input asp-for="AddressLine" class="form-control" placeholder="Enter address line" />
+            </div>
+            <div class="col-md-4">
+              <label asp-for="City" class="form-label">City</label>
+              <input asp-for="City" class="form-control" placeholder="Enter city" />
+            </div>
+            <div class="col-md-4">
+              <label asp-for="Province" class="form-label">Province / State</label>
+              <input asp-for="Province" class="form-control" placeholder="Enter province" />
+            </div>
+            <div class="col-md-4">
+              <label asp-for="Country" class="form-label">Country</label>
+              <input asp-for="Country" class="form-control" placeholder="Enter country" />
+            </div>
+            <div class="col-md-6">
+              <label asp-for="PaymentTermDays" class="form-label">Payment Term (Days)</label>
+              <input asp-for="PaymentTermDays" class="form-control" type="number" placeholder="30" />
+            </div>
+            <div class="col-md-6">
+              <div class="form-check form-switch mt-6">
+                <input asp-for="IsActive" class="form-check-input" type="checkbox" />
+                <label asp-for="IsActive" class="form-check-label">Is Active</label>
+              </div>
+            </div>
+          </div>
+
+          <div class="mt-6 d-flex gap-3">
+            <button type="submit" class="btn btn-primary">
+              <i class="icon-base bx bx-save me-1"></i> Create Supplier
+            </button>
+            <a asp-action="SuppliersIndex" class="btn btn-outline-secondary">
+              <i class="icon-base bx bx-x me-1"></i> Cancel
+            </a>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>

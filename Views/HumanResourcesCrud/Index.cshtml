@@ -1,0 +1,141 @@
+@{
+    Layout = "~/Views/Shared/_ContentNavbarLayout.cshtml";
+    ViewData["Title"] = "Human Resources CRUD";
+}
+
+<div class="row">
+  <div class="col-12 mb-4">
+    <h4 class="mb-0">Human Resources Management</h4>
+    <p class="text-muted">Manage employees, positions, attendance, and more</p>
+  </div>
+</div>
+
+<div class="row">
+  <div class="col-md-6 col-lg-3">
+    <div class="card border border-primary shadow-none mb-4">
+      <div class="card-body text-center py-4">
+        <div class="avatar avatar-md mx-auto mb-3">
+          <span class="avatar-initial rounded-circle bg-label-primary">
+            <i class="icon-base bx bx-user fs-3"></i>
+          </span>
+        </div>
+        <h6 class="mb-2">Employees</h6>
+        <a asp-action="Employees_Index" class="btn btn-primary btn-sm">
+          <i class="icon-base bx bx-list-ul me-1"></i> Manage
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-6 col-lg-3">
+    <div class="card border border-success shadow-none mb-4">
+      <div class="card-body text-center py-4">
+        <div class="avatar avatar-md mx-auto mb-3">
+          <span class="avatar-initial rounded-circle bg-label-success">
+            <i class="icon-base bx bx-briefcase fs-3"></i>
+          </span>
+        </div>
+        <h6 class="mb-2">Positions</h6>
+        <a asp-action="Positions_Index" class="btn btn-success btn-sm">
+          <i class="icon-base bx bx-list-ul me-1"></i> Manage
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-6 col-lg-3">
+    <div class="card border border-info shadow-none mb-4">
+      <div class="card-body text-center py-4">
+        <div class="avatar avatar-md mx-auto mb-3">
+          <span class="avatar-initial rounded-circle bg-label-info">
+            <i class="icon-base bx bx-calendar-check fs-3"></i>
+          </span>
+        </div>
+        <h6 class="mb-2">Attendances</h6>
+        <a asp-action="Attendances_Index" class="btn btn-info btn-sm">
+          <i class="icon-base bx bx-list-ul me-1"></i> Manage
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-6 col-lg-3">
+    <div class="card border border-warning shadow-none mb-4">
+      <div class="card-body text-center py-4">
+        <div class="avatar avatar-md mx-auto mb-3">
+          <span class="avatar-initial rounded-circle bg-label-warning">
+            <i class="icon-base bx bx-calendar-minus fs-3"></i>
+          </span>
+        </div>
+        <h6 class="mb-2">Leave Requests</h6>
+        <a asp-action="LeaveRequests_Index" class="btn btn-warning btn-sm">
+          <i class="icon-base bx bx-list-ul me-1"></i> Manage
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-6 col-lg-3">
+    <div class="card border border-danger shadow-none mb-4">
+      <div class="card-body text-center py-4">
+        <div class="avatar avatar-md mx-auto mb-3">
+          <span class="avatar-initial rounded-circle bg-label-danger">
+            <i class="icon-base bx bx-money fs-3"></i>
+          </span>
+        </div>
+        <h6 class="mb-2">Payrolls</h6>
+        <a asp-action="Payrolls_Index" class="btn btn-danger btn-sm">
+          <i class="icon-base bx bx-list-ul me-1"></i> Manage
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-6 col-lg-3">
+    <div class="card border border-secondary shadow-none mb-4">
+      <div class="card-body text-center py-4">
+        <div class="avatar avatar-md mx-auto mb-3">
+          <span class="avatar-initial rounded-circle bg-label-secondary">
+            <i class="icon-base bx bx-star fs-3"></i>
+          </span>
+        </div>
+        <h6 class="mb-2">Performance Reviews</h6>
+        <a asp-action="PerformanceReviews_Index" class="btn btn-secondary btn-sm">
+          <i class="icon-base bx bx-list-ul me-1"></i> Manage
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-6 col-lg-3">
+    <div class="card border border-dark shadow-none mb-4">
+      <div class="card-body text-center py-4">
+        <div class="avatar avatar-md mx-auto mb-3">
+          <span class="avatar-initial rounded-circle bg-label-dark">
+            <i class="icon-base bx bx-bullseye fs-3"></i>
+          </span>
+        </div>
+        <h6 class="mb-2">Job Openings</h6>
+        <a asp-action="JobOpenings_Index" class="btn btn-dark btn-sm">
+          <i class="icon-base bx bx-list-ul me-1"></i> Manage
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-6 col-lg-3">
+    <div class="card border border-primary shadow-none mb-4">
+      <div class="card-body text-center py-4">
+        <div class="avatar avatar-md mx-auto mb-3">
+          <span class="avatar-initial rounded-circle bg-label-primary">
+            <i class="icon-base bx bx-user-plus fs-3"></i>
+          </span>
+        </div>
+        <h6 class="mb-2">Applicants</h6>
+        <a asp-action="Applicants_Index" class="btn btn-primary btn-sm">
+          <i class="icon-base bx bx-list-ul me-1"></i> Manage
+        </a>
+      </div>
+    </div>
+  </div>
+</div>

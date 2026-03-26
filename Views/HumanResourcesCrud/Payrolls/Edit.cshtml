@@ -1,0 +1,145 @@
+@model Dashboard.Models.ViewModels.PayrollEditVM
+@{
+    Layout = "~/Views/Shared/_ContentNavbarLayout.cshtml";
+    ViewData["Title"] = "Edit Payroll";
+}
+
+<div class="row">
+  <div class="col-12 col-lg-10">
+    <div class="card mb-6">
+      <div class="card-header">
+        <h5 class="mb-0">Edit Payroll</h5>
+      </div>
+      <div class="card-body pt-4">
+        @if (ViewData.ModelState.ErrorCount > 0)
+        {
+          <div class="alert alert-danger" role="alert">
+            <div asp-validation-summary="ModelOnly"></div>
+          </div>
+        }
+
+        <form asp-action="Payrolls_Edit" method="post">
+          @Html.AntiForgeryToken()
+          <input type="hidden" asp-for="PayrollID" />
+          <input type="hidden" asp-for="CreatedAt" />
+
+          <h6 class="mb-4">Payroll Details</h6>
+          <div class="row g-6">
+            <div class="col-md-6">
+              <label asp-for="EmployeeID" class="form-label">Employee</label>
+              <select asp-for="EmployeeID" class="form-select">
+                <option value="">-- Select Employee --</option>
+                @if (ViewBag.Employees != null)
+                {
+                  @foreach (var emp in ViewBag.Employees)
+                  {
+                    <option value="@emp.EmployeeID" selected="@(emp.EmployeeID == Model.EmployeeID)">@emp.FullName</option>
+                  }
+                }
+              </select>
+              <span asp-validation-for="EmployeeID" class="text-danger"></span>
+            </div>
+            <div class="col-md-6">
+              <label asp-for="BranchID" class="form-label">Branch</label>
+              <select asp-for="BranchID" class="form-select">
+                <option value="">-- Select Branch --</option>
+                @if (ViewBag.Branches != null)
+                {
+                  @foreach (var branch in ViewBag.Branches)
+                  {
+                    <option value="@branch.BranchID" selected="@(branch.BranchID == Model.BranchID)">@branch.BranchName</option>
+                  }
+                }
+              </select>
+              <span asp-validation-for="BranchID" class="text-danger"></span>
+            </div>
+            <div class="col-md-6">
+              <label asp-for="PayrollPeriod" class="form-label">Payroll Period</label>
+              <input asp-for="PayrollPeriod" class="form-control" />
+              <span asp-validation-for="PayrollPeriod" class="text-danger"></span>
+            </div>
+            <div class="col-md-6">
+              <label asp-for="PaymentDate" class="form-label">Payment Date</label>
+              <input asp-for="PaymentDate" class="form-control" type="date" />
+              <span asp-validation-for="PaymentDate" class="text-danger"></span>
+            </div>
+          </div>
+
+          <hr class="my-6 mx-n4" />
+          <h6 class="mb-4">Salary Details</h6>
+          <div class="row g-6">
+            <div class="col-md-6">
+              <label asp-for="PeriodStartDate" class="form-label">Period Start Date</label>
+              <input asp-for="PeriodStartDate" class="form-control" type="date" />
+              <span asp-validation-for="PeriodStartDate" class="text-danger"></span>
+            </div>
+            <div class="col-md-6">
+              <label asp-for="PeriodEndDate" class="form-label">Period End Date</label>
+              <input asp-for="PeriodEndDate" class="form-control" type="date" />
+              <span asp-validation-for="PeriodEndDate" class="text-danger"></span>
+            </div>
+            <div class="col-md-6">
+              <label asp-for="BaseSalary" class="form-label">Base Salary</label>
+              <input asp-for="BaseSalary" class="form-control" type="number" step="0.01" />
+              <span asp-validation-for="BaseSalary" class="text-danger"></span>
+            </div>
+            <div class="col-md-6">
+              <label asp-for="OvertimeAmount" class="form-label">Overtime Amount</label>
+              <input asp-for="OvertimeAmount" class="form-control" type="number" step="0.01" />
+              <span asp-validation-for="OvertimeAmount" class="text-danger"></span>
+            </div>
+            <div class="col-md-6">
+              <label asp-for="BonusAmount" class="form-label">Bonus Amount</label>
+              <input asp-for="BonusAmount" class="form-control" type="number" step="0.01" />
+              <span asp-validation-for="BonusAmount" class="text-danger"></span>
+            </div>
+            <div class="col-md-6">
+              <label asp-for="AllowanceAmount" class="form-label">Allowance Amount</label>
+              <input asp-for="AllowanceAmount" class="form-control" type="number" step="0.01" />
+              <span asp-validation-for="AllowanceAmount" class="text-danger"></span>
+            </div>
+            <div class="col-md-6">
+              <label asp-for="DeductionAmount" class="form-label">Deduction Amount</label>
+              <input asp-for="DeductionAmount" class="form-control" type="number" step="0.01" />
+              <span asp-validation-for="DeductionAmount" class="text-danger"></span>
+            </div>
+            <div class="col-md-6">
+              <label asp-for="TaxAmount" class="form-label">Tax Amount</label>
+              <input asp-for="TaxAmount" class="form-control" type="number" step="0.01" />
+              <span asp-validation-for="TaxAmount" class="text-danger"></span>
+            </div>
+            <div class="col-md-6">
+              <label asp-for="NetSalary" class="form-label">Net Salary</label>
+              <input asp-for="NetSalary" class="form-control" type="number" step="0.01" />
+              <span asp-validation-for="NetSalary" class="text-danger"></span>
+            </div>
+            <div class="col-md-6">
+              <label asp-for="Status" class="form-label">Status</label>
+              <select asp-for="Status" class="form-select">
+                <option value="Pending" selected="@(Model.Status == "Pending")">Pending</option>
+                <option value="Approved" selected="@(Model.Status == "Approved")">Approved</option>
+                <option value="Rejected" selected="@(Model.Status == "Rejected")">Rejected</option>
+                <option value="Paid" selected="@(Model.Status == "Paid")">Paid</option>
+              </select>
+              <span asp-validation-for="Status" class="text-danger"></span>
+            </div>
+            <div class="col-12">
+              <label asp-for="Notes" class="form-label">Notes</label>
+              <textarea asp-for="Notes" class="form-control" rows="3"></textarea>
+              <span asp-validation-for="Notes" class="text-danger"></span>
+            </div>
+          </div>
+
+          <div class="mt-6 d-flex gap-3">
+            <button type="submit" class="btn btn-primary">
+              <i class="icon-base bx bx-save me-1"></i> Save Changes
+            </button>
+            <a asp-action="Payrolls_Index" class="btn btn-outline-secondary">
+              <i class="icon-base bx bx-x me-1"></i> Cancel
+            </a>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>

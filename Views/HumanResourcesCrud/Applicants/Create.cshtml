@@ -1,0 +1,132 @@
+@model Dashboard.Models.ViewModels.ApplicantCreateVM
+@{
+    Layout = "~/Views/Shared/_ContentNavbarLayout.cshtml";
+    ViewData["Title"] = "Create Applicant";
+}
+
+<div class="row">
+  <div class="col-12 col-lg-10">
+    <div class="card mb-6">
+      <div class="card-header">
+        <h5 class="mb-0">Create New Applicant</h5>
+      </div>
+      <div class="card-body pt-4">
+        @if (ViewData.ModelState.ErrorCount > 0)
+        {
+          <div class="alert alert-danger" role="alert">
+            <div asp-validation-summary="ModelOnly"></div>
+          </div>
+        }
+
+        <form asp-action="Applicants_Create" method="post">
+          @Html.AntiForgeryToken()
+
+          <h6 class="mb-4">Applicant Details</h6>
+          <div class="row g-6">
+            <div class="col-md-6">
+              <label asp-for="JobOpeningID" class="form-label">Job Opening</label>
+              <select asp-for="JobOpeningID" class="form-select">
+                <option value="">-- Select Job Opening --</option>
+                @if (ViewBag.JobOpenings != null)
+                {
+                  @foreach (var job in ViewBag.JobOpenings)
+                  {
+                    <option value="@job.JobOpeningID">@job.Title</option>
+                  }
+                }
+              </select>
+              <span asp-validation-for="JobOpeningID" class="text-danger"></span>
+            </div>
+            <div class="col-md-6">
+              <label asp-for="FullName" class="form-label">Full Name</label>
+              <input asp-for="FullName" class="form-control" placeholder="John Doe" />
+              <span asp-validation-for="FullName" class="text-danger"></span>
+            </div>
+            <div class="col-md-6">
+              <label asp-for="Email" class="form-label">Email</label>
+              <input asp-for="Email" class="form-control" type="email" placeholder="john@example.com" />
+              <span asp-validation-for="Email" class="text-danger"></span>
+            </div>
+            <div class="col-md-6">
+              <label asp-for="Phone" class="form-label">Phone</label>
+              <input asp-for="Phone" class="form-control" placeholder="+1 202 555 0111" />
+              <span asp-validation-for="Phone" class="text-danger"></span>
+            </div>
+            <div class="col-md-6">
+              <label asp-for="Gender" class="form-label">Gender</label>
+              <select asp-for="Gender" class="form-select">
+                <option value="">-- Select --</option>
+                <option value="Male">Male</option>
+                <option value="Female">Female</option>
+              </select>
+            </div>
+            <div class="col-md-6">
+              <label asp-for="DateOfBirth" class="form-label">Date of Birth</label>
+              <input asp-for="DateOfBirth" class="form-control" type="date" />
+            </div>
+            <div class="col-12">
+              <label asp-for="Address" class="form-label">Address</label>
+              <input asp-for="Address" class="form-control" placeholder="123 Main St, City, Country" />
+              <span asp-validation-for="Address" class="text-danger"></span>
+            </div>
+            <div class="col-md-6">
+              <label asp-for="Status" class="form-label">Status</label>
+              <select asp-for="Status" class="form-select">
+                <option value="Applied">Applied</option>
+                <option value="Screening">Screening</option>
+                <option value="Interview">Interview</option>
+                <option value="Offer">Offer</option>
+                <option value="Hired">Hired</option>
+                <option value="Rejected">Rejected</option>
+              </select>
+              <span asp-validation-for="Status" class="text-danger"></span>
+            </div>
+            <div class="col-md-6">
+              <label asp-for="ReferredByEmployeeID" class="form-label">Referred By</label>
+              <select asp-for="ReferredByEmployeeID" class="form-select">
+                <option value="">-- Select Employee --</option>
+                @if (ViewBag.Employees != null)
+                {
+                  @foreach (var emp in ViewBag.Employees)
+                  {
+                    <option value="@emp.EmployeeID">@emp.FullName</option>
+                  }
+                }
+              </select>
+              <span asp-validation-for="ReferredByEmployeeID" class="text-danger"></span>
+            </div>
+          </div>
+
+          <hr class="my-6 mx-n4" />
+          <h6 class="mb-4">Additional Information</h6>
+          <div class="row g-6">
+            <div class="col-12">
+              <label asp-for="ResumePath" class="form-label">Resume Path</label>
+              <input asp-for="ResumePath" class="form-control" placeholder="/uploads/resumes/..." />
+              <span asp-validation-for="ResumePath" class="text-danger"></span>
+            </div>
+            <div class="col-12">
+              <label asp-for="CoverLetter" class="form-label">Cover Letter</label>
+              <textarea asp-for="CoverLetter" class="form-control" rows="4" placeholder="Enter cover letter"></textarea>
+              <span asp-validation-for="CoverLetter" class="text-danger"></span>
+            </div>
+            <div class="col-md-6">
+              <label asp-for="LinkedInProfile" class="form-label">LinkedIn Profile</label>
+              <input asp-for="LinkedInProfile" class="form-control" placeholder="linkedin.com/in/username" />
+              <span asp-validation-for="LinkedInProfile" class="text-danger"></span>
+            </div>
+          </div>
+
+          <div class="mt-6 d-flex gap-3">
+            <button type="submit" class="btn btn-primary">
+              <i class="icon-base bx bx-save me-1"></i> Create Applicant
+            </button>
+            <a asp-action="Applicants_Index" class="btn btn-outline-secondary">
+              <i class="icon-base bx bx-x me-1"></i> Cancel
+            </a>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>

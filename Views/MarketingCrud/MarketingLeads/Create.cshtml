@@ -1,0 +1,114 @@
+@model Dashboard.Models.ViewModels.MarketingLeadCreateVM
+@{
+    Layout = "~/Views/Shared/_ContentNavbarLayout.cshtml";
+    ViewData["Title"] = "Create Marketing Lead";
+}
+
+<div class="row">
+  <div class="col-12 col-lg-8">
+    <div class="card mb-6">
+      <div class="card-header">
+        <h5 class="mb-0">Create Marketing Lead</h5>
+      </div>
+      <div class="card-body pt-4">
+        @if (ViewData.ModelState.ErrorCount > 0)
+        {
+          <div class="alert alert-danger" role="alert">
+            <div asp-validation-summary="ModelOnly"></div>
+          </div>
+        }
+
+        <form asp-action="MarketingLeadsCreate" method="post">
+          @Html.AntiForgeryToken()
+
+          <div class="row g-6">
+            <div class="col-md-6">
+              <label asp-for="LeadCode" class="form-label">Lead Code</label>
+              <input asp-for="LeadCode" class="form-control" placeholder="e.g. LEAD001" />
+              <span asp-validation-for="LeadCode" class="text-danger"></span>
+            </div>
+            <div class="col-md-6">
+              <label asp-for="LeadName" class="form-label">Lead Name</label>
+              <input asp-for="LeadName" class="form-control" placeholder="Enter lead name" />
+              <span asp-validation-for="LeadName" class="text-danger"></span>
+            </div>
+            <div class="col-md-6">
+              <label asp-for="CompanyName" class="form-label">Company</label>
+              <input asp-for="CompanyName" class="form-control" placeholder="Company name" />
+              <span asp-validation-for="CompanyName" class="text-danger"></span>
+            </div>
+            <div class="col-md-6">
+              <label asp-for="Phone" class="form-label">Phone</label>
+              <input asp-for="Phone" class="form-control" placeholder="+1 202 555 0111" />
+              <span asp-validation-for="Phone" class="text-danger"></span>
+            </div>
+            <div class="col-md-6">
+              <label asp-for="Email" class="form-label">Email</label>
+              <input asp-for="Email" class="form-control" type="email" placeholder="lead@example.com" />
+              <span asp-validation-for="Email" class="text-danger"></span>
+            </div>
+            <div class="col-md-6">
+              <label asp-for="Status" class="form-label">Status</label>
+              <select asp-for="Status" class="form-select">
+                <option value="New">New</option>
+                <option value="Contacted">Contacted</option>
+                <option value="Qualified">Qualified</option>
+                <option value="Negotiating">Negotiating</option>
+                <option value="Converted">Converted</option>
+                <option value="Lost">Lost</option>
+              </select>
+              <span asp-validation-for="Status" class="text-danger"></span>
+            </div>
+            <div class="col-md-6">
+              <label asp-for="LeadScore" class="form-label">Lead Score (0-100)</label>
+              <input asp-for="LeadScore" class="form-control" type="number" min="0" max="100" placeholder="0-100" />
+              <span asp-validation-for="LeadScore" class="text-danger"></span>
+            </div>
+            <div class="col-md-6">
+              <label asp-for="CampaignID" class="form-label">Campaign</label>
+              <select asp-for="CampaignID" class="form-select">
+                <option value="">-- Select Campaign --</option>
+                @if (ViewBag.Campaigns != null)
+                {
+                  @foreach (var campaign in ViewBag.Campaigns)
+                  {
+                    <option value="@campaign.Value">@campaign.Text</option>
+                  }
+                }
+              </select>
+              <span asp-validation-for="CampaignID" class="text-danger"></span>
+            </div>
+            <div class="col-md-6">
+              <label asp-for="AssignedEmployeeID" class="form-label">Assigned To</label>
+              <select asp-for="AssignedEmployeeID" class="form-select">
+                <option value="">-- Select Employee --</option>
+                @if (ViewBag.Employees != null)
+                {
+                  @foreach (var employee in ViewBag.Employees)
+                  {
+                    <option value="@employee.Value">@employee.Text</option>
+                  }
+                }
+              </select>
+              <span asp-validation-for="AssignedEmployeeID" class="text-danger"></span>
+            </div>
+            <div class="col-12">
+              <label asp-for="UtmCampaign" class="form-label">UTM Campaign</label>
+              <input asp-for="UtmCampaign" class="form-control" placeholder="e.g. spring_sale_2024" />
+              <span asp-validation-for="UtmCampaign" class="text-danger"></span>
+            </div>
+          </div>
+
+          <div class="mt-6 d-flex gap-3">
+            <button type="submit" class="btn btn-primary">
+              <i class="icon-base bx bx-save me-1"></i> Create Lead
+            </button>
+            <a asp-action="MarketingLeadsIndex" class="btn btn-outline-secondary">
+              <i class="icon-base bx bx-x me-1"></i> Cancel
+            </a>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>

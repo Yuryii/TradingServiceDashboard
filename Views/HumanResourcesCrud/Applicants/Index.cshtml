@@ -1,0 +1,104 @@
+@model IEnumerable<Dashboard.Models.ViewModels.ApplicantListVM>
+@{
+    Layout = "~/Views/Shared/_ContentNavbarLayout.cshtml";
+    ViewData["Title"] = "Applicants";
+}
+<div class="row">
+  <div class="col-12">
+    <div class="card">
+      <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">All Applicants</h5>
+        <div class="d-flex gap-1">
+          <a asp-action="Applicant_Export" class="btn btn-success btn-sm" title="Export Excel">
+            <i class="icon-base bx bx-download me-1"></i> Export
+          </a>
+          <button type="button" class="btn btn-info btn-sm" data-bs-toggle="modal" data-bs-target="#excelImportModal-Applicant" title="Import Excel">
+            <i class="icon-base bx bx-upload me-1"></i> Import
+          </button>
+          <a asp-action="Applicants_Create" class="btn btn-primary btn-sm">
+            <i class="icon-base bx bx-plus me-1"></i> Create New Applicant
+          </a>
+        </div>
+      </div>
+      <div class="table-responsive text-nowrap">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Email</th>
+              <th>Phone</th>
+              <th>Job Opening</th>
+              <th>Status</th>
+              <th>Applied Date</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody class="table-border-bottom-0">
+            @if (!Model.Any())
+            {
+              <tr>
+                <td colspan="7" class="text-center text-muted py-4">
+                  No applicants found.
+                </td>
+              </tr>
+            }
+            else
+            {
+              @foreach (var item in Model)
+              {
+                <tr>
+                  <td><strong>@item.FullName</strong></td>
+                  <td>@(item.Email ?? "-")</td>
+                  <td>@(item.Phone ?? "-")</td>
+                  <td>@(item.JobOpeningTitle ?? "-")</td>
+                  <td>
+                    @{
+                      var statusClass = item.Status switch
+                      {
+                        "Applied" => "bg-label-info",
+                        "Screening" => "bg-label-warning",
+                        "Interview" => "bg-label-primary",
+                        "Offer" => "bg-label-success",
+                        "Hired" => "bg-label-success",
+                        "Rejected" => "bg-label-danger",
+                        _ => "bg-label-secondary"
+                      };
+                    }
+                    <span class="badge @statusClass">@item.Status</span>
+                  </td>
+                  <td>@item.AppliedDate.ToString("yyyy-MM-dd")</td>
+                  <td>
+                    <div class="dropdown">
+                      <button type="button" class="btn p-0 dropdown-toggle hide-arrow" data-bs-toggle="dropdown">
+                        <i class="icon-base bx bx-dots-vertical-rounded"></i>
+                      </button>
+                      <div class="dropdown-menu">
+                        <a class="dropdown-item" asp-action="Applicants_Edit" asp-route-id="@item.ApplicantID">
+                          <i class="icon-base bx bx-edit-alt me-1"></i> Edit
+                        </a>
+                        <form asp-action="Applicants_Delete" asp-route-id="@item.ApplicantID" method="post" onsubmit="return confirm('Are you sure you want to delete applicant: @item.FullName?');" style="display:inline;">
+                          @Html.AntiForgeryToken()
+                          <button type="submit" class="dropdown-item text-danger">
+                            <i class="icon-base bx bx-trash me-1"></i> Delete
+                          </button>
+                        </form>
+                      </div>
+                    </div>
+                  </td>
+                </tr>
+              }
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+@await Html.PartialAsync("~/Views/Shared/Partials/_ExcelImportModal.cshtml", new Dashboard.Models.ViewModels.ExcelImportModalVM
+{
+    ModalId = "Applicant",
+    EntityType = "Applicant",
+    EntityName = "Applicant",
+    EntityDisplayName = "Ung vien"
+})

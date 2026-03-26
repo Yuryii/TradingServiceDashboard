@@ -1,0 +1,107 @@
+@model Dashboard.Models.ViewModels.BranchCreateVM
+@{
+    Layout = "~/Views/Shared/_ContentNavbarLayout.cshtml";
+    ViewData["Title"] = "Create Branch";
+}
+
+<div class="row">
+  <div class="col-12 col-lg-8">
+    <div class="card mb-6">
+      <div class="card-header">
+        <h5 class="mb-0">Create New Branch</h5>
+      </div>
+      <div class="card-body pt-4">
+        @if (ViewData.ModelState.ErrorCount > 0)
+        {
+          <div class="alert alert-danger" role="alert">
+            <div asp-validation-summary="ModelOnly"></div>
+          </div>
+        }
+
+        <form asp-action="Branches_Create" method="post">
+          @Html.AntiForgeryToken()
+
+          <div class="row g-6">
+            <div class="col-md-6">
+              <label asp-for="BranchCode" class="form-label">Branch Code</label>
+              <input asp-for="BranchCode" class="form-control" placeholder="e.g. BR001" />
+              <span asp-validation-for="BranchCode" class="text-danger"></span>
+            </div>
+            <div class="col-md-6">
+              <label asp-for="BranchName" class="form-label">Branch Name</label>
+              <input asp-for="BranchName" class="form-control" placeholder="e.g. New York Branch" />
+              <span asp-validation-for="BranchName" class="text-danger"></span>
+            </div>
+            <div class="col-md-6">
+              <label asp-for="RegionID" class="form-label">Region</label>
+              <select asp-for="RegionID" class="form-select">
+                <option value="">-- Select Region --</option>
+                @if (ViewBag.Regions != null)
+                {
+                  @foreach (var region in ViewBag.Regions)
+                  {
+                    <option value="@region.RegionID">@region.RegionName</option>
+                  }
+                }
+              </select>
+              <span asp-validation-for="RegionID" class="text-danger"></span>
+            </div>
+            <div class="col-md-6">
+              <label asp-for="City" class="form-label">City</label>
+              <input asp-for="City" class="form-control" placeholder="e.g. New York" />
+              <span asp-validation-for="City" class="text-danger"></span>
+            </div>
+            <div class="col-md-6">
+              <label asp-for="Province" class="form-label">Province/State</label>
+              <input asp-for="Province" class="form-control" placeholder="e.g. NY" />
+              <span asp-validation-for="Province" class="text-danger"></span>
+            </div>
+            <div class="col-md-6">
+              <label asp-for="Country" class="form-label">Country</label>
+              <input asp-for="Country" class="form-control" placeholder="e.g. USA" />
+              <span asp-validation-for="Country" class="text-danger"></span>
+            </div>
+            <div class="col-12">
+              <label asp-for="AddressLine" class="form-label">Address</label>
+              <input asp-for="AddressLine" class="form-control" placeholder="Street address" />
+              <span asp-validation-for="AddressLine" class="text-danger"></span>
+            </div>
+            <div class="col-md-6">
+              <label asp-for="Phone" class="form-label">Phone</label>
+              <input asp-for="Phone" class="form-control" placeholder="e.g. +1 202 555 0111" />
+              <span asp-validation-for="Phone" class="text-danger"></span>
+            </div>
+            <div class="col-md-6">
+              <label asp-for="Email" class="form-label">Email</label>
+              <input asp-for="Email" class="form-control" type="email" placeholder="branch@example.com" />
+              <span asp-validation-for="Email" class="text-danger"></span>
+            </div>
+            <div class="col-md-6">
+              <label asp-for="IsHeadOffice" class="form-label">Branch Type</label>
+              <div class="form-check form-switch mb-2">
+                <input asp-for="IsHeadOffice" class="form-check-input" type="checkbox" />
+                <label class="form-check-label" for="IsHeadOffice">Head Office</label>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <label asp-for="IsActive" class="form-label">Status</label>
+              <div class="form-check form-switch mb-2">
+                <input asp-for="IsActive" class="form-check-input" type="checkbox" checked />
+                <label class="form-check-label" for="IsActive">Active</label>
+              </div>
+            </div>
+          </div>
+
+          <div class="mt-6 d-flex gap-3">
+            <button type="submit" class="btn btn-primary">
+              <i class="icon-base bx bx-save me-1"></i> Create Branch
+            </button>
+            <a asp-action="Branches_Index" class="btn btn-outline-secondary">
+              <i class="icon-base bx bx-x me-1"></i> Cancel
+            </a>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>

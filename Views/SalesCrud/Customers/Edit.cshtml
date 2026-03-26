@@ -1,0 +1,149 @@
+@model Dashboard.Models.ViewModels.CustomerEditVM
+@{
+    Layout = "~/Views/Shared/_ContentNavbarLayout.cshtml";
+    ViewData["Title"] = "Edit Customer";
+}
+
+<div class="row">
+    <div class="col-12 col-lg-10">
+        <div class="card mb-6">
+            <div class="card-header">
+                <h5 class="mb-0">Edit Customer</h5>
+            </div>
+            <div class="card-body pt-4">
+                <form asp-action="Customers_Edit" method="post">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" asp-for="CustomerID" />
+                    <div class="row g-6">
+                        <div class="col-md-6">
+                            <label asp-for="CustomerCode" class="form-label">Customer Code</label>
+                            <input asp-for="CustomerCode" class="form-control" />
+                            <span asp-validation-for="CustomerCode" class="text-danger"></span>
+                        </div>
+                        <div class="col-md-6">
+                            <label asp-for="CustomerName" class="form-label">Customer Name</label>
+                            <input asp-for="CustomerName" class="form-control" />
+                            <span asp-validation-for="CustomerName" class="text-danger"></span>
+                        </div>
+                        <div class="col-md-6">
+                            <label asp-for="CustomerType" class="form-label">Customer Type</label>
+                            <input asp-for="CustomerType" class="form-control" placeholder="e.g., Individual, Corporate" />
+                            <span asp-validation-for="CustomerType" class="text-danger"></span>
+                        </div>
+                        <div class="col-md-6">
+                            <label asp-for="CustomerGroupID" class="form-label">Customer Group</label>
+                            <select asp-for="CustomerGroupID" class="form-select">
+                                <option value="">-- Select --</option>
+                                @if (ViewBag.CustomerGroups != null)
+                                {
+                                    @foreach (var item in ViewBag.CustomerGroups)
+                                    {
+                                        <option value="@item.CustomerGroupID">@item.GroupName</option>
+                                    }
+                                }
+                            </select>
+                            <span asp-validation-for="CustomerGroupID" class="text-danger"></span>
+                        </div>
+                        <div class="col-md-6">
+                            <label asp-for="RegionID" class="form-label">Region</label>
+                            <select asp-for="RegionID" class="form-select">
+                                <option value="">-- Select --</option>
+                                @if (ViewBag.Regions != null)
+                                {
+                                    @foreach (var item in ViewBag.Regions)
+                                    {
+                                        <option value="@item.RegionID">@item.RegionName</option>
+                                    }
+                                }
+                            </select>
+                            <span asp-validation-for="RegionID" class="text-danger"></span>
+                        </div>
+                        <div class="col-md-6">
+                            <label asp-for="BranchID" class="form-label">Branch</label>
+                            <select asp-for="BranchID" class="form-select">
+                                <option value="">-- Select --</option>
+                                @if (ViewBag.Branches != null)
+                                {
+                                    @foreach (var item in ViewBag.Branches)
+                                    {
+                                        <option value="@item.BranchID">@item.BranchName</option>
+                                    }
+                                }
+                            </select>
+                            <span asp-validation-for="BranchID" class="text-danger"></span>
+                        </div>
+                        <div class="col-md-6">
+                            <label asp-for="Industry" class="form-label">Industry</label>
+                            <input asp-for="Industry" class="form-control" />
+                            <span asp-validation-for="Industry" class="text-danger"></span>
+                        </div>
+                        <div class="col-md-6">
+                            <label asp-for="TaxCode" class="form-label">Tax Code</label>
+                            <input asp-for="TaxCode" class="form-control" />
+                            <span asp-validation-for="TaxCode" class="text-danger"></span>
+                        </div>
+                        <div class="col-md-6">
+                            <label asp-for="Phone" class="form-label">Phone</label>
+                            <input asp-for="Phone" class="form-control" />
+                            <span asp-validation-for="Phone" class="text-danger"></span>
+                        </div>
+                        <div class="col-md-6">
+                            <label asp-for="Email" class="form-label">Email</label>
+                            <input asp-for="Email" class="form-control" type="email" />
+                            <span asp-validation-for="Email" class="text-danger"></span>
+                        </div>
+                        <div class="col-12">
+                            <label asp-for="AddressLine" class="form-label">Address</label>
+                            <input asp-for="AddressLine" class="form-control" />
+                            <span asp-validation-for="AddressLine" class="text-danger"></span>
+                        </div>
+                        <div class="col-md-4">
+                            <label asp-for="City" class="form-label">City</label>
+                            <input asp-for="City" class="form-control" />
+                            <span asp-validation-for="City" class="text-danger"></span>
+                        </div>
+                        <div class="col-md-4">
+                            <label asp-for="Province" class="form-label">Province</label>
+                            <input asp-for="Province" class="form-control" />
+                            <span asp-validation-for="Province" class="text-danger"></span>
+                        </div>
+                        <div class="col-md-4">
+                            <label asp-for="Country" class="form-label">Country</label>
+                            <input asp-for="Country" class="form-control" />
+                            <span asp-validation-for="Country" class="text-danger"></span>
+                        </div>
+                        <div class="col-md-4">
+                            <label asp-for="JoinDate" class="form-label">Join Date</label>
+                            <input asp-for="JoinDate" class="form-control" type="date" />
+                            <span asp-validation-for="JoinDate" class="text-danger"></span>
+                        </div>
+                        <div class="col-md-4">
+                            <label asp-for="CreditLimit" class="form-label">Credit Limit</label>
+                            <input asp-for="CreditLimit" class="form-control" type="number" step="0.01" />
+                            <span asp-validation-for="CreditLimit" class="text-danger"></span>
+                        </div>
+                        <div class="col-md-4">
+                            <label asp-for="PaymentTermDays" class="form-label">Payment Term (Days)</label>
+                            <input asp-for="PaymentTermDays" class="form-control" type="number" />
+                            <span asp-validation-for="PaymentTermDays" class="text-danger"></span>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-check form-switch mb-2">
+                                <input asp-for="IsActive" class="form-check-input" type="checkbox" />
+                                <label asp-for="IsActive" class="form-check-label">Active</label>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mt-6 d-flex gap-3">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="icon-base bx bx-save me-1"></i> Save Changes
+                        </button>
+                        <a asp-action="Customers_Index" class="btn btn-outline-secondary">
+                            <i class="icon-base bx bx-x me-1"></i> Cancel
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,346 @@
+@{
+  string? currentPage = ViewContext.HttpContext.Request.Path;
+}
+
+<!-- Menu -->
+@* ! Do this simple *@
+<aside id="layout-menu" class="layout-menu menu-vertical menu bg-menu-theme">
+
+  @* ! Hide app brand if navbar-full *@
+  <div class='app-brand demo @((@ViewData["navbarFull"] != null && Convert.ToBoolean(@ViewData["navbarFull"])) ? "d-xl-none" : "")'>
+    <a asp-controller="Dashboards" asp-action="Index" class="app-brand-link">
+      <span class="app-brand-logo demo">
+        @await Html.PartialAsync("../_Partials/_Macros")
+      </span>
+      <span class="app-brand-text demo menu-text fw-bold ms-2">@TempData.Peek("appShortName")</span>
+    </a>
+
+    <a href="javascript:void(0);" class="layout-menu-toggle menu-link text-large ms-auto">
+      <i class="icon-base bx bx-chevron-left d-block d-xl-none align-middle"></i>
+    </a>
+  </div>
+
+  <div class="menu-divider mt-0"></div>
+
+  <div class="menu-inner-shadow"></div>
+
+  @* ! Full version menu-items *@
+  <ul class="menu-inner py-1">
+    <!-- Dashboards -->
+    <li class='menu-item@(currentPage.EndsWith("/") || currentPage.StartsWith("/Dashboards/") ? " active open" : "")'>
+      <a href="javascript:void(0);" class="menu-link menu-toggle">
+        <i class="menu-icon icon-base bx bx-home-smile"></i>
+        <div class="text-truncate" data-i18n="Dashboards">Dashboards</div>
+      </a>
+      <ul class="menu-sub">
+        <li class='menu-item@(currentPage == "/" ? " active" : "")'>
+          <a asp-controller="Dashboards" asp-action="Index" class="menu-link">
+            <div class="text-truncate">Analytics</div>
+          </a>
+        </li>
+      </ul>
+    </li>
+
+    <!-- Business Dashboards -->
+    <li class="menu-header small text-uppercase"><span class="menu-header-text">Business Dashboards</span></li>
+
+    <!-- Executive -->
+    @if (User.IsInRole(SD.Role_Executive))
+    {
+    <li class='menu-item@(currentPage.StartsWith("/Executive") ? " active" : "")'>
+      <a asp-controller="Executive" asp-action="Index" class="menu-link">
+        <i class="menu-icon icon-base bx bx-building-house"></i>
+        <div class="text-truncate">Executive</div>
+        <div class="badge rounded-pill bg-label-primary text-uppercase fs-tiny ms-auto">BGD</div>
+      </a>
+    </li>
+    }
+
+    <!-- User Management (Executive Only) -->
+    @if (User.IsInRole(SD.Role_Executive))
+    {
+    <li class='menu-item@(currentPage.StartsWith("/UserManagement") ? " active" : "")'>
+      <a asp-controller="UserManagement" asp-action="Index" class="menu-link">
+        <i class="menu-icon icon-base bx bx-user-circle"></i>
+        <div class="text-truncate">User Management</div>
+        <div class="badge rounded-pill bg-label-danger text-uppercase fs-tiny ms-auto">ADM</div>
+      </a>
+    </li>
+    }
+
+    <!-- Sales -->
+    @if (User.IsInRole(SD.Role_Sales) || User.IsInRole(SD.Role_Executive))
+    {
+    <li class='menu-item@(currentPage.StartsWith("/Sales") ? " active" : "")'>
+      <a asp-controller="Sales" asp-action="Index" class="menu-link">
+        <i class="menu-icon icon-base bx bx-trending-up"></i>
+        <div class="text-truncate">Sales</div>
+        <div class="badge rounded-pill bg-label-success text-uppercase fs-tiny ms-auto">KD</div>
+      </a>
+    </li>
+    }
+
+    <!-- Marketing -->
+    @if (User.IsInRole(SD.Role_Marketing) || User.IsInRole(SD.Role_Executive))
+    {
+    <li class='menu-item@(currentPage.StartsWith("/Marketing") ? " active" : "")'>
+      <a asp-controller="Marketing" asp-action="Index" class="menu-link">
+        <i class="menu-icon icon-base bx bx-megaphone"></i>
+        <div class="text-truncate">Marketing</div>
+      </a>
+    </li>
+    }
+
+    <!-- Finance -->
+    @if (User.IsInRole(SD.Role_Finance) || User.IsInRole(SD.Role_Executive))
+    {
+    <li class='menu-item@(currentPage.StartsWith("/Finance") ? " active" : "")'>
+      <a asp-controller="Finance" asp-action="Index" class="menu-link">
+        <i class="menu-icon icon-base bx bx-dollar"></i>
+        <div class="text-truncate">Finance</div>
+        <div class="badge rounded-pill bg-label-warning text-uppercase fs-tiny ms-auto">KT</div>
+      </a>
+    </li>
+    }
+
+    <!-- Inventory -->
+    @if (User.IsInRole(SD.Role_Inventory) || User.IsInRole(SD.Role_Executive))
+    {
+    <li class='menu-item@(currentPage.StartsWith("/Inventory") ? " active" : "")'>
+      <a asp-controller="Inventory" asp-action="Index" class="menu-link">
+        <i class="menu-icon icon-base bx bx-package"></i>
+        <div class="text-truncate">Inventory</div>
+      </a>
+    </li>
+    }
+
+    <!-- HR -->
+    @if (User.IsInRole(SD.Role_HumanResources) || User.IsInRole(SD.Role_Executive))
+    {
+    <li class='menu-item@(currentPage.StartsWith("/HumanResources") ? " active" : "")'>
+      <a asp-controller="HumanResources" asp-action="Index" class="menu-link">
+        <i class="menu-icon icon-base bx bx-user"></i>
+        <div class="text-truncate">HR</div>
+        <div class="badge rounded-pill bg-label-info text-uppercase fs-tiny ms-auto">NS</div>
+      </a>
+    </li>
+    }
+
+    <!-- Customer Service -->
+    @if (User.IsInRole(SD.Role_CustomerService) || User.IsInRole(SD.Role_Executive))
+    {
+    <li class='menu-item@(currentPage.StartsWith("/CustomerService") ? " active" : "")'>
+      <a asp-controller="CustomerService" asp-action="Index" class="menu-link">
+        <i class="menu-icon icon-base bx bx-headphone"></i>
+        <div class="text-truncate">Customer Service</div>
+      </a>
+    </li>
+    }
+
+    <!-- Data Management -->
+    <li class="menu-header small text-uppercase"><span class="menu-header-text">Data Management</span></li>
+
+    <!-- Executive CRUD -->
+    @if (User.IsInRole(SD.Role_Executive))
+    {
+    <li class='menu-item@(currentPage.StartsWith("/ExecutiveCrud") ? " active open" : "")'>
+      <a href="javascript:void(0);" class="menu-link menu-toggle">
+        <i class="menu-icon icon-base bx bx-building"></i>
+        <div class="text-truncate">System Data</div>
+        <div class="badge rounded-pill bg-label-danger text-uppercase fs-tiny ms-auto">ADM</div>
+      </a>
+      <ul class="menu-sub">
+        <li class='menu-item@(currentPage.StartsWith("/ExecutiveCrud/Regions") ? " active" : "")'>
+          <a asp-controller="ExecutiveCrud" asp-action="Regions_Index" class="menu-link"><div class="text-truncate">Regions</div></a>
+        </li>
+        <li class='menu-item@(currentPage.StartsWith("/ExecutiveCrud/Branches") ? " active" : "")'>
+          <a asp-controller="ExecutiveCrud" asp-action="Branches_Index" class="menu-link"><div class="text-truncate">Branches</div></a>
+        </li>
+        <li class='menu-item@(currentPage.StartsWith("/ExecutiveCrud/Departments") ? " active" : "")'>
+          <a asp-controller="ExecutiveCrud" asp-action="Departments_Index" class="menu-link"><div class="text-truncate">Departments</div></a>
+        </li>
+      </ul>
+    </li>
+    }
+
+    <!-- Sales CRUD -->
+    @if (User.IsInRole(SD.Role_Sales) || User.IsInRole(SD.Role_Executive))
+    {
+    <li class='menu-item@(currentPage.StartsWith("/SalesCrud") ? " active open" : "")'>
+      <a href="javascript:void(0);" class="menu-link menu-toggle">
+        <i class="menu-icon icon-base bx bx-trending-up"></i>
+        <div class="text-truncate">Sales Data</div>
+        <div class="badge rounded-pill bg-label-success text-uppercase fs-tiny ms-auto">KD</div>
+      </a>
+      <ul class="menu-sub">
+        <li class='menu-item@(currentPage.StartsWith("/SalesCrud/Customers") ? " active" : "")'>
+          <a asp-controller="SalesCrud" asp-action="Customers" class="menu-link"><div class="text-truncate">Customers</div></a>
+        </li>
+        <li class='menu-item@(currentPage.StartsWith("/SalesCrud/CustomerGroups") ? " active" : "")'>
+          <a asp-controller="SalesCrud" asp-action="CustomerGroups" class="menu-link"><div class="text-truncate">Customer Groups</div></a>
+        </li>
+        <li class='menu-item@(currentPage.StartsWith("/SalesCrud/SalesChannels") ? " active" : "")'>
+          <a asp-controller="SalesCrud" asp-action="SalesChannels" class="menu-link"><div class="text-truncate">Sales Channels</div></a>
+        </li>
+        <li class='menu-item@(currentPage.StartsWith("/SalesCrud/OpportunityStages") ? " active" : "")'>
+          <a asp-controller="SalesCrud" asp-action="OpportunityStages" class="menu-link"><div class="text-truncate">Opportunity Stages</div></a>
+        </li>
+        <li class='menu-item@(currentPage.StartsWith("/SalesCrud/Opportunities") ? " active" : "")'>
+          <a asp-controller="SalesCrud" asp-action="Opportunities" class="menu-link"><div class="text-truncate">Opportunities</div></a>
+        </li>
+        <li class='menu-item@(currentPage.StartsWith("/SalesCrud/Quotes") ? " active" : "")'>
+          <a asp-controller="SalesCrud" asp-action="Quotes" class="menu-link"><div class="text-truncate">Quotes</div></a>
+        </li>
+        <li class='menu-item@(currentPage.StartsWith("/SalesCrud/SalesOrders") ? " active" : "")'>
+          <a asp-controller="SalesCrud" asp-action="SalesOrders" class="menu-link"><div class="text-truncate">Sales Orders</div></a>
+        </li>
+        <li class='menu-item@(currentPage.StartsWith("/SalesCrud/SalesInvoices") ? " active" : "")'>
+          <a asp-controller="SalesCrud" asp-action="SalesInvoices" class="menu-link"><div class="text-truncate">Sales Invoices</div></a>
+        </li>
+        <li class='menu-item@(currentPage.StartsWith("/SalesCrud/SalesReturns") ? " active" : "")'>
+          <a asp-controller="SalesCrud" asp-action="SalesReturns" class="menu-link"><div class="text-truncate">Sales Returns</div></a>
+        </li>
+        <li class='menu-item@(currentPage.StartsWith("/SalesCrud/CustomerPayments") ? " active" : "")'>
+          <a asp-controller="SalesCrud" asp-action="CustomerPayments" class="menu-link"><div class="text-truncate">Customer Payments</div></a>
+        </li>
+      </ul>
+    </li>
+    }
+
+    <!-- Marketing CRUD -->
+    @if (User.IsInRole(SD.Role_Marketing) || User.IsInRole(SD.Role_Executive))
+    {
+    <li class='menu-item@(currentPage.StartsWith("/MarketingCrud") ? " active open" : "")'>
+      <a href="javascript:void(0);" class="menu-link menu-toggle">
+        <i class="menu-icon icon-base bx bx-megaphone"></i>
+        <div class="text-truncate">Marketing Data</div>
+      </a>
+      <ul class="menu-sub">
+        <li class='menu-item@(currentPage.StartsWith("/MarketingCrud/MarketingCampaignsIndex") ? " active" : "")'>
+          <a asp-controller="MarketingCrud" asp-action="MarketingCampaignsIndex" class="menu-link"><div class="text-truncate">Campaigns</div></a>
+        </li>
+        <li class='menu-item@(currentPage.StartsWith("/MarketingCrud/MarketingLeadsIndex") ? " active" : "")'>
+          <a asp-controller="MarketingCrud" asp-action="MarketingLeadsIndex" class="menu-link"><div class="text-truncate">Leads</div></a>
+        </li>
+        <li class='menu-item@(currentPage.StartsWith("/MarketingCrud/MarketingSpendDailiesIndex") ? " active" : "")'>
+          <a asp-controller="MarketingCrud" asp-action="MarketingSpendDailiesIndex" class="menu-link"><div class="text-truncate">Spend Daily</div></a>
+        </li>
+      </ul>
+    </li>
+    }
+
+    <!-- Inventory CRUD -->
+    @if (User.IsInRole(SD.Role_Inventory) || User.IsInRole(SD.Role_Executive))
+    {
+    <li class='menu-item@(currentPage.StartsWith("/InventoryCrud") ? " active open" : "")'>
+      <a href="javascript:void(0);" class="menu-link menu-toggle">
+        <i class="menu-icon icon-base bx bx-package"></i>
+        <div class="text-truncate">Inventory Data</div>
+      </a>
+      <ul class="menu-sub">
+        <li class='menu-item@(currentPage.StartsWith("/InventoryCrud/Products") ? " active" : "")'>
+          <a asp-controller="InventoryCrud" asp-action="Products" class="menu-link"><div class="text-truncate">Products</div></a>
+        </li>
+        <li class='menu-item@(currentPage.StartsWith("/InventoryCrud/ProductCategories") ? " active" : "")'>
+          <a asp-controller="InventoryCrud" asp-action="ProductCategories" class="menu-link"><div class="text-truncate">Product Categories</div></a>
+        </li>
+        <li class='menu-item@(currentPage.StartsWith("/InventoryCrud/Warehouses") ? " active" : "")'>
+          <a asp-controller="InventoryCrud" asp-action="Warehouses" class="menu-link"><div class="text-truncate">Warehouses</div></a>
+        </li>
+        <li class='menu-item@(currentPage.StartsWith("/InventoryCrud/Suppliers") ? " active" : "")'>
+          <a asp-controller="InventoryCrud" asp-action="Suppliers" class="menu-link"><div class="text-truncate">Suppliers</div></a>
+        </li>
+        <li class='menu-item@(currentPage.StartsWith("/InventoryCrud/PurchaseOrders") ? " active" : "")'>
+          <a asp-controller="InventoryCrud" asp-action="PurchaseOrders" class="menu-link"><div class="text-truncate">Purchase Orders</div></a>
+        </li>
+        <li class='menu-item@(currentPage.StartsWith("/InventoryCrud/PurchaseReceipts") ? " active" : "")'>
+          <a asp-controller="InventoryCrud" asp-action="PurchaseReceipts" class="menu-link"><div class="text-truncate">Purchase Receipts</div></a>
+        </li>
+        <li class='menu-item@(currentPage.StartsWith("/InventoryCrud/PurchaseInvoices") ? " active" : "")'>
+          <a asp-controller="InventoryCrud" asp-action="PurchaseInvoices" class="menu-link"><div class="text-truncate">Purchase Invoices</div></a>
+        </li>
+        <li class='menu-item@(currentPage.StartsWith("/InventoryCrud/SupplierPayments") ? " active" : "")'>
+          <a asp-controller="InventoryCrud" asp-action="SupplierPayments" class="menu-link"><div class="text-truncate">Supplier Payments</div></a>
+        </li>
+      </ul>
+    </li>
+    }
+
+    <!-- Finance CRUD -->
+    @if (User.IsInRole(SD.Role_Finance) || User.IsInRole(SD.Role_Executive))
+    {
+    <li class='menu-item@(currentPage.StartsWith("/FinanceCrud") ? " active open" : "")'>
+      <a href="javascript:void(0);" class="menu-link menu-toggle">
+        <i class="menu-icon icon-base bx bx-dollar"></i>
+        <div class="text-truncate">Finance Data</div>
+        <div class="badge rounded-pill bg-label-warning text-uppercase fs-tiny ms-auto">KT</div>
+      </a>
+      <ul class="menu-sub">
+        <li class='menu-item@(currentPage.StartsWith("/FinanceCrud/Expenses_Index") ? " active" : "")'>
+          <a asp-controller="FinanceCrud" asp-action="Expenses_Index" class="menu-link"><div class="text-truncate">Expenses</div></a>
+        </li>
+        <li class='menu-item@(currentPage.StartsWith("/FinanceCrud/ExpenseCategories_Index") ? " active" : "")'>
+          <a asp-controller="FinanceCrud" asp-action="ExpenseCategories_Index" class="menu-link"><div class="text-truncate">Expense Categories</div></a>
+        </li>
+      </ul>
+    </li>
+    }
+
+    <!-- HR CRUD -->
+    @if (User.IsInRole(SD.Role_HumanResources) || User.IsInRole(SD.Role_Executive))
+    {
+    <li class='menu-item@(currentPage.StartsWith("/HumanResourcesCrud") ? " active open" : "")'>
+      <a href="javascript:void(0);" class="menu-link menu-toggle">
+        <i class="menu-icon icon-base bx bx-user"></i>
+        <div class="text-truncate">HR Data</div>
+        <div class="badge rounded-pill bg-label-info text-uppercase fs-tiny ms-auto">NS</div>
+      </a>
+      <ul class="menu-sub">
+        <li class='menu-item@(currentPage.StartsWith("/HumanResourcesCrud/Positions") ? " active" : "")'>
+          <a asp-controller="HumanResourcesCrud" asp-action="Positions" class="menu-link"><div class="text-truncate">Positions</div></a>
+        </li>
+        <li class='menu-item@(currentPage.StartsWith("/HumanResourcesCrud/Employees") ? " active" : "")'>
+          <a asp-controller="HumanResourcesCrud" asp-action="Employees" class="menu-link"><div class="text-truncate">Employees</div></a>
+        </li>
+        <li class='menu-item@(currentPage.StartsWith("/HumanResourcesCrud/Attendances") ? " active" : "")'>
+          <a asp-controller="HumanResourcesCrud" asp-action="Attendances" class="menu-link"><div class="text-truncate">Attendances</div></a>
+        </li>
+        <li class='menu-item@(currentPage.StartsWith("/HumanResourcesCrud/LeaveRequests") ? " active" : "")'>
+          <a asp-controller="HumanResourcesCrud" asp-action="LeaveRequests" class="menu-link"><div class="text-truncate">Leave Requests</div></a>
+        </li>
+        <li class='menu-item@(currentPage.StartsWith("/HumanResourcesCrud/Payrolls") ? " active" : "")'>
+          <a asp-controller="HumanResourcesCrud" asp-action="Payrolls" class="menu-link"><div class="text-truncate">Payrolls</div></a>
+        </li>
+        <li class='menu-item@(currentPage.StartsWith("/HumanResourcesCrud/PerformanceReviews") ? " active" : "")'>
+          <a asp-controller="HumanResourcesCrud" asp-action="PerformanceReviews" class="menu-link"><div class="text-truncate">Performance Reviews</div></a>
+        </li>
+        <li class='menu-item@(currentPage.StartsWith("/HumanResourcesCrud/JobOpenings") ? " active" : "")'>
+          <a asp-controller="HumanResourcesCrud" asp-action="JobOpenings" class="menu-link"><div class="text-truncate">Job Openings</div></a>
+        </li>
+        <li class='menu-item@(currentPage.StartsWith("/HumanResourcesCrud/Applicants") ? " active" : "")'>
+          <a asp-controller="HumanResourcesCrud" asp-action="Applicants" class="menu-link"><div class="text-truncate">Applicants</div></a>
+        </li>
+      </ul>
+    </li>
+    }
+
+    <!-- Customer Service CRUD -->
+    @if (User.IsInRole(SD.Role_CustomerService) || User.IsInRole(SD.Role_Executive))
+    {
+    <li class='menu-item@(currentPage.StartsWith("/CustomerServiceCrud") ? " active open" : "")'>
+      <a href="javascript:void(0);" class="menu-link menu-toggle">
+        <i class="menu-icon icon-base bx bx-headphone"></i>
+        <div class="text-truncate">Customer Service Data</div>
+      </a>
+      <ul class="menu-sub">
+        <li class='menu-item@(currentPage.StartsWith("/CustomerServiceCrud/SupportTickets_Index") ? " active" : "")'>
+          <a asp-controller="CustomerServiceCrud" asp-action="SupportTickets_Index" class="menu-link"><div class="text-truncate">Support Tickets</div></a>
+        </li>
+      </ul>
+    </li>
+    }
+
+  </ul>
+
+</aside>
+<!-- / Menu -->

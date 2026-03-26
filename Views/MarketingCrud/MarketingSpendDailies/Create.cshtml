@@ -1,0 +1,79 @@
+@model Dashboard.Models.ViewModels.MarketingSpendDailyCreateVM
+@{
+    Layout = "~/Views/Shared/_ContentNavbarLayout.cshtml";
+    ViewData["Title"] = "Create Marketing Spend Daily";
+}
+<div class="row">
+  <div class="col-12 col-lg-8">
+    <div class="card mb-6">
+      <div class="card-header">
+        <h5 class="mb-0">Create Marketing Spend Daily</h5>
+      </div>
+      <div class="card-body pt-4">
+        <form asp-action="MarketingSpendDailies_Create" method="post">
+          @Html.AntiForgeryToken()
+          <div class="row g-6">
+            <div class="col-md-6">
+              <label asp-for="CampaignID" class="form-label">Campaign</label>
+              <select asp-for="CampaignID" class="form-select">
+                <option value="">-- Select --</option>
+                @if (ViewBag.Campaigns != null)
+                {
+                  @foreach (var item in ViewBag.Campaigns)
+                  {
+                    <option value="@item.CampaignID">@item.CampaignName</option>
+                  }
+                }
+              </select>
+              <span asp-validation-for="CampaignID" class="text-danger"></span>
+            </div>
+            <div class="col-md-6">
+              <label asp-for="SpendDate" class="form-label">Spend Date</label>
+              <input asp-for="SpendDate" type="date" class="form-control" />
+              <span asp-validation-for="SpendDate" class="text-danger"></span>
+            </div>
+            <div class="col-md-6">
+              <label asp-for="Amount" class="form-label">Amount</label>
+              <input asp-for="Amount" type="number" step="0.01" class="form-control" />
+              <span asp-validation-for="Amount" class="text-danger"></span>
+            </div>
+            <div class="col-md-6">
+              <label asp-for="Impressions" class="form-label">Impressions</label>
+              <input asp-for="Impressions" type="number" class="form-control" />
+              <span asp-validation-for="Impressions" class="text-danger"></span>
+            </div>
+            <div class="col-md-6">
+              <label asp-for="Clicks" class="form-label">Clicks</label>
+              <input asp-for="Clicks" type="number" class="form-control" />
+              <span asp-validation-for="Clicks" class="text-danger"></span>
+            </div>
+            <div class="col-md-6">
+              <label asp-for="Conversions" class="form-label">Conversions</label>
+              <input asp-for="Conversions" type="number" class="form-control" />
+              <span asp-validation-for="Conversions" class="text-danger"></span>
+            </div>
+            <div class="col-md-6">
+              <label asp-for="CPM" class="form-label">CPM</label>
+              <input asp-for="CPM" type="number" step="0.01" class="form-control" />
+              <span asp-validation-for="CPM" class="text-danger"></span>
+            </div>
+            <div class="col-md-6">
+              <label asp-for="CPC" class="form-label">CPC</label>
+              <input asp-for="CPC" type="number" step="0.01" class="form-control" />
+              <span asp-validation-for="CPC" class="text-danger"></span>
+            </div>
+            <div class="col-md-12">
+              <label asp-for="Notes" class="form-label">Notes</label>
+              <textarea asp-for="Notes" class="form-control" rows="2"></textarea>
+              <span asp-validation-for="Notes" class="text-danger"></span>
+            </div>
+          </div>
+          <div class="mt-6 d-flex gap-3">
+            <button type="submit" class="btn btn-primary"><i class="icon-base bx bx-save me-1"></i> Save</button>
+            <a asp-action="MarketingSpendDailies" class="btn btn-outline-secondary"><i class="icon-base bx bx-x me-1"></i> Cancel</a>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>

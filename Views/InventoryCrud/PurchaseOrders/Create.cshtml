@@ -1,0 +1,149 @@
+@model Dashboard.Models.ViewModels.PurchaseOrderCreateVM
+@{
+    Layout = "~/Views/Shared/_ContentNavbarLayout.cshtml";
+    ViewData["Title"] = "Create Purchase Order";
+}
+
+<div class="row">
+  <div class="col-12 col-lg-8">
+    <div class="card mb-6">
+      <div class="card-header">
+        <h5 class="mb-0">Create New Purchase Order</h5>
+      </div>
+      <div class="card-body pt-4">
+        @if (ViewData.ModelState.ErrorCount > 0)
+        {
+          <div class="alert alert-danger" role="alert">
+            <div asp-validation-summary="ModelOnly"></div>
+          </div>
+        }
+
+        <form asp-action="Create" method="post">
+          @Html.AntiForgeryToken()
+
+          <div class="row g-6">
+            <div class="col-md-6">
+              <label asp-for="OrderNumber" class="form-label">Order Number</label>
+              <input asp-for="OrderNumber" class="form-control" placeholder="Enter order number" />
+              <span asp-validation-for="OrderNumber" class="text-danger"></span>
+            </div>
+            <div class="col-md-6">
+              <label asp-for="SupplierID" class="form-label">Supplier</label>
+              <select asp-for="SupplierID" class="form-select">
+                <option value="">-- Select Supplier --</option>
+                @if (ViewBag.Suppliers != null)
+                {
+                  @foreach (var supplier in ViewBag.Suppliers)
+                  {
+                    <option value="@supplier.SupplierID">@supplier.SupplierName</option>
+                  }
+                }
+              </select>
+              <span asp-validation-for="SupplierID" class="text-danger"></span>
+            </div>
+            <div class="col-md-6">
+              <label asp-for="WarehouseID" class="form-label">Warehouse</label>
+              <select asp-for="WarehouseID" class="form-select">
+                <option value="">-- Select Warehouse --</option>
+                @if (ViewBag.Warehouses != null)
+                {
+                  @foreach (var warehouse in ViewBag.Warehouses)
+                  {
+                    <option value="@warehouse.WarehouseID">@warehouse.WarehouseName</option>
+                  }
+                }
+              </select>
+              <span asp-validation-for="WarehouseID" class="text-danger"></span>
+            </div>
+            <div class="col-md-6">
+              <label asp-for="BranchID" class="form-label">Branch</label>
+              <select asp-for="BranchID" class="form-select">
+                <option value="">-- Select Branch --</option>
+                @if (ViewBag.Branches != null)
+                {
+                  @foreach (var branch in ViewBag.Branches)
+                  {
+                    <option value="@branch.BranchID">@branch.BranchName</option>
+                  }
+                }
+              </select>
+              <span asp-validation-for="BranchID" class="text-danger"></span>
+            </div>
+            <div class="col-md-6">
+              <label asp-for="OrderDate" class="form-label">Order Date</label>
+              <input asp-for="OrderDate" class="form-control" type="date" />
+              <span asp-validation-for="OrderDate" class="text-danger"></span>
+            </div>
+            <div class="col-md-6">
+              <label asp-for="ExpectedDeliveryDate" class="form-label">Expected Delivery Date</label>
+              <input asp-for="ExpectedDeliveryDate" class="form-control" type="date" />
+              <span asp-validation-for="ExpectedDeliveryDate" class="text-danger"></span>
+            </div>
+            <div class="col-md-4">
+              <label asp-for="SubTotal" class="form-label">Sub Total</label>
+              <input asp-for="SubTotal" class="form-control" type="number" step="0.01" placeholder="0.00" />
+              <span asp-validation-for="SubTotal" class="text-danger"></span>
+            </div>
+            <div class="col-md-4">
+              <label asp-for="TaxAmount" class="form-label">Tax Amount</label>
+              <input asp-for="TaxAmount" class="form-control" type="number" step="0.01" placeholder="0.00" />
+              <span asp-validation-for="TaxAmount" class="text-danger"></span>
+            </div>
+            <div class="col-md-4">
+              <label asp-for="DiscountAmount" class="form-label">Discount Amount</label>
+              <input asp-for="DiscountAmount" class="form-control" type="number" step="0.01" placeholder="0.00" />
+              <span asp-validation-for="DiscountAmount" class="text-danger"></span>
+            </div>
+            <div class="col-md-4">
+              <label asp-for="TotalAmount" class="form-label">Total Amount</label>
+              <input asp-for="TotalAmount" class="form-control" type="number" step="0.01" placeholder="0.00" />
+              <span asp-validation-for="TotalAmount" class="text-danger"></span>
+            </div>
+            <div class="col-md-4">
+              <label asp-for="PaymentStatus" class="form-label">Payment Status</label>
+              <select asp-for="PaymentStatus" class="form-select">
+                <option value="Pending">Pending</option>
+                <option value="Partial">Partial</option>
+                <option value="Paid">Paid</option>
+              </select>
+              <span asp-validation-for="PaymentStatus" class="text-danger"></span>
+            </div>
+            <div class="col-md-4">
+              <label asp-for="DeliveryStatus" class="form-label">Delivery Status</label>
+              <select asp-for="DeliveryStatus" class="form-select">
+                <option value="Pending">Pending</option>
+                <option value="Partial">Partial</option>
+                <option value="Delivered">Delivered</option>
+              </select>
+              <span asp-validation-for="DeliveryStatus" class="text-danger"></span>
+            </div>
+            <div class="col-md-4">
+              <label asp-for="Status" class="form-label">Status</label>
+              <select asp-for="Status" class="form-select">
+                <option value="Draft">Draft</option>
+                <option value="Submitted">Submitted</option>
+                <option value="Approved">Approved</option>
+                <option value="Rejected">Rejected</option>
+              </select>
+              <span asp-validation-for="Status" class="text-danger"></span>
+            </div>
+            <div class="col-12">
+              <label asp-for="Notes" class="form-label">Notes</label>
+              <textarea asp-for="Notes" class="form-control" rows="3" placeholder="Enter notes..."></textarea>
+              <span asp-validation-for="Notes" class="text-danger"></span>
+            </div>
+          </div>
+
+          <div class="mt-6 d-flex gap-3">
+            <button type="submit" class="btn btn-primary">
+              <i class="icon-base bx bx-save me-1"></i> Save
+            </button>
+            <a asp-action="Index" class="btn btn-outline-secondary">
+              <i class="icon-base bx bx-x me-1"></i> Cancel
+            </a>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>

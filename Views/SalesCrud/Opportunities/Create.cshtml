@@ -1,0 +1,141 @@
+@model Dashboard.Models.ViewModels.OpportunityCreateVM
+@{
+    Layout = "~/Views/Shared/_ContentNavbarLayout.cshtml";
+    ViewData["Title"] = "Create Opportunity";
+}
+
+<div class="row">
+    <div class="col-12 col-lg-10">
+        <div class="card mb-6">
+            <div class="card-header">
+                <h5 class="mb-0">Create Opportunity</h5>
+            </div>
+            <div class="card-body pt-4">
+                <form asp-action="Opportunities_Create" method="post">
+                    @Html.AntiForgeryToken()
+                    <div class="row g-6">
+                        <div class="col-md-6">
+                            <label asp-for="OpportunityCode" class="form-label">Opportunity Code</label>
+                            <input asp-for="OpportunityCode" class="form-control" />
+                            <span asp-validation-for="OpportunityCode" class="text-danger"></span>
+                        </div>
+                        <div class="col-md-6">
+                            <label asp-for="CustomerID" class="form-label">Customer</label>
+                            <select asp-for="CustomerID" class="form-select">
+                                <option value="">-- Select --</option>
+                                @if (ViewBag.Customers != null)
+                                {
+                                    @foreach (var item in ViewBag.Customers)
+                                    {
+                                        <option value="@item.CustomerID">@item.CustomerName</option>
+                                    }
+                                }
+                            </select>
+                            <span asp-validation-for="CustomerID" class="text-danger"></span>
+                        </div>
+                        <div class="col-md-6">
+                            <label asp-for="LeadID" class="form-label">Lead ID</label>
+                            <input asp-for="LeadID" class="form-control" type="number" />
+                            <span asp-validation-for="LeadID" class="text-danger"></span>
+                        </div>
+                        <div class="col-md-6">
+                            <label asp-for="OwnerEmployeeID" class="form-label">Owner Employee</label>
+                            <select asp-for="OwnerEmployeeID" class="form-select">
+                                <option value="">-- Select --</option>
+                                @if (ViewBag.Employees != null)
+                                {
+                                    @foreach (var item in ViewBag.Employees)
+                                    {
+                                        <option value="@item.EmployeeID">@item.FullName</option>
+                                    }
+                                }
+                            </select>
+                            <span asp-validation-for="OwnerEmployeeID" class="text-danger"></span>
+                        </div>
+                        <div class="col-md-6">
+                            <label asp-for="StageID" class="form-label">Stage</label>
+                            <select asp-for="StageID" class="form-select">
+                                <option value="">-- Select --</option>
+                                @if (ViewBag.Stages != null)
+                                {
+                                    @foreach (var item in ViewBag.Stages)
+                                    {
+                                        <option value="@item.StageID">@item.StageName</option>
+                                    }
+                                }
+                            </select>
+                            <span asp-validation-for="StageID" class="text-danger"></span>
+                        </div>
+                        <div class="col-md-6">
+                            <label asp-for="BranchID" class="form-label">Branch</label>
+                            <select asp-for="BranchID" class="form-select">
+                                <option value="">-- Select --</option>
+                                @if (ViewBag.Branches != null)
+                                {
+                                    @foreach (var branch in ViewBag.Branches)
+                                    {
+                                        <option value="@branch.BranchID">@branch.BranchName</option>
+                                    }
+                                }
+                            </select>
+                            <span asp-validation-for="BranchID" class="text-danger"></span>
+                        </div>
+                        <div class="col-md-6">
+                            <label asp-for="SourceChannel" class="form-label">Source Channel</label>
+                            <input asp-for="SourceChannel" class="form-control" />
+                            <span asp-validation-for="SourceChannel" class="text-danger"></span>
+                        </div>
+                        <div class="col-md-6">
+                            <label asp-for="ExpectedCloseDate" class="form-label">Expected Close Date</label>
+                            <input asp-for="ExpectedCloseDate" class="form-control" type="date" />
+                            <span asp-validation-for="ExpectedCloseDate" class="text-danger"></span>
+                        </div>
+                        <div class="col-md-6">
+                            <label asp-for="ActualCloseDate" class="form-label">Actual Close Date</label>
+                            <input asp-for="ActualCloseDate" class="form-control" type="date" />
+                            <span asp-validation-for="ActualCloseDate" class="text-danger"></span>
+                        </div>
+                        <div class="col-md-6">
+                            <label asp-for="EstimatedValue" class="form-label">Estimated Value</label>
+                            <input asp-for="EstimatedValue" class="form-control" type="number" step="0.01" />
+                            <span asp-validation-for="EstimatedValue" class="text-danger"></span>
+                        </div>
+                        <div class="col-md-6">
+                            <label asp-for="Probability" class="form-label">Probability (%)</label>
+                            <input asp-for="Probability" class="form-control" type="number" min="0" max="100" />
+                            <span asp-validation-for="Probability" class="text-danger"></span>
+                        </div>
+                        <div class="col-md-6">
+                            <label asp-for="Status" class="form-label">Status</label>
+                            <select asp-for="Status" class="form-select">
+                                <option value="">-- Select --</option>
+                                <option value="Open">Open</option>
+                                <option value="Won">Won</option>
+                                <option value="Lost">Lost</option>
+                            </select>
+                            <span asp-validation-for="Status" class="text-danger"></span>
+                        </div>
+                        <div class="col-md-6">
+                            <label asp-for="WonReason" class="form-label">Won Reason</label>
+                            <input asp-for="WonReason" class="form-control" />
+                            <span asp-validation-for="WonReason" class="text-danger"></span>
+                        </div>
+                        <div class="col-12">
+                            <label asp-for="LostReason" class="form-label">Lost Reason</label>
+                            <textarea asp-for="LostReason" class="form-control" rows="2"></textarea>
+                            <span asp-validation-for="LostReason" class="text-danger"></span>
+                        </div>
+                    </div>
+                    <div class="mt-6 d-flex gap-3">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="icon-base bx bx-save me-1"></i> Save
+                        </button>
+                        <a asp-action="Opportunities_Index" class="btn btn-outline-secondary">
+                            <i class="icon-base bx bx-x me-1"></i> Cancel
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>

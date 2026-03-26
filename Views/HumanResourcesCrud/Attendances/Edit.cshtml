@@ -1,0 +1,84 @@
+@model Dashboard.Models.ViewModels.AttendanceEditVM
+@{
+    Layout = "~/Views/Shared/_ContentNavbarLayout.cshtml";
+    ViewData["Title"] = "Edit Attendance";
+}
+
+<div class="row">
+  <div class="col-12 col-lg-6">
+    <div class="card mb-6">
+      <div class="card-header">
+        <h5 class="mb-0">Edit Attendance</h5>
+      </div>
+      <div class="card-body pt-4">
+        @if (ViewData.ModelState.ErrorCount > 0)
+        {
+          <div class="alert alert-danger" role="alert">
+            <div asp-validation-summary="ModelOnly"></div>
+          </div>
+        }
+
+        <form asp-action="Attendances_Edit" method="post">
+          @Html.AntiForgeryToken()
+          <input type="hidden" asp-for="AttendanceID" />
+
+          <div class="row g-6">
+            <div class="col-md-6">
+              <label asp-for="EmployeeID" class="form-label">Employee</label>
+              <select asp-for="EmployeeID" class="form-select">
+                <option value="">-- Select Employee --</option>
+                @if (ViewBag.Employees != null)
+                {
+                  @foreach (var emp in ViewBag.Employees)
+                  {
+                    <option value="@emp.EmployeeID" selected="@(emp.EmployeeID == Model.EmployeeID)">@emp.FullName</option>
+                  }
+                }
+              </select>
+              <span asp-validation-for="EmployeeID" class="text-danger"></span>
+            </div>
+            <div class="col-md-6">
+              <label asp-for="AttendanceDate" class="form-label">Attendance Date</label>
+              <input asp-for="AttendanceDate" class="form-control" type="date" />
+              <span asp-validation-for="AttendanceDate" class="text-danger"></span>
+            </div>
+            <div class="col-md-6">
+              <label asp-for="CheckInTime" class="form-label">Check In Time</label>
+              <input asp-for="CheckInTime" class="form-control" type="datetime-local" />
+              <span asp-validation-for="CheckInTime" class="text-danger"></span>
+            </div>
+            <div class="col-md-6">
+              <label asp-for="CheckOutTime" class="form-label">Check Out Time</label>
+              <input asp-for="CheckOutTime" class="form-control" type="datetime-local" />
+              <span asp-validation-for="CheckOutTime" class="text-danger"></span>
+            </div>
+            <div class="col-md-6">
+              <label asp-for="Status" class="form-label">Status</label>
+              <select asp-for="Status" class="form-select">
+                <option value="Present" selected="@(Model.Status == "Present")">Present</option>
+                <option value="Absent" selected="@(Model.Status == "Absent")">Absent</option>
+                <option value="Late" selected="@(Model.Status == "Late")">Late</option>
+                <option value="OnLeave" selected="@(Model.Status == "OnLeave")">On Leave</option>
+              </select>
+              <span asp-validation-for="Status" class="text-danger"></span>
+            </div>
+            <div class="col-12">
+              <label asp-for="Notes" class="form-label">Notes</label>
+              <textarea asp-for="Notes" class="form-control" rows="3"></textarea>
+              <span asp-validation-for="Notes" class="text-danger"></span>
+            </div>
+          </div>
+
+          <div class="mt-6 d-flex gap-3">
+            <button type="submit" class="btn btn-primary">
+              <i class="icon-base bx bx-save me-1"></i> Save Changes
+            </button>
+            <a asp-action="Attendances_Index" class="btn btn-outline-secondary">
+              <i class="icon-base bx bx-x me-1"></i> Cancel
+            </a>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>

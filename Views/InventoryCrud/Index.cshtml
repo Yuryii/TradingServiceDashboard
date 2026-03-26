@@ -1,0 +1,150 @@
+@model Dashboard.Models.ViewModels.InventoryCrudIndexVM
+@{
+    Layout = "~/Views/Shared/_ContentNavbarLayout.cshtml";
+    ViewData["Title"] = "Inventory CRUD";
+}
+<div class="row">
+  <div class="col-12 mb-4">
+    <h4 class="fw-bold py-3 mb-2">
+      <span class="text-muted fw-light">Inventory /</span> Data Management
+    </h4>
+  </div>
+</div>
+<div class="row">
+  <!-- Products -->
+  <div class="col-lg-3 col-md-4 col-sm-6 mb-4">
+    <div class="card h-100">
+      <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="mb-0"><i class="icon-base bx bx-package text-primary me-1"></i> Products</h5>
+        <span class="badge bg-primary rounded-pill">@Model.ProductCount</span>
+      </div>
+      <div class="card-body">
+        <a asp-action="ProductsIndex" class="btn btn-outline-primary btn-sm mt-2 w-100">
+          <i class="icon-base bx bx-list-ul me-1"></i> Manage
+        </a>
+        <a asp-action="ProductsCreate" class="btn btn-primary btn-sm mt-2 w-100">
+          <i class="icon-base bx bx-plus me-1"></i> Create
+        </a>
+      </div>
+    </div>
+  </div>
+  <!-- Product Categories -->
+  <div class="col-lg-3 col-md-4 col-sm-6 mb-4">
+    <div class="card h-100">
+      <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="mb-0"><i class="icon-base bx bx-category text-secondary me-1"></i> Categories</h5>
+        <span class="badge bg-secondary rounded-pill">@Model.CategoryCount</span>
+      </div>
+      <div class="card-body">
+        <a asp-action="ProductCategoriesIndex" class="btn btn-outline-secondary btn-sm mt-2 w-100">
+          <i class="icon-base bx bx-list-ul me-1"></i> Manage
+        </a>
+        <a asp-action="ProductCategoriesCreate" class="btn btn-secondary btn-sm mt-2 w-100">
+          <i class="icon-base bx bx-plus me-1"></i> Create
+        </a>
+      </div>
+    </div>
+  </div>
+  <!-- Warehouses -->
+  <div class="col-lg-3 col-md-4 col-sm-6 mb-4">
+    <div class="card h-100">
+      <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="mb-0"><i class="icon-base bx bx-building text-info me-1"></i> Warehouses</h5>
+        <span class="badge bg-info rounded-pill">@Model.WarehouseCount</span>
+      </div>
+      <div class="card-body">
+        <a asp-action="WarehousesIndex" class="btn btn-outline-info btn-sm mt-2 w-100">
+          <i class="icon-base bx bx-list-ul me-1"></i> Manage
+        </a>
+        <a asp-action="WarehousesCreate" class="btn btn-info btn-sm mt-2 w-100">
+          <i class="icon-base bx bx-plus me-1"></i> Create
+        </a>
+      </div>
+    </div>
+  </div>
+  <!-- Suppliers -->
+  <div class="col-lg-3 col-md-4 col-sm-6 mb-4">
+    <div class="card h-100">
+      <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="mb-0"><i class="icon-base bx bx-store text-success me-1"></i> Suppliers</h5>
+        <span class="badge bg-success rounded-pill">@Model.SupplierCount</span>
+      </div>
+      <div class="card-body">
+        <a asp-action="SuppliersIndex" class="btn btn-outline-success btn-sm mt-2 w-100">
+          <i class="icon-base bx bx-list-ul me-1"></i> Manage
+        </a>
+        <a asp-action="SuppliersCreate" class="btn btn-success btn-sm mt-2 w-100">
+          <i class="icon-base bx bx-plus me-1"></i> Create
+        </a>
+      </div>
+    </div>
+  </div>
+  <!-- Purchase Orders -->
+  <div class="col-lg-3 col-md-4 col-sm-6 mb-4">
+    <div class="card h-100">
+      <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="mb-0"><i class="icon-base bx bx-cart text-warning me-1"></i> Purchase Orders</h5>
+        <span class="badge bg-warning text-dark rounded-pill">@Model.PurchaseOrderCount</span>
+      </div>
+      <div class="card-body">
+        <a asp-action="PurchaseOrdersIndex" class="btn btn-outline-warning btn-sm mt-2 w-100">
+          <i class="icon-base bx bx-list-ul me-1"></i> Manage
+        </a>
+        <a asp-action="PurchaseOrdersCreate" class="btn btn-warning btn-sm mt-2 w-100 text-white">
+          <i class="icon-base bx bx-plus me-1"></i> Create
+        </a>
+      </div>
+    </div>
+  </div>
+  <!-- Purchase Receipts -->
+  <div class="col-lg-3 col-md-4 col-sm-6 mb-4">
+    <div class="card h-100">
+      <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="mb-0"><i class="icon-base bx bx-package text-danger me-1"></i> Purchase Receipts</h5>
+        <span class="badge bg-danger rounded-pill">@Model.PurchaseReceiptCount</span>
+      </div>
+      <div class="card-body">
+        <a asp-action="PurchaseReceiptsIndex" class="btn btn-outline-danger btn-sm mt-2 w-100">
+          <i class="icon-base bx bx-list-ul me-1"></i> Manage
+        </a>
+        <a asp-action="PurchaseReceiptsCreate" class="btn btn-danger btn-sm mt-2 w-100">
+          <i class="icon-base bx bx-plus me-1"></i> Create
+        </a>
+      </div>
+    </div>
+  </div>
+  <!-- Purchase Invoices -->
+  <div class="col-lg-3 col-md-4 col-sm-6 mb-4">
+    <div class="card h-100">
+      <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="mb-0"><i class="icon-base bx bx-file text-dark me-1"></i> Purchase Invoices</h5>
+        <span class="badge bg-dark rounded-pill">@Model.PurchaseInvoiceCount</span>
+      </div>
+      <div class="card-body">
+        <a asp-action="PurchaseInvoicesIndex" class="btn btn-outline-dark btn-sm mt-2 w-100">
+          <i class="icon-base bx bx-list-ul me-1"></i> Manage
+        </a>
+        <a asp-action="PurchaseInvoicesCreate" class="btn btn-dark btn-sm mt-2 w-100">
+          <i class="icon-base bx bx-plus me-1"></i> Create
+        </a>
+      </div>
+    </div>
+  </div>
+  <!-- Supplier Payments -->
+  <div class="col-lg-3 col-md-4 col-sm-6 mb-4">
+    <div class="card h-100">
+      <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="mb-0"><i class="icon-base bx bx-credit-card text-info me-1"></i> Supplier Payments</h5>
+        <span class="badge bg-info rounded-pill">@Model.SupplierPaymentCount</span>
+      </div>
+      <div class="card-body">
+        <a asp-action="SupplierPaymentsIndex" class="btn btn-outline-info btn-sm mt-2 w-100">
+          <i class="icon-base bx bx-list-ul me-1"></i> Manage
+        </a>
+        <a asp-action="SupplierPaymentsCreate" class="btn btn-info btn-sm mt-2 w-100">
+          <i class="icon-base bx bx-plus me-1"></i> Create
+        </a>
+      </div>
+    </div>
+  </div>
+</div>

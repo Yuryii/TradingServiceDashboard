@@ -1,0 +1,752 @@
+@model CustomerServiceDashboardViewModel
+@{
+  ViewData["Title"] = "Customer Service Dashboard";
+  var now = DateTime.Now;
+  var defaultFrom = new DateTime(now.Year, 1, 1).ToString("yyyy-MM-dd");
+  var defaultTo = now.ToString("yyyy-MM-dd");
+  var currentFrom = Context.Request.Query["from"].FirstOrDefault() ?? defaultFrom;
+  var currentTo = Context.Request.Query["to"].FirstOrDefault() ?? defaultTo;
+}
+@section VendorStyles {
+<link rel="stylesheet" href="~/vendor/libs/apex-charts/apex-charts.css" />
+}
+@section VendorScripts {
+<script src="~/vendor/libs/apex-charts/apexcharts.js"></script>
+}
+@* Always render chart data - individual guards protect each chart render *@
+<script>
+window.dashboardCharts = window.dashboardCharts || {};
+window.dashboardCharts.orderChart = @Html.Raw(Json.Serialize(Model.SupportOverviewChart));
+window.dashboardCharts.ticketVolumeLine = @Html.Raw(Json.Serialize(Model.TicketVolumeLineChart));
+window.dashboardCharts.slaCompliance = @Html.Raw(Json.Serialize(Model.SlaComplianceChart));
+window.dashboardCharts.responseTime = @Html.Raw(Json.Serialize(Model.ResponseTimeChart));
+window.dashboardCharts.backlogAging = @Html.Raw(Json.Serialize(Model.BacklogAgingChart));
+window.dashboardCharts.channelMixStacked = @Html.Raw(Json.Serialize(Model.ChannelMixStackedChart));
+window.dashboardCharts.csatNpsTrend = @Html.Raw(Json.Serialize(Model.CsatNpsTrendChart));
+window.dashboardCharts.rootCausePareto = @Html.Raw(Json.Serialize(Model.RootCauseParetoChart));
+window.dashboardCharts.churnRiskHeatmap = @Html.Raw(Json.Serialize(Model.ChurnRiskHeatmap));
+</script>
+@section PageScripts {
+<script src="~/js/dashboards-analytics.js"></script>
+}
+
+<div class="row">
+  <div class="col-xxl-8 mb-6 order-0">
+    <div class="card">
+      <div class="d-flex align-items-start row">
+        <div class="col-sm-7">
+          <div class="card-body">
+            <h5 class="card-title text-primary mb-3">Customer Service Overview 🎧</h5>
+            <p class="mb-6">Welcome to the Customer Service Dashboard. Monitor support metrics.</p>
+            <a href="javascript:;" class="btn btn-sm btn-outline-primary">View Tickets</a>
+          </div>
+        </div>
+        <div class="col-sm-5 text-center text-sm-left">
+          <div class="card-body pb-0 px-0 px-md-6">
+            <img src="~/img/illustrations/man-with-laptop.png" height="175" alt="Customer Service Dashboard" />
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="col-xxl-4 col-lg-12 col-md-4 order-1">
+    <div class="row">
+      <div class="col-lg-6 col-md-12 col-6 mb-6">
+        <div class="card h-100">
+          <div class="card-body">
+            <div class="card-title d-flex align-items-start justify-content-between mb-4">
+              <div class="avatar flex-shrink-0">
+                <img src="~/img/icons/unicons/chart-success.png" alt="Tickets" class="rounded" />
+              </div>
+              <div class="dropdown">
+                <button class="btn p-0" type="button" id="cardOpt1" data-bs-toggle="dropdown" aria-haspup="true" aria-expanded="false">
+                  <i class="icon-base bx bx-dots-vertical-rounded text-body-secondary"></i>
+                </button>
+                <div class="dropdown-menu dropdown-menu-end" aria-labelledby="cardOpt1">
+                  <a class="dropdown-item" href="javascript:void(0);">View More</a>
+                </div>
+              </div>
+            </div>
+            <p class="mb-1">@Model.TotalTickets.Title</p>
+            <h4 class="card-title mb-3">@Model.TotalTickets.Value</h4>
+            <small class="text-success fw-medium"><i class="icon-base bx bx-up-arrow-alt"></i> @Model.TotalTickets.TrendLabel</small>
+          </div>
+        </div>
+      </div>
+      <div class="col-lg-6 col-md-12 col-6 mb-6">
+        <div class="card h-100">
+          <div class="card-body">
+            <div class="card-title d-flex align-items-start justify-content-between mb-4">
+              <div class="avatar flex-shrink-0">
+                <img src="~/img/icons/unicons/wallet-info.png" alt="Satisfaction" class="rounded" />
+              </div>
+              <div class="dropdown">
+                <button class="btn p-0" type="button" id="cardOpt2" data-bs-toggle="dropdown" aria-haspup="true" aria-expanded="false">
+                  <i class="icon-base bx bx-dots-vertical-rounded text-body-secondary"></i>
+                </button>
+                <div class="dropdown-menu dropdown-menu-end" aria-labelledby="cardOpt2">
+                  <a class="dropdown-item" href="javascript:void(0);">View More</a>
+                </div>
+              </div>
+            </div>
+            <p class="mb-1">@Model.Satisfaction.Title</p>
+            <h4 class="card-title mb-3">@Model.Satisfaction.Value</h4>
+            <small class="text-success fw-medium"><i class="icon-base bx bx-star"></i> @Model.Satisfaction.TrendLabel</small>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="card mb-4">
+  <div class="card-body">
+    <form method="get" class="row g-3 align-items-end">
+      <div class="col-auto">
+        <label class="form-label">From</label>
+        <input type="date" name="from" class="form-control form-control-sm" value="@currentFrom" />
+      </div>
+      <div class="col-auto">
+        <label class="form-label">To</label>
+        <input type="date" name="to" class="form-control form-control-sm" value="@currentTo" />
+      </div>
+      <div class="col-auto">
+        <button type="submit" class="btn btn-sm btn-primary"><i class="icon-base bx bx-filter-alt"></i> Apply</button>
+      </div>
+      <div class="col-auto">
+        <a href="/CustomerService" class="btn btn-sm btn-outline-secondary"><i class="icon-base bx bx-reset"></i> Reset</a>
+      </div>
+      <div class="col-auto ms-auto">
+        <div class="btn-group btn-group-sm" role="group">
+          <button type="button" class="btn btn-outline-primary" onclick="setRange('today')">Today</button>
+          <button type="button" class="btn btn-outline-primary" onclick="setRange('week')">This Week</button>
+          <button type="button" class="btn btn-outline-primary" onclick="setRange('month')">This Month</button>
+          <button type="button" class="btn btn-outline-primary" onclick="setRange('ytd')">YTD</button>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div class="row">
+  <div class="col-12 col-xxl-8 order-2 order-md-3 order-xxl-2 mb-6">
+    <div class="card">
+      <div class="row row-bordered g-0">
+        <div class="col-lg-8">
+          <div class="card-header d-flex align-items-center justify-content-between">
+            <div class="card-title mb-0">
+              <h5 class="m-0 me-2">Support Overview</h5>
+            </div>
+            <div class="dropdown">
+              <button class="btn p-0" type="button" id="supportChart" data-bs-toggle="dropdown" aria-haspup="true" aria-expanded="false">
+                <i class="icon-base bx bx-dots-vertical-rounded icon-lg text-body-secondary"></i>
+              </button>
+              <div class="dropdown-menu dropdown-menu-end" aria-labelledby="supportChart">
+                <a class="dropdown-item" href="javascript:void(0);">This Week</a>
+                <a class="dropdown-item" href="javascript:void(0);">This Month</a>
+              </div>
+            </div>
+          </div>
+          <div id="totalRevenueChart" class="px-3"></div>
+        </div>
+        <div class="col-lg-4">
+          <div class="card-body px-xl-9 py-12 d-flex align-items-center flex-column">
+            <div class="text-center mb-6">
+              <h6 class="mb-0">@Model.FirstResponseRatePercent% First Response Rate</h6>
+            </div>
+            <div id="growthChart"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="col-12 col-md-8 col-lg-12 col-xxl-4 order-3 order-md-2 mb-6">
+    <div class="row">
+      <div class="col-6 mb-6">
+        <div class="card h-100">
+          <div class="card-body">
+            <div class="card-title d-flex align-items-start justify-content-between mb-4">
+              <div class="avatar flex-shrink-0">
+                <img src="~/img/icons/unicons/paypal.png" alt="Resolved" class="rounded" />
+              </div>
+              <div class="dropdown">
+                <button class="btn p-0" type="button" id="cardOpt3" data-bs-toggle="dropdown" aria-haspup="true" aria-expanded="false">
+                  <i class="icon-base bx bx-dots-vertical-rounded text-body-secondary"></i>
+                </button>
+                <div class="dropdown-menu dropdown-menu-end" aria-labelledby="cardOpt3">
+                  <a class="dropdown-item" href="javascript:void(0);">View More</a>
+                </div>
+              </div>
+            </div>
+            <p class="mb-1">@Model.ResolvedTickets.Title</p>
+            <h4 class="card-title mb-3">@Model.ResolvedTickets.Value</h4>
+            <small class="text-success fw-medium"><i class="icon-base bx bx-check-circle"></i> @Model.ResolvedTickets.TrendLabel</small>
+          </div>
+        </div>
+      </div>
+      <div class="col-6 mb-6">
+        <div class="card h-100">
+          <div class="card-body">
+            <div class="card-title d-flex align-items-start justify-content-between mb-4">
+              <div class="avatar flex-shrink-0">
+                <img src="~/img/icons/unicons/cc-primary.png" alt="Pending" class="rounded" />
+              </div>
+              <div class="dropdown">
+                <button class="btn p-0" type="button" id="cardOpt4" data-bs-toggle="dropdown" aria-haspup="true" aria-expanded="false">
+                  <i class="icon-base bx bx-dots-vertical-rounded text-body-secondary"></i>
+                </button>
+                <div class="dropdown-menu" aria-labelledby="cardOpt4">
+                  <a class="dropdown-item" href="javascript:void(0);">View More</a>
+                </div>
+              </div>
+            </div>
+            <p class="mb-1">@Model.PendingTickets.Title</p>
+            <h4 class="card-title mb-3">@Model.PendingTickets.Value</h4>
+            <small class="text-warning fw-medium"><i class="icon-base bx bx-time"></i> @Model.PendingTickets.TrendLabel</small>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- KPI Cards Row 2: FCR, Avg Response, Avg Resolution, Open Tickets -->
+<div class="row">
+  <div class="col-lg-3 col-md-6 col-sm-6 mb-6">
+    <div class="card h-100">
+      <div class="card-body">
+        <div class="card-title d-flex align-items-start justify-content-between mb-3"><div class="avatar flex-shrink-0"><img src="~/img/icons/unicons/chart-success.png" alt="FCR" class="rounded" /></div><div class="dropdown"><button class="btn p-0" type="button" id="cardFcr" data-bs-toggle="dropdown"><i class="icon-base bx bx-dots-vertical-rounded text-body-secondary"></i></button><div class="dropdown-menu dropdown-menu-end"><a class="dropdown-item" href="javascript:void(0);">View More</a></div></div></div>
+        <p class="mb-1">First Response Rate</p>
+        <h4 class="card-title mb-2">@Model.FirstResponseRate.Value</h4>
+        <small class="text-success fw-medium"><i class="icon-base bx bx-bolt"></i> @Model.FirstResponseRate.TrendLabel</small>
+      </div>
+    </div>
+  </div>
+  <div class="col-lg-3 col-md-6 col-sm-6 mb-6">
+    <div class="card h-100">
+      <div class="card-body">
+        <div class="card-title d-flex align-items-start justify-content-between mb-3"><div class="avatar flex-shrink-0"><img src="~/img/icons/unicons/wallet-info.png" alt="Response" class="rounded" /></div><div class="dropdown"><button class="btn p-0" type="button" id="cardResp" data-bs-toggle="dropdown"><i class="icon-base bx bx-dots-vertical-rounded text-body-secondary"></i></button><div class="dropdown-menu dropdown-menu-end"><a class="dropdown-item" href="javascript:void(0);">View More</a></div></div></div>
+        <p class="mb-1">@Model.AvgResponseTime.Title</p>
+        <h4 class="card-title mb-2">@Model.AvgResponseTime.Value</h4>
+        <small class="text-primary fw-medium"><i class="icon-base bx bx-time"></i> Avg Response</small>
+      </div>
+    </div>
+  </div>
+  <div class="col-lg-3 col-md-6 col-sm-6 mb-6">
+    <div class="card h-100">
+      <div class="card-body">
+        <div class="card-title d-flex align-items-start justify-content-between mb-3"><div class="avatar flex-shrink-0"><img src="~/img/icons/unicons/paypal.png" alt="Resolution" class="rounded" /></div><div class="dropdown"><button class="btn p-0" type="button" id="cardRes" data-bs-toggle="dropdown"><i class="icon-base bx bx-dots-vertical-rounded text-body-secondary"></i></button><div class="dropdown-menu dropdown-menu-end"><a class="dropdown-item" href="javascript:void(0);">View More</a></div></div></div>
+        <p class="mb-1">@Model.AvgResolutionTime.Title</p>
+        <h4 class="card-title mb-2">@Model.AvgResolutionTime.Value</h4>
+        <small class="text-warning fw-medium"><i class="icon-base bx bx-check"></i> Resolution Time</small>
+      </div>
+    </div>
+  </div>
+  <div class="col-lg-3 col-md-6 col-sm-6 mb-6">
+    <div class="card h-100">
+      <div class="card-body">
+        <div class="card-title d-flex align-items-start justify-content-between mb-3"><div class="avatar flex-shrink-0"><img src="~/img/icons/unicons/cc-primary.png" alt="Open" class="rounded" /></div><div class="dropdown"><button class="btn p-0" type="button" id="cardOpen" data-bs-toggle="dropdown"><i class="icon-base bx bx-dots-vertical-rounded text-body-secondary"></i></button><div class="dropdown-menu dropdown-menu-end"><a class="dropdown-item" href="javascript:void(0);">View More</a></div></div></div>
+        <p class="mb-1">@Model.OpenTickets.Title</p>
+        <h4 class="card-title mb-2">@Model.OpenTickets.Value</h4>
+        <small class="text-danger fw-medium"><i class="icon-base bx bx-alert-circle"></i> @Model.OpenTickets.TrendLabel</small>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Chart Row 1: Ticket Volume Line + SLA Compliance -->
+<div class="row">
+  <div class="col-lg-6 mb-6">
+    <div class="card h-100">
+      <div class="card-header d-flex align-items-center justify-content-between">
+        <h5 class="card-title m-0 me-2">Ticket Volume Trend</h5>
+        <div class="dropdown"><button class="btn p-0" type="button" id="tvOpts" data-bs-toggle="dropdown"><i class="icon-base bx bx-dots-vertical-rounded icon-lg text-body-secondary"></i></button><div class="dropdown-menu dropdown-menu-end"><a class="dropdown-item" href="javascript:void(0);">Refresh</a></div></div>
+      </div>
+      <div class="card-body">
+        <div id="ticketVolumeLineChart" style="min-height: 280px;"></div>
+      </div>
+    </div>
+  </div>
+  <div class="col-lg-6 mb-6">
+    <div class="card h-100">
+      <div class="card-header d-flex align-items-center justify-content-between">
+        <h5 class="card-title m-0 me-2">SLA Compliance</h5>
+        <div class="dropdown"><button class="btn p-0" type="button" id="slaOpts" data-bs-toggle="dropdown"><i class="icon-base bx bx-dots-vertical-rounded icon-lg text-body-secondary"></i></button><div class="dropdown-menu dropdown-menu-end"><a class="dropdown-item" href="javascript:void(0);">Refresh</a></div></div>
+      </div>
+      <div class="card-body">
+        <div id="slaComplianceChart" style="min-height: 280px;"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Chart Row 2: Response Time Line + Backlog Aging -->
+<div class="row">
+  <div class="col-lg-6 mb-6">
+    <div class="card h-100">
+      <div class="card-header d-flex align-items-center justify-content-between">
+        <h5 class="card-title m-0 me-2">Response & Resolution Time</h5>
+        <div class="dropdown"><button class="btn p-0" type="button" id="rtOpts" data-bs-toggle="dropdown"><i class="icon-base bx bx-dots-vertical-rounded icon-lg text-body-secondary"></i></button><div class="dropdown-menu dropdown-menu-end"><a class="dropdown-item" href="javascript:void(0);">Refresh</a></div></div>
+      </div>
+      <div class="card-body">
+        <div id="responseTimeChart" style="min-height: 280px;"></div>
+      </div>
+    </div>
+  </div>
+  <div class="col-lg-6 mb-6">
+    <div class="card h-100">
+      <div class="card-header d-flex align-items-center justify-content-between">
+        <h5 class="card-title m-0 me-2">Backlog Aging</h5>
+        <div class="dropdown"><button class="btn p-0" type="button" id="baOpts" data-bs-toggle="dropdown"><i class="icon-base bx bx-dots-vertical-rounded icon-lg text-body-secondary"></i></button><div class="dropdown-menu dropdown-menu-end"><a class="dropdown-item" href="javascript:void(0);">Refresh</a></div></div>
+      </div>
+      <div class="card-body">
+        <div id="backlogAgingChart" style="min-height: 280px;"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Chart Row 3: Channel Mix Stacked + CSAT/NPS Trend -->
+<div class="row">
+  <div class="col-lg-6 mb-6">
+    <div class="card h-100">
+      <div class="card-header d-flex align-items-center justify-content-between">
+        <h5 class="card-title m-0 me-2">Channel Mix</h5>
+        <div class="dropdown"><button class="btn p-0" type="button" id="cmOpts" data-bs-toggle="dropdown"><i class="icon-base bx bx-dots-vertical-rounded icon-lg text-body-secondary"></i></button><div class="dropdown-menu dropdown-menu-end"><a class="dropdown-item" href="javascript:void(0);">Refresh</a></div></div>
+      </div>
+      <div class="card-body">
+        <div id="channelMixStackedChart" style="min-height: 280px;"></div>
+      </div>
+    </div>
+  </div>
+  <div class="col-lg-6 mb-6">
+    <div class="card h-100">
+      <div class="card-header d-flex align-items-center justify-content-between">
+        <h5 class="card-title m-0 me-2">CSAT & NPS Trend</h5>
+        <div class="dropdown"><button class="btn p-0" type="button" id="csatOpts" data-bs-toggle="dropdown"><i class="icon-base bx bx-dots-vertical-rounded icon-lg text-body-secondary"></i></button><div class="dropdown-menu dropdown-menu-end"><a class="dropdown-item" href="javascript:void(0);">Refresh</a></div></div>
+      </div>
+      <div class="card-body">
+        <div id="csatNpsTrendChart" style="min-height: 280px;"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Chart Row 4: Root Cause Pareto + Churn Risk Heatmap -->
+<div class="row">
+  <div class="col-lg-6 mb-6">
+    <div class="card h-100">
+      <div class="card-header d-flex align-items-center justify-content-between">
+        <h5 class="card-title m-0 me-2">Root Cause Pareto (80/20)</h5>
+        <div class="dropdown"><button class="btn p-0" type="button" id="paretoOpts" data-bs-toggle="dropdown"><i class="icon-base bx bx-dots-vertical-rounded icon-lg text-body-secondary"></i></button><div class="dropdown-menu dropdown-menu-end"><a class="dropdown-item" href="javascript:void(0);">Refresh</a></div></div>
+      </div>
+      <div class="card-body">
+        <div id="rootCauseParetoChart" style="min-height: 280px;"></div>
+      </div>
+    </div>
+  </div>
+  <div class="col-lg-6 mb-6">
+    <div class="card h-100">
+      <div class="card-header d-flex align-items-center justify-content-between">
+        <h5 class="card-title m-0 me-2">Churn Risk Signals</h5>
+        <div class="dropdown"><button class="btn p-0" type="button" id="churnOpts" data-bs-toggle="dropdown"><i class="icon-base bx bx-dots-vertical-rounded icon-lg text-body-secondary"></i></button><div class="dropdown-menu dropdown-menu-end"><a class="dropdown-item" href="javascript:void(0);">Refresh</a></div></div>
+      </div>
+      <div class="card-body">
+        <div id="churnRiskHeatmap" style="min-height: 280px;"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="row">
+  <div class="col-md-6 col-lg-4 order-0 mb-6">
+    <div class="card h-100">
+      <div class="card-header d-flex justify-content-between">
+        <div class="card-title mb-0">
+          <h5 class="mb-1 me-2">Ticket Categories</h5>
+          <p class="card-subtitle">Issues by Type</p>
+        </div>
+      </div>
+      <div class="card-body">
+        <ul class="p-0 m-0">
+          @if (Model.TicketCategories.Any())
+          {
+            @foreach (var cat in Model.TicketCategories.Take(5))
+            {
+              <li class="d-flex align-items-center mb-5">
+                <div class="avatar flex-shrink-0 me-3">
+                  <span class="avatar-initial rounded @cat.IconBgClass"><i class="@cat.IconClass"></i></span>
+                </div>
+                <div class="d-flex w-100 flex-wrap align-items-center justify-content-between gap-2">
+                  <div class="me-2">
+                    <h6 class="mb-0">@cat.Name</h6>
+                    <small>@cat.Subtitle</small>
+                  </div>
+                  <div class="user-progress">
+                    <h6 class="mb-0">@cat.FormattedValue</h6>
+                  </div>
+                </div>
+              </li>
+            }
+          }
+          else
+          {
+            <li class="d-flex align-items-center mb-5">
+              <div class="avatar flex-shrink-0 me-3">
+                <span class="avatar-initial rounded bg-label-primary"><i class="icon-base bx bx-cog"></i></span>
+              </div>
+              <div class="d-flex w-100 flex-wrap align-items-center justify-content-between gap-2">
+                <div class="me-2">
+                  <h6 class="mb-0">Technical</h6>
+                  <small>428 tickets</small>
+                </div>
+                <div class="user-progress">
+                  <h6 class="mb-0">23%</h6>
+                </div>
+              </div>
+            </li>
+          }
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-6 col-lg-4 order-1 mb-6">
+    <div class="card h-100">
+      <div class="card-header d-flex justify-content-between">
+        <div class="card-title mb-0">
+          <h5 class="mb-1 me-2">Recent Tickets</h5>
+          <p class="card-subtitle">Latest Support Requests</p>
+        </div>
+      </div>
+      <div class="card-body pt-4">
+        <ul class="p-0 m-0">
+          @if (Model.RecentTickets.Any())
+          {
+            @foreach (var ticket in Model.RecentTickets.Take(5))
+            {
+              <li class="d-flex align-items-center mb-6">
+                <div class="avatar flex-shrink-0 me-3">
+                  <img src="~/img/icons/unicons/wallet.png" alt="@ticket.Column1" class="rounded" />
+                </div>
+                <div class="d-flex w-100 flex-wrap align-items-center justify-content-between gap-2">
+                  <div class="me-2">
+                    <small class="d-block">@ticket.Column1</small>
+                    <h6 class="fw-normal mb-0">@ticket.Column2</h6>
+                  </div>
+                  <div class="user-progress d-flex align-items-center gap-2">
+                    <span class="badge @ticket.BadgeClass">@ticket.Column3</span>
+                  </div>
+                </div>
+              </li>
+            }
+          }
+          else
+          {
+            <li class="d-flex align-items-center mb-6">
+              <div class="avatar flex-shrink-0 me-3">
+                <img src="~/img/icons/unicons/wallet.png" alt="Ticket" class="rounded" />
+              </div>
+              <div class="d-flex w-100 flex-wrap align-items-center justify-content-between gap-2">
+                <div class="me-2">
+                  <small class="d-block">Ticket #4582</small>
+                  <h6 class="fw-normal mb-0">Login issue</h6>
+                </div>
+                <div class="user-progress d-flex align-items-center gap-2">
+                  <span class="badge bg-label-success">Resolved</span>
+                </div>
+              </div>
+            </li>
+          }
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-6 col-lg-4 order-2 mb-6">
+    <div class="card h-100">
+      <div class="card-header d-flex justify-content-between">
+        <div class="card-title mb-0">
+          <h5 class="mb-1 me-2">Support Agents</h5>
+          <p class="card-subtitle">Team Performance</p>
+        </div>
+      </div>
+      <div class="card-body">
+        <ul class="p-0 m-0">
+          @if (Model.TopAgents.Any())
+          {
+            @foreach (var agent in Model.TopAgents.Take(5))
+            {
+              <li class="d-flex align-items-center mb-5">
+                <div class="avatar flex-shrink-0 me-3">
+                  <span class="avatar-initial rounded @agent.IconBgClass">@string.Join("", agent.Name.Split(' ').Take(2).Select(s => s[0]))</span>
+                </div>
+                <div class="d-flex w-100 flex-wrap align-items-center justify-content-between gap-2">
+                  <div class="me-2">
+                    <h6 class="mb-0">@agent.Name</h6>
+                    <small>@agent.Subtitle</small>
+                  </div>
+                  <div class="user-progress">
+                    <h6 class="mb-0">@agent.Value</h6>
+                  </div>
+                </div>
+              </li>
+            }
+          }
+          else
+          {
+            <li class="d-flex align-items-center mb-5">
+              <div class="avatar flex-shrink-0 me-3">
+                <span class="avatar-initial rounded bg-label-primary">JD</span>
+              </div>
+              <div class="d-flex w-100 flex-wrap align-items-center justify-content-between gap-2">
+                <div class="me-2">
+                  <h6 class="mb-0">John Doe</h6>
+                  <small>Team Lead</small>
+                </div>
+                <div class="user-progress">
+                  <h6 class="mb-0">156</h6>
+                </div>
+              </div>
+            </li>
+          }
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+
+@if (Model.TicketVolumeLineChart.Series.Any())
+{
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      // Ticket Volume Line Chart
+      var tvData = @Html.Raw(Json.Serialize(Model.TicketVolumeLineChart));
+      var tvEl = document.querySelector('#ticketVolumeLineChart');
+      if (tvEl && typeof ApexCharts !== 'undefined') {
+        new ApexCharts(tvEl, {
+          chart: { height: 280, type: 'line', toolbar: { show: false }, fontFamily: config.fontFamily, foreColor: labelColor },
+          colors: ['#6965fd', '#71dd88'],
+          dataLabels: { enabled: false },
+          stroke: { curve: 'smooth', width: 3 },
+          legend: { show: true, position: 'top', horizontalAlign: 'left', fontSize: '13px', fontFamily: config.fontFamily, labels: { colors: legendColor }, markers: { size: 4, radius: 12, shape: 'circle' } },
+          grid: { strokeDashArray: 7, borderColor: borderColor, padding: { top: -10, bottom: -10, left: 10, right: 10 } },
+          xaxis: { categories: tvData.categories || [], labels: { style: { fontSize: '13px', fontFamily: config.fontFamily, colors: labelColor } }, axisTicks: { show: false }, axisBorder: { show: false } },
+          yaxis: { labels: { style: { fontSize: '13px', fontFamily: config.fontFamily, colors: labelColor } } },
+          tooltip: { theme: 'dark' },
+          series: tvData.series || []
+        }).render();
+      }
+
+      // SLA Compliance Chart
+      var slaData = @Html.Raw(Json.Serialize(Model.SlaComplianceChart));
+      var slaEl = document.querySelector('#slaComplianceChart');
+      if (slaEl && typeof ApexCharts !== 'undefined') {
+        new ApexCharts(slaEl, {
+          chart: { height: 280, type: 'bar', toolbar: { show: false }, fontFamily: config.fontFamily, foreColor: labelColor },
+          colors: ['#71dd88', '#03c3ec'],
+          dataLabels: { enabled: false },
+          plotOptions: { bar: { horizontal: false, columnWidth: '40%', borderRadius: 6, borderRadiusApplication: 'around' } },
+          legend: { show: true, position: 'top', horizontalAlign: 'left', fontSize: '13px', fontFamily: config.fontFamily, labels: { colors: legendColor }, markers: { size: 4, radius: 12, shape: 'circle' } },
+          grid: { strokeDashArray: 7, borderColor: borderColor, padding: { top: -10, bottom: -10, left: 10, right: 10 } },
+          xaxis: { categories: slaData.categories || [], labels: { style: { fontSize: '13px', fontFamily: config.fontFamily, colors: labelColor } }, axisTicks: { show: false }, axisBorder: { show: false } },
+          yaxis: { labels: { style: { fontSize: '13px', fontFamily: config.fontFamily, colors: labelColor }, formatter: function(val) { return typeof val === 'number' ? val + '%' : val; } } },
+          tooltip: { theme: 'dark', y: { formatter: function(val) { return typeof val === 'number' ? val + '%' : val; } } },
+          series: slaData.series || []
+        }).render();
+      }
+
+      // Response Time Chart
+      var rtData = @Html.Raw(Json.Serialize(Model.ResponseTimeChart));
+      var rtEl = document.querySelector('#responseTimeChart');
+      if (rtEl && typeof ApexCharts !== 'undefined') {
+        new ApexCharts(rtEl, {
+          chart: { height: 280, type: 'line', toolbar: { show: false }, fontFamily: config.fontFamily, foreColor: labelColor },
+          colors: ['#ffab00', '#ff3e1d'],
+          dataLabels: { enabled: false },
+          stroke: { curve: 'smooth', width: 3 },
+          legend: { show: true, position: 'top', horizontalAlign: 'left', fontSize: '13px', fontFamily: config.fontFamily, labels: { colors: legendColor }, markers: { size: 4, radius: 12, shape: 'circle' } },
+          grid: { strokeDashArray: 7, borderColor: borderColor, padding: { top: -10, bottom: -10, left: 10, right: 10 } },
+          xaxis: { categories: rtData.categories || [], labels: { style: { fontSize: '13px', fontFamily: config.fontFamily, colors: labelColor } }, axisTicks: { show: false }, axisBorder: { show: false } },
+          yaxis: { labels: { style: { fontSize: '13px', fontFamily: config.fontFamily, colors: labelColor } } },
+          tooltip: { theme: 'dark' },
+          series: rtData.series || []
+        }).render();
+      }
+
+      // Backlog Aging Chart
+      var baData = @Html.Raw(Json.Serialize(Model.BacklogAgingChart));
+      var baEl = document.querySelector('#backlogAgingChart');
+      if (baEl && typeof ApexCharts !== 'undefined') {
+        new ApexCharts(baEl, {
+          chart: { height: 280, type: 'bar', toolbar: { show: false }, fontFamily: config.fontFamily, foreColor: labelColor },
+          colors: ['#71dd88', '#03c3ec', '#ffab00', '#ff3e1d'],
+          dataLabels: { enabled: false },
+          plotOptions: { bar: { horizontal: false, columnWidth: '50%', borderRadius: 6, borderRadiusApplication: 'around' } },
+          legend: { show: true, position: 'top', horizontalAlign: 'left', fontSize: '12px', fontFamily: config.fontFamily, labels: { colors: legendColor }, markers: { size: 4, radius: 12, shape: 'circle' } },
+          grid: { strokeDashArray: 7, borderColor: borderColor, padding: { top: -10, bottom: -10, left: 10, right: 10 } },
+          xaxis: { categories: baData.categories || [], labels: { style: { fontSize: '13px', fontFamily: config.fontFamily, colors: labelColor } }, axisTicks: { show: false }, axisBorder: { show: false } },
+          yaxis: { labels: { style: { fontSize: '13px', fontFamily: config.fontFamily, colors: labelColor } } },
+          tooltip: { theme: 'dark' },
+          series: baData.series || []
+        }).render();
+      }
+
+      // Channel Mix Stacked Chart
+      var cmData = @Html.Raw(Json.Serialize(Model.ChannelMixStackedChart));
+      var cmEl = document.querySelector('#channelMixStackedChart');
+      if (cmEl && typeof ApexCharts !== 'undefined') {
+        new ApexCharts(cmEl, {
+          chart: { height: 280, type: 'bar', toolbar: { show: false }, fontFamily: config.fontFamily, foreColor: labelColor },
+          colors: ['#6965fd', '#03c3ec', '#71dd88', '#ffab00'],
+          dataLabels: { enabled: false },
+          plotOptions: { bar: { horizontal: false, columnWidth: '40%', borderRadius: 6, borderRadiusApplication: 'around' } },
+          legend: { show: true, position: 'top', horizontalAlign: 'left', fontSize: '12px', fontFamily: config.fontFamily, labels: { colors: legendColor }, markers: { size: 4, radius: 12, shape: 'circle' } },
+          grid: { strokeDashArray: 7, borderColor: borderColor, padding: { top: -10, bottom: -10, left: 10, right: 10 } },
+          xaxis: { categories: cmData.categories || [], labels: { style: { fontSize: '13px', fontFamily: config.fontFamily, colors: labelColor } }, axisTicks: { show: false }, axisBorder: { show: false } },
+          yaxis: { labels: { style: { fontSize: '13px', fontFamily: config.fontFamily, colors: labelColor } } },
+          tooltip: { theme: 'dark' },
+          series: cmData.series || []
+        }).render();
+      }
+
+      // CSAT/NPS Trend Chart
+      var csatData = @Html.Raw(Json.Serialize(Model.CsatNpsTrendChart));
+      var csatEl = document.querySelector('#csatNpsTrendChart');
+      if (csatEl && typeof ApexCharts !== 'undefined') {
+        new ApexCharts(csatEl, {
+          chart: { height: 280, type: 'line', toolbar: { show: false }, fontFamily: config.fontFamily, foreColor: labelColor },
+          colors: ['#71dd88', '#6965fd'],
+          dataLabels: { enabled: false },
+          stroke: { curve: 'smooth', width: 3 },
+          legend: { show: true, position: 'top', horizontalAlign: 'left', fontSize: '13px', fontFamily: config.fontFamily, labels: { colors: legendColor }, markers: { size: 4, radius: 12, shape: 'circle' } },
+          grid: { strokeDashArray: 7, borderColor: borderColor, padding: { top: -10, bottom: -10, left: 10, right: 10 } },
+          xaxis: { categories: csatData.categories || [], labels: { style: { fontSize: '13px', fontFamily: config.fontFamily, colors: labelColor } }, axisTicks: { show: false }, axisBorder: { show: false } },
+          yaxis: { labels: { style: { fontSize: '13px', fontFamily: config.fontFamily, colors: labelColor } } },
+          tooltip: { theme: 'dark' },
+          series: csatData.series || []
+        }).render();
+      }
+
+      // Root Cause Pareto Chart
+      var paretoData = @Html.Raw(Json.Serialize(Model.RootCauseParetoChart));
+      var paretoEl = document.querySelector('#rootCauseParetoChart');
+      if (paretoEl && typeof ApexCharts !== 'undefined') {
+        new ApexCharts(paretoEl, {
+          chart: { height: 280, type: 'bar', toolbar: { show: false }, fontFamily: config.fontFamily, foreColor: labelColor },
+          colors: ['#ff3e1d'],
+          dataLabels: { enabled: false },
+          plotOptions: { bar: { horizontal: true, barHeight: '65%', borderRadius: 6, borderRadiusApplication: 'end' } },
+          legend: { show: false },
+          grid: { strokeDashArray: 7, borderColor: borderColor, padding: { top: -10, bottom: -10, left: 10, right: 10 } },
+          xaxis: { categories: paretoData.categories || [], labels: { style: { fontSize: '11px', fontFamily: config.fontFamily, colors: labelColor } }, axisTicks: { show: false }, axisBorder: { show: false } },
+          yaxis: { labels: { style: { fontSize: '12px', fontFamily: config.fontFamily, colors: labelColor } } },
+          tooltip: { theme: 'dark' },
+          series: paretoData.series || []
+        }).render();
+      }
+
+      // Churn Risk Heatmap
+      var churnData = @Html.Raw(Json.Serialize(Model.ChurnRiskHeatmap));
+      var churnEl = document.querySelector('#churnRiskHeatmap');
+      if (churnEl && typeof ApexCharts !== 'undefined') {
+        var yCats = churnData.yCategories || [];
+        new ApexCharts(churnEl, {
+          chart: { height: 280, type: 'heatmap', toolbar: { show: false }, fontFamily: config.fontFamily, foreColor: labelColor },
+          colors: ['#ff3e1d'],
+          dataLabels: { enabled: false },
+          stroke: { width: 1, colors: [cardColor] },
+          legend: { show: true, position: 'top', horizontalAlign: 'left', fontSize: '12px', fontFamily: config.fontFamily, labels: { colors: legendColor } },
+          grid: { padding: { top: -10, bottom: -10, left: 10, right: 10 } },
+          xaxis: { labels: { style: { fontSize: '11px', fontFamily: config.fontFamily, colors: labelColor } }, axisTicks: { show: false }, axisBorder: { show: false }, categories: churnData.xCategories || [] },
+          yaxis: { labels: { style: { fontSize: '11px', fontFamily: config.fontFamily, colors: labelColor } } },
+          plotOptions: { heatmap: { radius: 3, colorScale: { ranges: [{ from: 0, to: 0, name: 'Low', color: '#dce6ff' }, { from: 1, to: 3, name: 'Medium', color: '#ffeaa7' }, { from: 4, to: 7, name: 'High', color: '#ff7675' }, { from: 8, to: 10, name: 'Critical', color: '#d63031' }] } } },
+          series: yCats.map(function(yCat) { return { name: yCat, data: (churnData.data || []).filter(function(d){ return d.y === yCat; }).map(function(d){ return d.value || 0; }) }; }),
+          tooltip: { theme: 'dark' }
+        }).render();
+      }
+    });
+  </script>
+}
+
+@if (Model.SupportOverviewChart.Series.Any())
+{
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      var chartData = @Html.Raw(Json.Serialize(Model.SupportOverviewChart));
+      var chartEl = document.querySelector('#totalRevenueChart');
+      if (chartEl && typeof ApexCharts !== 'undefined') {
+        var options = {
+          chart: { height: 300, stacked: true, type: 'bar', toolbar: { show: false } },
+          plotOptions: { bar: { horizontal: false, columnWidth: '30%', borderRadius: 8, borderRadiusApplication: 'around' } },
+          colors: ['#6965fd', '#03c3ec'],
+          dataLabels: { enabled: false },
+          stroke: { curve: 'smooth', width: 6, lineCap: 'round', colors: [cardColor] },
+          legend: { show: true, horizontalAlign: 'left', position: 'top', markers: { size: 4, radius: 12, shape: 'circle', strokeWidth: 0 }, fontSize: '13px', fontFamily: config.fontFamily, labels: { colors: legendColor, useSeriesColors: false }, itemMargin: { horizontal: 10 } },
+          grid: { strokeDashArray: 7, borderColor: borderColor, padding: { top: 0, bottom: -8, left: 20, right: 20 } },
+          fill: { opacity: [1, 1] },
+          xaxis: { categories: chartData.categories || [], labels: { style: { fontSize: '13px', fontFamily: config.fontFamily, colors: labelColor } }, axisTicks: { show: false }, axisBorder: { show: false } },
+          yaxis: { labels: { style: { fontSize: '13px', fontFamily: config.fontFamily, colors: labelColor } } },
+          states: { hover: { filter: { type: 'none' } }, active: { filter: { type: 'none' } } },
+          series: chartData.series || []
+        };
+        new ApexCharts(chartEl, options).render();
+      }
+    });
+  </script>
+}
+
+@if (Model.FirstResponseRatePercent > 0)
+{
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      var growthEl = document.querySelector('#growthChart');
+      if (growthEl && typeof ApexCharts !== 'undefined') {
+        var options = {
+          series: [@Model.FirstResponseRatePercent],
+          labels: ['FCR'],
+          chart: { height: 200, type: 'radialBar' },
+          plotOptions: { radialBar: { size: 150, offsetY: 10, startAngle: -150, endAngle: 150, hollow: { size: '55%' }, track: { background: cardColor, strokeWidth: '100%' }, dataLabels: { name: { offsetY: 15, color: legendColor, fontSize: '15px', fontWeight: '500', fontFamily: config.fontFamily }, value: { offsetY: -25, color: headingColor, fontSize: '22px', fontWeight: '500', fontFamily: config.fontFamily } } },
+          colors: ['#6965fd'],
+          fill: { type: 'gradient', gradient: { shade: 'dark', shadeIntensity: 0.5, gradientToColors: ['#6965fd'], inverseColors: true, opacityFrom: 1, opacityTo: 0.6, stops: [30, 70, 100] } },
+          stroke: { dashArray: 5 },
+          grid: { padding: { top: -35, bottom: -10 } },
+          states: { hover: { filter: { type: 'none' } }, active: { filter: { type: 'none' } } }
+        };
+        new ApexCharts(growthEl, options).render();
+      }
+    });
+  </script>
+}
+
+<script>
+function setRange(type) {
+    var today = new Date();
+    var toInput = document.querySelector('form[method="get"] input[name="to"]');
+    var fromInput = document.querySelector('form[method="get"] input[name="from"]');
+    if (!fromInput || !toInput) return;
+
+    var to = new Date(today);
+    var from = new Date(today);
+
+    if (type === 'today') {
+        from = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+        to = from;
+    } else if (type === 'week') {
+        var day = today.getDay();
+        var diff = today.getDate() - day + (day === 0 ? -6 : 1);
+        from = new Date(today.getFullYear(), today.getMonth(), diff);
+        to = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+    } else if (type === 'month') {
+        from = new Date(today.getFullYear(), today.getMonth(), 1);
+        to = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+    } else if (type === 'ytd') {
+        from = new Date(today.getFullYear(), 0, 1);
+        to = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+    }
+
+    fromInput.value = from.toISOString().split('T')[0];
+    toInput.value = to.toISOString().split('T')[0];
+    fromInput.closest('form').submit();
+}
+</script>

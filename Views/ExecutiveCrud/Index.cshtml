@@ -1,0 +1,75 @@
+@{
+    Layout = "~/Views/Shared/_ContentNavbarLayout.cshtml";
+    ViewData["Title"] = "Executive CRUD Management";
+}
+<div class="row">
+  <div class="col-12 mb-4">
+    <h4 class="py-3 mb-0">Executive CRUD Management</h4>
+  </div>
+  <!-- Regions Card -->
+  <div class="col-lg-4 col-md-6">
+    <div class="card mb-4">
+      <div class="card-body text-center">
+        <div class="avatar avatar-md mx-auto mb-3">
+          <span class="avatar-initial rounded-circle bg-label-primary">
+            <i class="icon-base bx bx-globe-alt fs-3"></i>
+          </span>
+        </div>
+        <h5 class="mb-1">Regions</h5>
+        <p class="text-muted small mb-3">Manage regional locations</p>
+        <div class="d-flex justify-content-center gap-2">
+          <a asp-action="Regions_Index" class="btn btn-primary btn-sm">
+            <i class="icon-base bx bx-list-ul me-1"></i> View All (@ViewBag.RegionCount)
+          </a>
+          <a asp-action="Regions_Create" class="btn btn-outline-primary btn-sm">
+            <i class="icon-base bx bx-plus me-1"></i> Create
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+  <!-- Branches Card -->
+  <div class="col-lg-4 col-md-6">
+    <div class="card mb-4">
+      <div class="card-body text-center">
+        <div class="avatar avatar-md mx-auto mb-3">
+          <span class="avatar-initial rounded-circle bg-label-success">
+            <i class="icon-base bx bx-building-house fs-3"></i>
+          </span>
+        </div>
+        <h5 class="mb-1">Branches</h5>
+        <p class="text-muted small mb-3">Manage branch locations</p>
+        <div class="d-flex justify-content-center gap-2">
+          <a asp-action="Branches_Index" class="btn btn-success btn-sm">
+            <i class="icon-base bx bx-list-ul me-1"></i> View All (@ViewBag.BranchCount)
+          </a>
+          <a asp-action="Branches_Create" class="btn btn-outline-success btn-sm">
+            <i class="icon-base bx bx-plus me-1"></i> Create
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+  <!-- Departments Card -->
+  <div class="col-lg-4 col-md-6">
+    <div class="card mb-4">
+      <div class="card-body text-center">
+        <div class="avatar avatar-md mx-auto mb-3">
+          <span class="avatar-initial rounded-circle bg-label-info">
+            <i class="icon-base bx bx-buildings fs-3"></i>
+          </span>
+        </div>
+        <h5 class="mb-1">Departments</h5>
+        <p class="text-muted small mb-3">Manage organizational units</p>
+        <div class="d-flex justify-content-center gap-2">
+          <a asp-action="Departments_Index" class="btn btn-info btn-sm">
+            <i class="icon-base bx bx-list-ul me-1"></i> View All (@ViewBag.DepartmentCount)
+          </a>
+          <a asp-action="Departments_Create" class="btn btn-outline-info btn-sm">
+            <i class="icon-base bx bx-plus me-1"></i> Create
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

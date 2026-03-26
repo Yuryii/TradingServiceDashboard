@@ -1,0 +1,62 @@
+@model Dashboard.Models.ViewModels.ExpenseCategoryCreateVM
+@{
+    Layout = "~/Views/Shared/_ContentNavbarLayout.cshtml";
+    ViewData["Title"] = "Create Expense Category";
+}
+
+<div class="row">
+  <div class="col-12 col-lg-6">
+    <div class="card mb-6">
+      <div class="card-header">
+        <h5 class="mb-0">Create New Expense Category</h5>
+      </div>
+      <div class="card-body pt-4">
+        @if (ViewData.ModelState.ErrorCount > 0)
+        {
+          <div class="alert alert-danger" role="alert">
+            <div asp-validation-summary="ModelOnly"></div>
+          </div>
+        }
+
+        <form asp-action="ExpenseCategories_Create" method="post">
+          @Html.AntiForgeryToken()
+
+          <div class="row g-6">
+            <div class="col-md-6">
+              <label asp-for="CategoryCode" class="form-label">Category Code</label>
+              <input asp-for="CategoryCode" class="form-control" placeholder="EXP-CAT-001" />
+              <span asp-validation-for="CategoryCode" class="text-danger"></span>
+            </div>
+            <div class="col-md-6">
+              <label asp-for="CategoryName" class="form-label">Category Name</label>
+              <input asp-for="CategoryName" class="form-control" placeholder="Travel Expenses" />
+              <span asp-validation-for="CategoryName" class="text-danger"></span>
+            </div>
+            <div class="col-12">
+              <label asp-for="Description" class="form-label">Description</label>
+              <textarea asp-for="Description" class="form-control" rows="3" placeholder="Enter category description"></textarea>
+              <span asp-validation-for="Description" class="text-danger"></span>
+            </div>
+            <div class="col-md-6">
+              <label asp-for="IsActive" class="form-label">Status</label>
+              <select asp-for="IsActive" class="form-select">
+                <option value="true">Active</option>
+                <option value="false">Inactive</option>
+              </select>
+              <span asp-validation-for="IsActive" class="text-danger"></span>
+            </div>
+          </div>
+
+          <div class="mt-6 d-flex gap-3">
+            <button type="submit" class="btn btn-primary">
+              <i class="icon-base bx bx-save me-1"></i> Create Category
+            </button>
+            <a asp-action="ExpenseCategories_Index" class="btn btn-outline-secondary">
+              <i class="icon-base bx bx-x me-1"></i> Cancel
+            </a>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>

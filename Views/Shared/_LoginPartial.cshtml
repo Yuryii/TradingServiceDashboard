@@ -1,0 +1,73 @@
+@using Microsoft.AspNetCore.Identity
+@using Dashboard.Models
+
+@inject SignInManager<ApplicationUser> SignInManager
+@inject UserManager<ApplicationUser> UserManager
+
+<ul class="navbar-nav flex-row align-items-center ms-md-auto">
+@if (SignInManager.IsSignedIn(User))
+{
+    <li class="nav-item navbar-dropdown dropdown-user dropdown">
+        <a class="nav-link dropdown-toggle hide-arrow p-0" href="javascript:void(0);" data-bs-toggle="dropdown">
+            <div class="avatar avatar-online">
+                <img src="~/img/avatars/1.png" alt class="w-px-40 h-auto rounded-circle" />
+            </div>
+        </a>
+        <ul class="dropdown-menu dropdown-menu-end">
+            <li>
+                <a class="dropdown-item" href="javascript:void(0);">
+                    <div class="d-flex">
+                        <div class="flex-shrink-0 me-3">
+                            <div class="avatar avatar-online">
+                                <img src="~/img/avatars/1.png" alt class="w-px-40 h-auto rounded-circle" />
+                            </div>
+                        </div>
+                        <div class="flex-grow-1">
+                            <h6 class="mb-0">@User.Identity?.Name</h6>
+                            <small class="text-body-secondary">
+                                @{
+                                    var user = await UserManager.GetUserAsync(User);
+                                    if (user != null)
+                                    {
+                                        var roles = await UserManager.GetRolesAsync(user);
+                                        @string.Join(", ", roles)
+                                    }
+                                }
+                            </small>
+                        </div>
+                    </div>
+                </a>
+            </li>
+            <li>
+                <div class="dropdown-divider my-1"></div>
+            </li>
+            <li>
+                <a class="dropdown-item" asp-controller="Pages" asp-action="AccountSettings">
+                    <i class="icon-base bx bx-user icon-md me-3"></i><span>Profile</span>
+                </a>
+            </li>
+            <li>
+                <form asp-controller="Auth" asp-action="Logout" method="post" id="logoutForm">
+                    @Html.AntiForgeryToken()
+                    <button type="submit" class="dropdown-item" style="border: none; background: none; cursor: pointer; width: 100%; text-align: left;">
+                        <i class="icon-base bx bx-power-off icon-md me-3"></i><span>Log Out</span>
+                    </button>
+                </form>
+            </li>
+        </ul>
+    </li>
+}
+else
+{
+    <li class="nav-item">
+        <a class="btn btn-outline-primary me-2" asp-controller="Auth" asp-action="LoginBasic">
+            <i class="icon-base bx bx-log-in icon-md me-1"></i> Login
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="btn btn-primary" asp-controller="Auth" asp-action="RegisterBasic">
+            <i class="icon-base bx bx-user-plus icon-md me-1"></i> Register
+        </a>
+    </li>
+}
+</ul>

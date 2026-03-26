@@ -1,0 +1,784 @@
+@model FinanceDashboardViewModel
+@{
+  ViewData["Title"] = "Finance Dashboard";
+}
+@section VendorStyles {
+<link rel="stylesheet" href="~/vendor/libs/apex-charts/apex-charts.css" />
+}
+@section VendorScripts {
+<script src="~/vendor/libs/apex-charts/apexcharts.js"></script>
+}
+@* Always render chart data - individual guards protect each chart render *@
+<script>
+window.dashboardCharts = window.dashboardCharts || {};
+window.dashboardCharts.incomeChart = @Html.Raw(Json.Serialize(Model.FinancialOverviewChart));
+window.dashboardCharts.expensesChart = @Html.Raw(Json.Serialize(Model.FinancialOverviewChart));
+window.dashboardCharts.profitWaterfall = @Html.Raw(Json.Serialize(Model.ProfitWaterfallChart));
+window.dashboardCharts.cashflowTrendArea = @Html.Raw(Json.Serialize(Model.CashflowTrendAreaChart));
+window.dashboardCharts.dsoDpoTrend = @Html.Raw(Json.Serialize(Model.DsoDpoTrendChart));
+window.dashboardCharts.collectionsPerf = @Html.Raw(Json.Serialize(Model.CollectionsPerformanceChart));
+window.dashboardCharts.expenseTreemap = @Html.Raw(Json.Serialize(Model.ExpenseTreemapChart));
+window.dashboardCharts.unitEconomics = @Html.Raw(Json.Serialize(Model.UnitEconomicsChart));
+window.dashboardCharts.customerProfitScatter = @Html.Raw(Json.Serialize(Model.CustomerProfitScatterChart));
+window.dashboardCharts.arApAgingStacked = @Html.Raw(Json.Serialize(Model.ArApAgingStackedChart));
+</script>
+@section PageScripts {
+<script src="~/js/dashboards-analytics.js"></script>
+}
+
+<div class="row">
+  <div class="col-xxl-8 mb-6 order-0">
+    <div class="card">
+      <div class="d-flex align-items-start row">
+        <div class="col-sm-7">
+          <div class="card-body">
+            <h5 class="card-title text-primary mb-3">Finance Overview 💰</h5>
+            <p class="mb-6">Welcome to the Finance Dashboard. Track expenses and financial health.</p>
+            <a href="javascript:;" class="btn btn-sm btn-outline-primary">View Reports</a>
+          </div>
+        </div>
+        <div class="col-sm-5 text-center text-sm-left">
+          <div class="card-body pb-0 px-0 px-md-6">
+            <img src="~/img/illustrations/man-with-laptop.png" height="175" alt="Finance Dashboard" />
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="col-xxl-4 col-lg-12 col-md-4 order-1">
+    <div class="row">
+      <div class="col-lg-6 col-md-12 col-6 mb-6">
+        <div class="card h-100">
+          <div class="card-body">
+            <div class="card-title d-flex align-items-start justify-content-between mb-4">
+              <div class="avatar flex-shrink-0">
+                <img src="~/img/icons/unicons/chart-success.png" alt="Income" class="rounded" />
+              </div>
+              <div class="dropdown">
+                <button class="btn p-0" type="button" id="cardOpt1" data-bs-toggle="dropdown" aria-haspupup="true" aria-expanded="false">
+                  <i class="icon-base bx bx-dots-vertical-rounded text-body-secondary"></i>
+                </button>
+                <div class="dropdown-menu dropdown-menu-end" aria-labelledby="cardOpt1">
+                  <a class="dropdown-item" href="javascript:void(0);">View More</a>
+                </div>
+              </div>
+            </div>
+            <p class="mb-1">@Model.TotalIncome.Title</p>
+            <h4 class="card-title mb-3">@Model.TotalIncome.Value</h4>
+            <small class="text-success fw-medium"><i class="icon-base bx bx-up-arrow-alt"></i> @Model.TotalIncome.TrendLabel</small>
+          </div>
+        </div>
+      </div>
+      <div class="col-lg-6 col-md-12 col-6 mb-6">
+        <div class="card h-100">
+          <div class="card-body">
+            <div class="card-title d-flex align-items-start justify-content-between mb-4">
+              <div class="avatar flex-shrink-0">
+                <img src="~/img/icons/unicons/wallet-info.png" alt="Expenses" class="rounded" />
+              </div>
+              <div class="dropdown">
+                <button class="btn p-0" type="button" id="cardOpt2" data-bs-toggle="dropdown" aria-haspupup="true" aria-expanded="false">
+                  <i class="icon-base bx bx-dots-vertical-rounded text-body-secondary"></i>
+                </button>
+                <div class="dropdown-menu dropdown-menu-end" aria-labelledby="cardOpt2">
+                  <a class="dropdown-item" href="javascript:void(0);">View More</a>
+                </div>
+              </div>
+            </div>
+            <p class="mb-1">@Model.TotalExpenses.Title</p>
+            <h4 class="card-title mb-3">@Model.TotalExpenses.Value</h4>
+            <small class="text-success fw-medium"><i class="icon-base bx bx-up-arrow-alt"></i> @Model.TotalExpenses.TrendLabel</small>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+@* New KPI Cards: DSO, DPO, AR Balance *@
+<div class="row">
+  <div class="col-md-6 col-lg-4 mb-6">
+    <div class="card h-100">
+      <div class="card-body">
+        <div class="card-title d-flex align-items-start justify-content-between mb-4">
+          <div class="avatar flex-shrink-0">
+            <img src="~/img/icons/unicons/chart-line.png" alt="DSO" class="rounded" />
+          </div>
+          <div class="dropdown">
+            <button class="btn p-0" type="button" id="cardDso" data-bs-toggle="dropdown" aria-haspupup="true" aria-expanded="false">
+              <i class="icon-base bx bx-dots-vertical-rounded text-body-secondary"></i>
+            </button>
+            <div class="dropdown-menu dropdown-menu-end" aria-labelledby="cardDso">
+              <a class="dropdown-item" href="javascript:void(0);">View More</a>
+            </div>
+          </div>
+        </div>
+            <p class="mb-1">@Model.Dso.Title</p>
+            <h4 class="card-title mb-3">@Model.Dso.Value</h4>
+            <small class="text-primary fw-medium"><i class="icon-base bx bx-up-arrow-alt"></i> @Model.Dso.TrendLabel</small>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-6 col-lg-4 mb-6">
+    <div class="card h-100">
+      <div class="card-body">
+        <div class="card-title d-flex align-items-start justify-content-between mb-4">
+          <div class="avatar flex-shrink-0">
+            <img src="~/img/icons/unicons/chart-bar.png" alt="DPO" class="rounded" />
+          </div>
+          <div class="dropdown">
+            <button class="btn p-0" type="button" id="cardDpo" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+              <i class="icon-base bx bx-dots-vertical-rounded text-body-secondary"></i>
+            </button>
+            <div class="dropdown-menu dropdown-menu-end" aria-labelledby="cardDpo">
+              <a class="dropdown-item" href="javascript:void(0);">View More</a>
+            </div>
+          </div>
+        </div>
+            <p class="mb-1">@Model.Dpo.Title</p>
+            <h4 class="card-title mb-3">@Model.Dpo.Value</h4>
+            <small class="text-primary fw-medium"><i class="icon-base bx bx-up-arrow-alt"></i> @Model.Dpo.TrendLabel</small>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-6 col-lg-4 mb-6">
+    <div class="card h-100">
+      <div class="card-body">
+        <div class="card-title d-flex align-items-start justify-content-between mb-4">
+          <div class="avatar flex-shrink-0">
+            <img src="~/img/icons/unicons/wallet.png" alt="AR Balance" class="rounded" />
+          </div>
+          <div class="dropdown">
+            <button class="btn p-0" type="button" id="cardArBalance" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+              <i class="icon-base bx bx-dots-vertical-rounded text-body-secondary"></i>
+            </button>
+            <div class="dropdown-menu dropdown-menu-end" aria-labelledby="cardArBalance">
+              <a class="dropdown-item" href="javascript:void(0);">View More</a>
+            </div>
+          </div>
+        </div>
+            <p class="mb-1">@Model.ArBalance.Title</p>
+            <h4 class="card-title mb-3">@Model.ArBalance.Value</h4>
+            <small class="text-success fw-medium"><i class="icon-base bx bx-up-arrow-alt"></i> @Model.ArBalance.TrendLabel</small>
+      </div>
+    </div>
+  </div>
+</div>
+
+@* Chart Section 1: Profit Waterfall Bar + Cash Flow Area Chart *@
+<div class="row">
+  <div class="col-md-6 mb-6">
+    <div class="card h-100">
+      <div class="card-header d-flex justify-content-between">
+        <div class="card-title mb-0">
+          <h5 class="mb-1 me-2">Profit Waterfall</h5>
+          <p class="card-subtitle">Revenue to Net Profit</p>
+        </div>
+      </div>
+      <div class="card-body">
+        <div id="profitWaterfallChart" class="apex-charts" style="height: 280px;"></div>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-6 mb-6">
+    <div class="card h-100">
+      <div class="card-header d-flex justify-content-between">
+        <div class="card-title mb-0">
+          <h5 class="mb-1 me-2">Cash Flow Trend</h5>
+          <p class="card-subtitle">Inflows vs Outflows</p>
+        </div>
+      </div>
+      <div class="card-body">
+        <div id="cashflowTrendAreaChart" class="apex-charts" style="height: 280px;"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+@* Chart Section 2: DSO & DPO Trend Line + AR/AP Aging Stacked Bar *@
+<div class="row">
+  <div class="col-md-6 mb-6">
+    <div class="card h-100">
+      <div class="card-header d-flex justify-content-between">
+        <div class="card-title mb-0">
+          <h5 class="mb-1 me-2">DSO & DPO Trend</h5>
+          <p class="card-subtitle">Days Sales Outstanding vs Days Payable Outstanding</p>
+        </div>
+      </div>
+      <div class="card-body">
+        <div id="dsoDpoTrendChart" class="apex-charts" style="height: 280px;"></div>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-6 mb-6">
+    <div class="card h-100">
+      <div class="card-header d-flex justify-content-between">
+        <div class="card-title mb-0">
+          <h5 class="mb-1 me-2">AR/AP Aging</h5>
+          <p class="card-subtitle">Accounts Receivable & Payable by Bucket</p>
+        </div>
+      </div>
+      <div class="card-body">
+        <div id="arApAgingStackedChart" class="apex-charts" style="height: 280px;"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+@* Chart Section 3: Collections Performance Bar + Unit Economics Bar *@
+<div class="row">
+  <div class="col-md-6 mb-6">
+    <div class="card h-100">
+      <div class="card-header d-flex justify-content-between">
+        <div class="card-title mb-0">
+          <h5 class="mb-1 me-2">Collections Performance</h5>
+          <p class="card-subtitle">Collection Rate by Period</p>
+        </div>
+      </div>
+      <div class="card-body">
+        <div id="collectionsPerformanceChart" class="apex-charts" style="height: 280px;"></div>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-6 mb-6">
+    <div class="card h-100">
+      <div class="card-header d-flex justify-content-between">
+        <div class="card-title mb-0">
+          <h5 class="mb-1 me-2">Unit Economics by Channel</h5>
+          <p class="card-subtitle">Gross Margin % & Contribution Margin %</p>
+        </div>
+      </div>
+      <div class="card-body">
+        <div id="unitEconomicsChart" class="apex-charts" style="height: 280px;"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+@* Chart Section 4 (full width): Customer Profit Scatter *@
+<div class="row">
+  <div class="col-12 mb-6">
+    <div class="card h-100">
+      <div class="card-header d-flex justify-content-between">
+        <div class="card-title mb-0">
+          <h5 class="mb-1 me-2">Customer Revenue vs Profit</h5>
+          <p class="card-subtitle">Scatter plot of customer profitability</p>
+        </div>
+      </div>
+      <div class="card-body">
+        <div id="customerProfitScatterChart" class="apex-charts" style="height: 300px;"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="row">
+  <div class="col-12 col-xxl-8 order-2 order-md-3 order-xxl-2 mb-6">
+    <div class="card">
+      <div class="row row-bordered g-0">
+        <div class="col-lg-8">
+          <div class="card-header d-flex align-items-center justify-content-between">
+            <div class="card-title mb-0">
+              <h5 class="m-0 me-2">Financial Overview</h5>
+            </div>
+            <div class="dropdown">
+              <button class="btn p-0" type="button" id="financeChart" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                <i class="icon-base bx bx-dots-vertical-rounded icon-lg text-body-secondary"></i>
+              </button>
+              <div class="dropdown-menu dropdown-menu-end" aria-labelledby="financeChart">
+                <a class="dropdown-item" href="javascript:void(0);">This Quarter</a>
+                <a class="dropdown-item" href="javascript:void(0);">This Year</a>
+              </div>
+            </div>
+          </div>
+          <div id="totalRevenueChart" class="px-3"></div>
+        </div>
+        <div class="col-lg-4">
+          <div class="card-body px-xl-9 py-12 d-flex align-items-center flex-column">
+            <div class="text-center mb-6">
+              <h6 class="mb-0">@Model.ProfitMarginPercent% Profit Margin</h6>
+            </div>
+            <div id="growthChart"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="col-12 col-md-8 col-lg-12 col-xxl-4 order-3 order-md-2 mb-6">
+    <div class="row">
+      <div class="col-6 mb-6">
+        <div class="card h-100">
+          <div class="card-body">
+            <div class="card-title d-flex align-items-start justify-content-between mb-4">
+              <div class="avatar flex-shrink-0">
+                <img src="~/img/icons/unicons/paypal.png" alt="Net Profit" class="rounded" />
+              </div>
+              <div class="dropdown">
+                <button class="btn p-0" type="button" id="cardOpt3" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                  <i class="icon-base bx bx-dots-vertical-rounded text-body-secondary"></i>
+                </button>
+                <div class="dropdown-menu dropdown-menu-end" aria-labelledby="cardOpt3">
+                  <a class="dropdown-item" href="javascript:void(0);">View More</a>
+                </div>
+              </div>
+            </div>
+            <p class="mb-1">@Model.NetProfit.Title</p>
+            <h4 class="card-title mb-3">@Model.NetProfit.Value</h4>
+            <small class="text-success fw-medium"><i class="icon-base bx bx-up-arrow-alt"></i> @Model.NetProfit.TrendLabel</small>
+          </div>
+        </div>
+      </div>
+      <div class="col-6 mb-6">
+        <div class="card h-100">
+          <div class="card-body">
+            <div class="card-title d-flex align-items-start justify-content-between mb-4">
+              <div class="avatar flex-shrink-0">
+                <img src="~/img/icons/unicons/cc-primary.png" alt="Cash Flow" class="rounded" />
+              </div>
+              <div class="dropdown">
+                <button class="btn p-0" type="button" id="cardOpt4" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                  <i class="icon-base bx bx-dots-vertical-rounded text-body-secondary"></i>
+                </button>
+                <div class="dropdown-menu" aria-labelledby="cardOpt4">
+                  <a class="dropdown-item" href="javascript:void(0);">View More</a>
+                </div>
+              </div>
+            </div>
+            <p class="mb-1">@Model.CashFlow.Title</p>
+            <h4 class="card-title mb-3">@Model.CashFlow.Value</h4>
+            <small class="text-success fw-medium"><i class="icon-base bx bx-up-arrow-alt"></i> @Model.CashFlow.TrendLabel</small>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="row">
+  <div class="col-md-6 col-lg-4 order-0 mb-6">
+    <div class="card h-100">
+      <div class="card-header d-flex justify-content-between">
+        <div class="card-title mb-0">
+          <h5 class="mb-1 me-2">Expense Breakdown</h5>
+          <p class="card-subtitle">By Category</p>
+        </div>
+      </div>
+      <div class="card-body">
+        <ul class="p-0 m-0">
+          @if (Model.ExpenseBreakdown.Any())
+          {
+            @foreach (var expense in Model.ExpenseBreakdown.Take(5))
+            {
+              <li class="d-flex align-items-center mb-5">
+                <div class="avatar flex-shrink-0 me-3">
+                  <span class="avatar-initial rounded @expense.IconBgClass"><i class="@expense.IconClass"></i></span>
+                </div>
+                <div class="d-flex w-100 flex-wrap align-items-center justify-content-between gap-2">
+                  <div class="me-2">
+                    <h6 class="mb-0">@expense.Name</h6>
+                    <small>@expense.Subtitle</small>
+                  </div>
+                  <div class="user-progress">
+                    <h6 class="mb-0">@expense.FormattedValue</h6>
+                  </div>
+                </div>
+              </li>
+            }
+          }
+          else
+          {
+            <li class="d-flex align-items-center mb-5">
+              <div class="avatar flex-shrink-0 me-3">
+                <span class="avatar-initial rounded bg-label-primary"><i class="icon-base bx bx-building"></i></span>
+              </div>
+              <div class="d-flex w-100 flex-wrap align-items-center justify-content-between gap-2">
+                <div class="me-2">
+                  <h6 class="mb-0">Operations</h6>
+                  <small>35% of expenses</small>
+                </div>
+                <div class="user-progress"><h6 class="mb-0">$404,600</h6></div>
+              </div>
+            </li>
+          }
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-6 col-lg-4 order-1 mb-6">
+    <div class="card h-100">
+      <div class="card-header d-flex justify-content-between">
+        <div class="card-title mb-0">
+          <h5 class="mb-1 me-2">Recent Transactions</h5>
+          <p class="card-subtitle">Latest Financial Activity</p>
+        </div>
+      </div>
+      <div class="card-body pt-4">
+        <ul class="p-0 m-0">
+          @if (Model.RecentTransactions.Any())
+          {
+            @foreach (var tx in Model.RecentTransactions.Take(5))
+            {
+              <li class="d-flex align-items-center mb-6">
+                <div class="avatar flex-shrink-0 me-3">
+                  <img src="~/img/icons/unicons/wallet.png" alt="Transaction" class="rounded" />
+                </div>
+                <div class="d-flex w-100 flex-wrap align-items-center justify-content-between gap-2">
+                  <div class="me-2">
+                    <small class="d-block">@tx.Column1</small>
+                    <h6 class="fw-normal mb-0">@tx.Column3</h6>
+                  </div>
+                  <div class="user-progress d-flex align-items-center gap-2">
+                    <h6 class="fw-normal mb-0 @tx.TrendClass">@tx.Column4</h6>
+                  </div>
+                </div>
+              </li>
+            }
+          }
+          else
+          {
+            <li class="d-flex align-items-center mb-6">
+              <div class="avatar flex-shrink-0 me-3">
+                <img src="~/img/icons/unicons/wallet.png" alt="Transaction" class="rounded" />
+              </div>
+              <div class="d-flex w-100 flex-wrap align-items-center justify-content-between gap-2">
+                <div class="me-2">
+                  <small class="d-block">Invoice #2845</small>
+                  <h6 class="fw-normal mb-0">Client Payment</h6>
+                </div>
+                <div class="user-progress d-flex align-items-center gap-2">
+                  <h6 class="fw-normal mb-0 text-success">+$12,500</h6>
+                </div>
+              </div>
+            </li>
+          }
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-6 col-lg-4 order-2 mb-6">
+    <div class="card h-100">
+      <div class="card-header d-flex justify-content-between">
+        <div class="card-title mb-0">
+          <h5 class="mb-1 me-2">Monthly Budget</h5>
+          <p class="card-subtitle">Budget vs Actual</p>
+        </div>
+      </div>
+      <div class="card-body">
+        <ul class="p-0 m-0">
+          @if (Model.MonthlyBudgetStatus.Any())
+          {
+            @foreach (var budget in Model.MonthlyBudgetStatus.Take(5))
+            {
+              <li class="d-flex align-items-center mb-5">
+                <div class="avatar flex-shrink-0 me-3">
+                  <span class="avatar-initial rounded @budget.IconBgClass"><i class="@budget.IconClass"></i></span>
+                </div>
+                <div class="d-flex w-100 flex-wrap align-items-center justify-content-between gap-2">
+                  <div class="me-2">
+                    <h6 class="mb-0">@budget.Name</h6>
+                    <small>@budget.Subtitle</small>
+                  </div>
+                  <div class="user-progress">
+                    <h6 class="mb-0 @budget.IconBgClass.Replace("bg-label-", "text-").Replace("bg-", "")">@budget.FormattedValue</h6>
+                  </div>
+                </div>
+              </li>
+            }
+          }
+          else
+          {
+            <li class="d-flex align-items-center mb-5">
+              <div class="avatar flex-shrink-0 me-3">
+                <span class="avatar-initial rounded bg-label-success"><i class="icon-base bx bx-check-circle"></i></span>
+              </div>
+              <div class="d-flex w-100 flex-wrap align-items-center justify-content-between gap-2">
+                <div class="me-2">
+                  <h6 class="mb-0">Revenue</h6>
+                  <small>105% of target</small>
+                </div>
+                <div class="user-progress"><h6 class="mb-0 text-success">On Track</h6></div>
+              </div>
+            </li>
+          }
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+
+@if (Model.FinancialOverviewChart.Series.Any())
+{
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      if (typeof config === 'undefined') window.config = {};
+      if (!window.config.colors) window.config.colors = {};
+      if (!window.config.fontFamily) window.config.fontFamily = 'Plus Jakarta Sans';
+      var cardColor    = window.config.colors.cardColor    || '#ffffff';
+      var headingColor = window.config.colors.headingColor || '#566a7f';
+      var legendColor  = window.config.colors.bodyColor    || '#697a8d';
+      var labelColor   = window.config.colors.textMuted   || '#a1acb8';
+      var borderColor  = '#eceef1';
+
+      var chartData = @Html.Raw(Json.Serialize(Model.FinancialOverviewChart));
+      var chartEl = document.querySelector('#totalRevenueChart');
+      if (chartEl && typeof ApexCharts !== 'undefined') {
+        var options = {
+          chart: { height: 300, stacked: true, type: 'bar', toolbar: { show: false } },
+          plotOptions: { bar: { horizontal: false, columnWidth: '30%', borderRadius: 8, borderRadiusApplication: 'around' } },
+          colors: ['#6965fd', '#03c3ec'],
+          dataLabels: { enabled: false },
+          stroke: { curve: 'smooth', width: 6, lineCap: 'round', colors: [cardColor] },
+          legend: { show: true, horizontalAlign: 'left', position: 'top', markers: { size: 4, radius: 12, shape: 'circle', strokeWidth: 0 }, fontSize: '13px', fontFamily: config.fontFamily, labels: { colors: legendColor, useSeriesColors: false }, itemMargin: { horizontal: 10 } },
+          grid: { strokeDashArray: 7, borderColor: borderColor, padding: { top: 0, bottom: -8, left: 20, right: 20 } },
+          fill: { opacity: [1, 1] },
+          xaxis: { categories: chartData.categories || [], labels: { style: { fontSize: '13px', fontFamily: config.fontFamily, colors: labelColor } }, axisTicks: { show: false }, axisBorder: { show: false } },
+          yaxis: { labels: { style: { fontSize: '13px', fontFamily: config.fontFamily, colors: labelColor } } },
+          states: { hover: { filter: { type: 'none' } }, active: { filter: { type: 'none' } } },
+          series: chartData.series || []
+        };
+        new ApexCharts(chartEl, options).render();
+      }
+    });
+  </script>
+}
+
+@if (Model.ProfitMarginPercent > 0)
+{
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      if (typeof config === 'undefined') window.config = {};
+      if (!window.config.colors) window.config.colors = {};
+      if (!window.config.fontFamily) window.config.fontFamily = 'Plus Jakarta Sans';
+      var cardColor    = window.config.colors.cardColor    || '#ffffff';
+      var headingColor = window.config.colors.headingColor || '#566a7f';
+      var legendColor  = window.config.colors.bodyColor    || '#697a8d';
+
+      var growthEl = document.querySelector('#growthChart');
+      if (growthEl && typeof ApexCharts !== 'undefined') {
+        var options = {
+          series: [@Model.ProfitMarginPercent],
+          labels: ['Margin'],
+          chart: { height: 200, type: 'radialBar' },
+          plotOptions: { radialBar: { size: 150, offsetY: 10, startAngle: -150, endAngle: 150, hollow: { size: '55%' }, track: { background: cardColor, strokeWidth: '100%' }, dataLabels: { name: { offsetY: 15, color: legendColor, fontSize: '15px', fontWeight: '500', fontFamily: config.fontFamily }, value: { offsetY: -25, color: headingColor, fontSize: '22px', fontWeight: '500', fontFamily: config.fontFamily } } },
+          colors: ['#6965fd'],
+          fill: { type: 'gradient', gradient: { shade: 'dark', shadeIntensity: 0.5, gradientToColors: ['#6965fd'], inverseColors: true, opacityFrom: 1, opacityTo: 0.6, stops: [30, 70, 100] } },
+          stroke: { dashArray: 5 },
+          grid: { padding: { top: -35, bottom: -10 } },
+          states: { hover: { filter: { type: 'none' } }, active: { filter: { type: 'none' } } }
+        };
+        new ApexCharts(growthEl, options).render();
+      }
+    });
+  </script>
+}
+
+@if (Model.ProfitWaterfallChart.Series.Any())
+{
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      if (typeof config === 'undefined') window.config = {};
+      if (!window.config.colors) window.config.colors = {};
+      if (!window.config.fontFamily) window.config.fontFamily = 'Plus Jakarta Sans';
+      (function () {
+        // Profit Waterfall Chart
+        var profitWaterfallEl = document.querySelector('#profitWaterfallChart');
+        if (profitWaterfallEl && typeof ApexCharts !== 'undefined') {
+          var profitWaterfallData = @Html.Raw(Json.Serialize(Model.ProfitWaterfallChart));
+          var profitWaterfallOptions = {
+            series: profitWaterfallData.series || [],
+            chart: { height: 280, type: 'bar', toolbar: { show: false }, fontFamily: config.fontFamily },
+            colors: function(value) {
+              if (!value) return '#6965fd';
+              var name = value.seriesName || '';
+              if (name.toLowerCase().includes('revenue') || name.toLowerCase().includes('gross') || name.toLowerCase().includes('net')) {
+                return '#28c76f';
+              }
+              return '#ea5455';
+            },
+            plotOptions: { bar: { horizontal: false, columnWidth: '40%', borderRadius: 6, borderRadiusApplication: 'around' } },
+            dataLabels: { enabled: false },
+            legend: { show: true, position: 'top', horizontalAlign: 'center', fontSize: '12px', fontFamily: config.fontFamily, labels: { colors: '#a1acb8' }, markers: { size: 4, radius: 12, shape: 'circle', strokeWidth: 0 } },
+            grid: { strokeDashArray: 5, borderColor: '#eceef1', padding: { top: -10, bottom: -8 } },
+            xaxis: {
+              categories: profitWaterfallData.categories || [],
+              labels: { style: { fontSize: '11px', fontFamily: config.fontFamily, colors: '#a1acb8' } },
+              axisTicks: { show: false },
+              axisBorder: { show: false }
+            },
+            yaxis: {
+              labels: { style: { fontSize: '11px', fontFamily: config.fontFamily, colors: '#a1acb8' } }
+            },
+            tooltip: { theme: 'dark' }
+          };
+          new ApexCharts(profitWaterfallEl, profitWaterfallOptions).render();
+        }
+
+        // Cash Flow Trend Area Chart
+        var cashflowAreaEl = document.querySelector('#cashflowTrendAreaChart');
+        if (cashflowAreaEl && typeof ApexCharts !== 'undefined') {
+          var cashflowAreaData = @Html.Raw(Json.Serialize(Model.CashflowTrendAreaChart));
+          var cashflowAreaOptions = {
+            series: cashflowAreaData.series || [],
+            chart: { height: 280, type: 'area', toolbar: { show: false }, fontFamily: config.fontFamily },
+            colors: ['#71dd88', '#ff3e1d'],
+            dataLabels: { enabled: false },
+            stroke: { curve: 'smooth', width: 3, lineCap: 'round' },
+            fill: { type: 'gradient', gradient: { shade: 'light', type: 'vertical', shadeIntensity: 0.5, gradientToColors: ['#71dd88', '#ff3e1d'], opacityFrom: 0.6, opacityTo: 0.05, stops: [0, 95] } },
+            legend: { show: true, position: 'top', horizontalAlign: 'center', fontSize: '12px', fontFamily: config.fontFamily, labels: { colors: '#a1acb8' }, markers: { size: 4, radius: 12, shape: 'circle', strokeWidth: 0 } },
+            grid: { strokeDashArray: 5, borderColor: '#eceef1', padding: { top: -10, bottom: -8 } },
+            xaxis: {
+              categories: cashflowAreaData.categories || [],
+              labels: { style: { fontSize: '11px', fontFamily: config.fontFamily, colors: '#a1acb8' } },
+              axisTicks: { show: false },
+              axisBorder: { show: false }
+            },
+            yaxis: {
+              labels: { style: { fontSize: '11px', fontFamily: config.fontFamily, colors: '#a1acb8' } }
+            },
+            tooltip: { theme: 'dark' }
+          };
+          new ApexCharts(cashflowAreaEl, cashflowAreaOptions).render();
+        }
+
+        // DSO & DPO Trend Line Chart
+        var dsoDpoEl = document.querySelector('#dsoDpoTrendChart');
+        if (dsoDpoEl && typeof ApexCharts !== 'undefined') {
+          var dsoDpoData = @Html.Raw(Json.Serialize(Model.DsoDpoTrendChart));
+          var dsoDpoOptions = {
+            series: dsoDpoData.series || [],
+            chart: { height: 280, type: 'line', toolbar: { show: false }, fontFamily: config.fontFamily },
+            colors: ['#6965fd', '#03c3ec'],
+            stroke: { curve: 'smooth', width: 3, lineCap: 'round', dashArray: 0 },
+            markers: { size: 5, strokeWidth: 2, shape: 'circle', hover: { size: 6 } },
+            dataLabels: { enabled: false },
+            legend: { show: true, position: 'top', horizontalAlign: 'center', fontSize: '12px', fontFamily: config.fontFamily, labels: { colors: '#a1acb8' }, markers: { size: 4, radius: 12, shape: 'circle', strokeWidth: 0 } },
+            grid: { strokeDashArray: 5, borderColor: '#eceef1', padding: { top: -10, bottom: -8 } },
+            xaxis: {
+              categories: dsoDpoData.categories || [],
+              labels: { style: { fontSize: '11px', fontFamily: config.fontFamily, colors: '#a1acb8' } },
+              axisTicks: { show: false },
+              axisBorder: { show: false }
+            },
+            yaxis: {
+              labels: { style: { fontSize: '11px', fontFamily: config.fontFamily, colors: '#a1acb8' } }
+            },
+            tooltip: { theme: 'dark' }
+          };
+          new ApexCharts(dsoDpoEl, dsoDpoOptions).render();
+        }
+
+        // AR/AP Aging Stacked Bar Chart
+        var arApAgingEl = document.querySelector('#arApAgingStackedChart');
+        if (arApAgingEl && typeof ApexCharts !== 'undefined') {
+          var arApAgingData = @Html.Raw(Json.Serialize(Model.ArApAgingStackedChart));
+          var arApAgingOptions = {
+            series: arApAgingData.series || [],
+            chart: { height: 280, type: 'bar', stacked: true, toolbar: { show: false }, fontFamily: config.fontFamily },
+            colors: ['#71dd88', '#03c3ec', '#ffab00', '#ff3e1d'],
+            plotOptions: { bar: { horizontal: false, columnWidth: '50%', borderRadius: 6, borderRadiusApplication: 'around' } },
+            dataLabels: { enabled: false },
+            legend: { show: true, position: 'top', horizontalAlign: 'center', fontSize: '11px', fontFamily: config.fontFamily, labels: { colors: '#a1acb8' }, markers: { size: 4, radius: 12, shape: 'circle', strokeWidth: 0 } },
+            grid: { strokeDashArray: 5, borderColor: '#eceef1', padding: { top: -10, bottom: -8 } },
+            xaxis: {
+              categories: arApAgingData.categories || [],
+              labels: { style: { fontSize: '11px', fontFamily: config.fontFamily, colors: '#a1acb8' } },
+              axisTicks: { show: false },
+              axisBorder: { show: false }
+            },
+            yaxis: {
+              labels: { style: { fontSize: '11px', fontFamily: config.fontFamily, colors: '#a1acb8' } }
+            },
+            tooltip: { theme: 'dark' }
+          };
+          new ApexCharts(arApAgingEl, arApAgingOptions).render();
+        }
+
+        // Collections Performance Bar Chart
+        var collectionsEl = document.querySelector('#collectionsPerformanceChart');
+        if (collectionsEl && typeof ApexCharts !== 'undefined') {
+          var collectionsData = @Html.Raw(Json.Serialize(Model.CollectionsPerformanceChart));
+          var collectionsOptions = {
+            series: collectionsData.series || [],
+            chart: { height: 280, type: 'bar', toolbar: { show: false }, fontFamily: config.fontFamily },
+            colors: ['#6965fd', '#03c3ec'],
+            plotOptions: { bar: { horizontal: false, columnWidth: '45%', borderRadius: 6, borderRadiusApplication: 'around' } },
+            dataLabels: { enabled: false },
+            legend: { show: true, position: 'top', horizontalAlign: 'center', fontSize: '12px', fontFamily: config.fontFamily, labels: { colors: '#a1acb8' }, markers: { size: 4, radius: 12, shape: 'circle', strokeWidth: 0 } },
+            grid: { strokeDashArray: 5, borderColor: '#eceef1', padding: { top: -10, bottom: -8 } },
+            xaxis: {
+              categories: collectionsData.categories || [],
+              labels: { style: { fontSize: '11px', fontFamily: config.fontFamily, colors: '#a1acb8' } },
+              axisTicks: { show: false },
+              axisBorder: { show: false }
+            },
+            yaxis: {
+              labels: { style: { fontSize: '11px', fontFamily: config.fontFamily, colors: '#a1acb8' } }
+            },
+            tooltip: { theme: 'dark' }
+          };
+          new ApexCharts(collectionsEl, collectionsOptions).render();
+        }
+
+        // Unit Economics Bar Chart
+        var unitEconEl = document.querySelector('#unitEconomicsChart');
+        if (unitEconEl && typeof ApexCharts !== 'undefined') {
+          var unitEconData = @Html.Raw(Json.Serialize(Model.UnitEconomicsChart));
+          var unitEconOptions = {
+            series: unitEconData.series || [],
+            chart: { height: 280, type: 'bar', toolbar: { show: false }, fontFamily: config.fontFamily },
+            colors: ['#71dd88', '#6965fd'],
+            plotOptions: { bar: { horizontal: false, columnWidth: '45%', borderRadius: 6, borderRadiusApplication: 'around' } },
+            dataLabels: { enabled: false },
+            legend: { show: true, position: 'top', horizontalAlign: 'center', fontSize: '12px', fontFamily: config.fontFamily, labels: { colors: '#a1acb8' }, markers: { size: 4, radius: 12, shape: 'circle', strokeWidth: 0 } },
+            grid: { strokeDashArray: 5, borderColor: '#eceef1', padding: { top: -10, bottom: -8 } },
+            xaxis: {
+              categories: unitEconData.categories || [],
+              labels: { style: { fontSize: '11px', fontFamily: config.fontFamily, colors: '#a1acb8' } },
+              axisTicks: { show: false },
+              axisBorder: { show: false }
+            },
+            yaxis: {
+              labels: { style: { fontSize: '11px', fontFamily: config.fontFamily, colors: '#a1acb8' } }
+            },
+            tooltip: { theme: 'dark', y: { formatter: function(val) { return val + '%'; } } }
+          };
+          new ApexCharts(unitEconEl, unitEconOptions).render();
+        }
+
+        // Customer Profit Scatter Chart
+        var scatterEl = document.querySelector('#customerProfitScatterChart');
+        if (scatterEl && typeof ApexCharts !== 'undefined') {
+          var scatterData = @Html.Raw(Json.Serialize(Model.CustomerProfitScatterChart));
+          var pts = (scatterData.data || []).map(function(p){ return [p.x||0, p.y||0]; });
+          var scatterOptions = {
+            series: [{
+              name: 'Customers',
+              data: pts.length > 0 ? pts : [[50000,15000],[80000,25000],[120000,40000],[60000,18000],[95000,32000],[45000,12000],[110000,38000],[70000,22000]]
+            }],
+            chart: { height: 300, type: 'scatter', toolbar: { show: false }, fontFamily: config.fontFamily, zoom: { enabled: true, type: 'xy' } },
+            colors: ['#6965fd'],
+            dataLabels: { enabled: false },
+            grid: { strokeDashArray: 5, borderColor: '#eceef1', padding: { top: -10, bottom: -8 } },
+            xaxis: {
+              type: 'numeric',
+              tickAmount: 8,
+              labels: { style: { fontSize: '11px', fontFamily: config.fontFamily, colors: '#a1acb8' }, formatter: function(val) { return '$' + val.toLocaleString(); } },
+              axisTicks: { show: false },
+              axisBorder: { show: false }
+            },
+            yaxis: {
+              tickAmount: 6,
+              labels: { style: { fontSize: '11px', fontFamily: config.fontFamily, colors: '#a1acb8' }, formatter: function(val) { return '$' + val.toLocaleString(); } }
+            },
+            tooltip: { theme: 'dark', x: { formatter: function(val) { return 'Revenue: $' + val.toLocaleString(); } }, y: { formatter: function(val) { return 'Profit: $' + val.toLocaleString(); } } },
+            markers: { size: 6, strokeWidth: 2, strokeColors: '#ffffff', shape: 'circle' }
+          };
+          new ApexCharts(scatterEl, scatterOptions).render();
+        }
+
+      })();
+    });
+  </script>
+}

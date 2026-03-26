@@ -1,0 +1,113 @@
+@* Reusable ApexCharts partial view *@
+@* Usage: Pass a ChartDataDto model to render an ApexCharts chart *@
+@model Dashboard.Models.ViewModels.ChartDataDto?;
+
+@if (Model != null && Model.Series.Any())
+{
+  <div id="@ViewData["ChartId"]" @(ViewData.ContainsKey("ChartClass") ? $"class={ViewData["ChartClass"]}" : "") style="min-height: @(ViewData.ContainsKey("Height") ? ViewData["Height"] : "300")px;"></div>
+
+  var chartType = Model.ChartType ?? "bar";
+  var chartId = ViewData["ChartId"] ?? "chart";
+
+  if (chartType == "area")
+  {
+    <text>
+    <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      if (typeof config === 'undefined') window.config = {};
+      if (!window.config.colors) window.config.colors = {};
+      if (!window.config.fontFamily) window.config.fontFamily = 'Plus Jakarta Sans';
+      var cardColor    = window.config.colors.cardColor    || '#ffffff';
+      var headingColor = window.config.colors.headingColor || '#566a7f';
+      var legendColor  = window.config.colors.bodyColor    || '#697a8d';
+      var labelColor   = window.config.colors.textMuted   || '#a1acb8';
+      var borderColor  = window.config.colors.borderColor  || '#eceef1';
+      var el = document.querySelector('#@chartId');
+      if (el && typeof ApexCharts !== 'undefined') {
+        var data = @Html.Raw(Json.Serialize(Model));
+        new ApexCharts(el, {
+          chart: { height: @(ViewData["Height"] ?? "300"), type: 'area', toolbar: { show: false }, fontFamily: config.fontFamily, foreColor: labelColor },
+          colors: ['#6965fd', '#03c3ec', '#71dd88', '#ffab00'],
+          dataLabels: { enabled: false },
+          stroke: { curve: 'smooth', width: 3, lineCap: 'round' },
+          legend: { show: true, position: 'top', horizontalAlign: 'left', fontSize: '13px', fontFamily: config.fontFamily, labels: { colors: legendColor }, markers: { size: 4, radius: 12, shape: 'circle' } },
+          grid: { strokeDashArray: 7, borderColor: borderColor, padding: { top: -10, bottom: -10, left: 10, right: 10 } },
+          xaxis: { categories: data.categories || [], labels: { style: { fontSize: '13px', fontFamily: config.fontFamily, colors: labelColor } }, axisTicks: { show: false }, axisBorder: { show: false } },
+          yaxis: { labels: { style: { fontSize: '13px', fontFamily: config.fontFamily, colors: labelColor }, formatter: function(val) { return typeof val === 'number' ? val.toLocaleString() : val; } } },
+          fill: { opacity: [0.85, 0.85], type: 'gradient', gradient: { shade: 'light', type: 'vertical', shadeIntensity: 0.5, gradientToColors: undefined, opacityFrom: 0.85, opacityTo: 0.55, stops: [0, 100] } },
+          tooltip: { theme: 'dark', y: { formatter: function(val) { return typeof val === 'number' ? val.toLocaleString() : val; } } },
+          series: data.series || []
+        }).render();
+      }
+    });
+    </script>
+    </text>
+  }
+  else if (chartType == "line")
+  {
+    <text>
+    <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      if (typeof config === 'undefined') window.config = {};
+      if (!window.config.colors) window.config.colors = {};
+      if (!window.config.fontFamily) window.config.fontFamily = 'Plus Jakarta Sans';
+      var cardColor    = window.config.colors.cardColor    || '#ffffff';
+      var headingColor = window.config.colors.headingColor || '#566a7f';
+      var legendColor  = window.config.colors.bodyColor    || '#697a8d';
+      var labelColor   = window.config.colors.textMuted   || '#a1acb8';
+      var borderColor  = window.config.colors.borderColor  || '#eceef1';
+      var el = document.querySelector('#@chartId');
+      if (el && typeof ApexCharts !== 'undefined') {
+        var data = @Html.Raw(Json.Serialize(Model));
+        new ApexCharts(el, {
+          chart: { height: @(ViewData["Height"] ?? "300"), type: 'line', toolbar: { show: false }, fontFamily: config.fontFamily, foreColor: labelColor, dropShadow: { enabled: false } },
+          colors: ['#6965fd', '#03c3ec', '#71dd88', '#ffab00', '#ff3e1d'],
+          dataLabels: { enabled: false },
+          stroke: { curve: 'smooth', width: 3 },
+          legend: { show: true, position: 'top', horizontalAlign: 'left', fontSize: '13px', fontFamily: config.fontFamily, labels: { colors: legendColor }, markers: { size: 4, radius: 12, shape: 'circle' } },
+          grid: { strokeDashArray: 7, borderColor: borderColor, padding: { top: -10, bottom: -10, left: 10, right: 10 } },
+          xaxis: { categories: data.categories || [], labels: { style: { fontSize: '13px', fontFamily: config.fontFamily, colors: labelColor } }, axisTicks: { show: false }, axisBorder: { show: false } },
+          yaxis: { labels: { style: { fontSize: '13px', fontFamily: config.fontFamily, colors: labelColor }, formatter: function(val) { return typeof val === 'number' ? val.toLocaleString() : val; } } },
+          tooltip: { theme: 'dark', y: { formatter: function(val) { return typeof val === 'number' ? val.toLocaleString() : val; } } },
+          series: data.series || []
+        }).render();
+      }
+    });
+    </script>
+    </text>
+  }
+  else if (chartType == "heatmap")
+  {
+    <text>
+    <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      if (typeof config === 'undefined') window.config = {};
+      if (!window.config.colors) window.config.colors = {};
+      if (!window.config.fontFamily) window.config.fontFamily = 'Plus Jakarta Sans';
+      var cardColor    = window.config.colors.cardColor    || '#ffffff';
+      var headingColor = window.config.colors.headingColor || '#566a7f';
+      var legendColor  = window.config.colors.bodyColor    || '#697a8d';
+      var labelColor   = window.config.colors.textMuted   || '#a1acb8';
+      var borderColor  = window.config.colors.borderColor  || '#eceef1';
+      var el = document.querySelector('#@chartId');
+      if (el && typeof ApexCharts !== 'undefined') {
+        var data = @Html.Raw(Json.Serialize(Model));
+        new ApexCharts(el, {
+          chart: { height: @(ViewData["Height"] ?? "350"), type: 'heatmap', toolbar: { show: false }, fontFamily: config.fontFamily, foreColor: labelColor },
+          colors: ['#6965fd'],
+          dataLabels: { enabled: false },
+          stroke: { width: 1, colors: [cardColor] },
+          legend: { show: true, position: 'top', horizontalAlign: 'left', fontSize: '13px', fontFamily: config.fontFamily, labels: { colors: legendColor } },
+          grid: { padding: { top: -10, bottom: -10, left: 10, right: 10 } },
+          xaxis: { labels: { style: { fontSize: '12px', fontFamily: config.fontFamily, colors: labelColor } }, axisTicks: { show: false }, axisBorder: { show: false }, categories: data.xCategories || [] },
+          yaxis: { labels: { style: { fontSize: '12px', fontFamily: config.fontFamily, colors: labelColor } } },
+          plotOptions: { heatmap: { radius: 2, colorScale: { ranges: [{ from: 0, to: 0, name: 'Low', color: '#ffeaa7' }, { from: 1, to: 5000, name: 'Medium', color: '#74b9ff' }, { from: 5001, to: 10000, name: 'High', color: '#0984e3' }] } } },
+          series: (data.series || []).map(function(s, i) { return { name: data.yCategories && data.yCategories[i] ? data.yCategories[i] : 'Series ' + (i+1), data: s.data || [] }; }),
+          tooltip: { theme: 'dark' }
+        }).render();
+      }
+    });
+    </script>
+    </text>
+  }
+}

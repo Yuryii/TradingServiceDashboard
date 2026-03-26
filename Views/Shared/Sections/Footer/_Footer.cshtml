@@ -1,0 +1,36 @@
+@{
+  ViewData["containerNav"] = (ViewData["containerNav"] ??= "container-xxl");
+}
+
+<!-- Footer -->
+<footer class="eoh-footer">
+  <div class="@ViewData["containerNav"]">
+    <div class="d-flex align-items-center justify-content-between py-3 flex-wrap gap-2">
+
+      <!-- Left: Brand + Copyright -->
+      <div class="d-flex align-items-center gap-2">
+        <i class="ti ti-hexagon-filled eoh-footer-icon"></i>
+        <span class="eoh-footer-brand">@TempData.Peek("creatorName")</span>
+        <span class="eoh-footer-sep">|</span>
+        <span class="eoh-footer-copy">
+          &#169;
+          <script>document.write(new Date().getFullYear());</script>
+        </span>
+        <span class="eoh-footer-copy">All rights reserved.</span>
+      </div>
+
+      <!-- Right: Quick Links -->
+      <div class="eoh-footer-links d-flex align-items-center gap-3">
+        <a href="@TempData.Peek("privacyUrl")" class="eoh-footer-link">Privacy Policy</a>
+        <a href="@TempData.Peek("termsUrl")" class="eoh-footer-link">Terms</a>
+        <a href="@TempData.Peek("support")" class="eoh-footer-link">Support</a>
+        <span class="eoh-footer-sep">|</span>
+        <a href="@TempData.Peek("facebookUrl")" target="_blank" class="eoh-footer-social" aria-label="Facebook"><i class="ti ti-brand-facebook"></i></a>
+        <a href="@TempData.Peek("twitterUrl")" target="_blank" class="eoh-footer-social" aria-label="Twitter"><i class="ti ti-brand-x"></i></a>
+        <a href="@TempData.Peek("githubUrl")" target="_blank" class="eoh-footer-social" aria-label="GitHub"><i class="ti ti-brand-github"></i></a>
+      </div>
+
+    </div>
+  </div>
+</footer>
+<!-- / Footer -->

@@ -1,0 +1,75 @@
+@model Dashboard.Models.ViewModels.ProductCategoryEditVM
+@{
+    Layout = "~/Views/Shared/_ContentNavbarLayout.cshtml";
+    ViewData["Title"] = "Edit Product Category";
+}
+
+<div class="row">
+  <div class="col-12 col-lg-8">
+    <div class="card mb-6">
+      <div class="card-header">
+        <h5 class="mb-0">Edit Product Category</h5>
+      </div>
+      <div class="card-body pt-4">
+        @if (ViewData.ModelState.ErrorCount > 0)
+        {
+          <div class="alert alert-danger" role="alert">
+            <div asp-validation-summary="ModelOnly"></div>
+          </div>
+        }
+
+        <form asp-action="Edit" method="post">
+          @Html.AntiForgeryToken()
+          <input type="hidden" asp-for="CategoryID" />
+
+          <div class="row g-6">
+            <div class="col-md-6">
+              <label asp-for="CategoryCode" class="form-label">Category Code</label>
+              <input asp-for="CategoryCode" class="form-control" placeholder="Enter category code" />
+              <span asp-validation-for="CategoryCode" class="text-danger"></span>
+            </div>
+            <div class="col-md-6">
+              <label asp-for="CategoryName" class="form-label">Category Name</label>
+              <input asp-for="CategoryName" class="form-control" placeholder="Enter category name" />
+              <span asp-validation-for="CategoryName" class="text-danger"></span>
+            </div>
+            <div class="col-md-6">
+              <label asp-for="ParentCategoryID" class="form-label">Parent Category</label>
+              <select asp-for="ParentCategoryID" class="form-select">
+                <option value="">-- Select Parent Category --</option>
+                @if (ViewBag.ParentCategories != null)
+                {
+                  @foreach (var parent in ViewBag.ParentCategories)
+                  {
+                    <option value="@parent.CategoryID">@parent.CategoryName</option>
+                  }
+                }
+              </select>
+              <span asp-validation-for="ParentCategoryID" class="text-danger"></span>
+            </div>
+            <div class="col-12">
+              <label asp-for="Description" class="form-label">Description</label>
+              <textarea asp-for="Description" class="form-control" rows="3" placeholder="Enter description..."></textarea>
+              <span asp-validation-for="Description" class="text-danger"></span>
+            </div>
+            <div class="col-md-6">
+              <div class="form-check mt-2">
+                <input asp-for="IsActive" class="form-check-input" type="checkbox" />
+                <label asp-for="IsActive" class="form-check-label">Is Active</label>
+              </div>
+            </div>
+          </div>
+
+          <div class="mt-6 d-flex gap-3">
+            <button type="submit" class="btn btn-primary">
+              <i class="icon-base bx bx-save me-1"></i> Save Changes
+            </button>
+            <a asp-action="Index" class="btn btn-outline-secondary">
+              <i class="icon-base bx bx-x me-1"></i> Cancel
+            </a>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,94 @@
+@model IEnumerable<Dashboard.Models.ViewModels.PositionListVM>
+@{
+    Layout = "~/Views/Shared/_ContentNavbarLayout.cshtml";
+    ViewData["Title"] = "Positions";
+}
+<div class="row">
+  <div class="col-12">
+    <div class="card">
+      <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">All Positions</h5>
+        <div class="d-flex gap-1">
+          <a asp-action="Position_Export" class="btn btn-success btn-sm" title="Export Excel">
+            <i class="icon-base bx bx-download me-1"></i> Export
+          </a>
+          <button type="button" class="btn btn-info btn-sm" data-bs-toggle="modal" data-bs-target="#excelImportModal-Position" title="Import Excel">
+            <i class="icon-base bx bx-upload me-1"></i> Import
+          </button>
+          <a asp-action="Positions_Create" class="btn btn-primary btn-sm">
+            <i class="icon-base bx bx-plus me-1"></i> Create New Position
+          </a>
+        </div>
+      </div>
+      <div class="table-responsive text-nowrap">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Code</th>
+              <th>Position Name</th>
+              <th>Level</th>
+              <th>Description</th>
+              <th>Status</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody class="table-border-bottom-0">
+            @if (!Model.Any())
+            {
+              <tr>
+                <td colspan="6" class="text-center text-muted py-4">
+                  No positions found.
+                </td>
+              </tr>
+            }
+            else
+            {
+              @foreach (var item in Model)
+              {
+                <tr>
+                  <td><strong>@item.PositionCode</strong></td>
+                  <td>@item.PositionName</td>
+                  <td>@item.PositionLevel</td>
+                  <td>@(item.Description ?? "-")</td>
+                  <td>
+                    @{
+                      var statusClass = item.IsActive ? "bg-label-success" : "bg-label-secondary";
+                      var statusText = item.IsActive ? "Active" : "Inactive";
+                    }
+                    <span class="badge @statusClass">@statusText</span>
+                  </td>
+                  <td>
+                    <div class="dropdown">
+                      <button type="button" class="btn p-0 dropdown-toggle hide-arrow" data-bs-toggle="dropdown">
+                        <i class="icon-base bx bx-dots-vertical-rounded"></i>
+                      </button>
+                      <div class="dropdown-menu">
+                        <a class="dropdown-item" asp-action="Positions_Edit" asp-route-id="@item.PositionID">
+                          <i class="icon-base bx bx-edit-alt me-1"></i> Edit
+                        </a>
+                        <form asp-action="Positions_Delete" asp-route-id="@item.PositionID" method="post" onsubmit="return confirm('Are you sure you want to delete position: @item.PositionName?');" style="display:inline;">
+                          @Html.AntiForgeryToken()
+                          <button type="submit" class="dropdown-item text-danger">
+                            <i class="icon-base bx bx-trash me-1"></i> Delete
+                          </button>
+                        </form>
+                      </div>
+                    </div>
+                  </td>
+                </tr>
+              }
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+@await Html.PartialAsync("~/Views/Shared/Partials/_ExcelImportModal.cshtml", new Dashboard.Models.ViewModels.ExcelImportModalVM
+{
+    ModalId = "Position",
+    EntityType = "Position",
+    EntityName = "Position",
+    EntityDisplayName = "Chuc vu"
+})

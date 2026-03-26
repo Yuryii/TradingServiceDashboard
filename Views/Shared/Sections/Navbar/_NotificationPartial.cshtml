@@ -1,0 +1,33 @@
+<li class="nav-item dropdown-notify navbar-dropdown dropdown me-3 me-xl-2">
+  <a class="nav-link dropdown-toggle hide-arrow" href="javascript:void(0);" data-bs-toggle="dropdown" aria-expanded="false" id="notificationBell">
+    <i class="icon-base bx bx-bell icon-md"></i>
+    <span class="badge bg-danger rounded-pill badge-notify d-none" id="notificationBadge">0</span>
+  </a>
+  <ul class="dropdown-menu dropdown-menu-end py-0" aria-labelledby="notificationBell" style="width: 380px; max-height: 480px; overflow-y: auto;">
+    <li class="dropdown-menu-header border-bottom">
+      <div class="dropdown-header d-flex align-items-center py-3">
+        <h5 class="mb-0 me-auto">Thong bao</h5>
+        <a class="dropdown-item-text text-body" href="javascript:void(0)" id="markAllReadBtn">
+          <i class="icon-base bx bx-envelope-open"></i> Danh dau da doc
+        </a>
+      </div>
+    </li>
+    <li class="dropdown-notifications-list scrollable-container">
+      <ul class="list-group list-group-flush" id="notificationList">
+        <li class="list-group-item list-group-item-action dropdown-notifications-item" id="noNotificationsItem">
+          <div class="d-flex justify-content-center align-items-center py-4">
+            <div class="text-center">
+              <i class="icon-base bx bx-bell-off fs-1 text-muted mb-2"></i>
+              <p class="mb-0 text-muted">Khong co thong bao nao</p>
+            </div>
+          </div>
+        </li>
+      </ul>
+    </li>
+    <li class="dropdown-menu-footer border-top text-center">
+      <a href="@Url.Action("Index", "Notification")" class="dropdown-item py-2">
+        <i class="icon-base bx bx-list-ul me-1"></i> Xem tat ca
+      </a>
+    </li>
+  </ul>
+</li>

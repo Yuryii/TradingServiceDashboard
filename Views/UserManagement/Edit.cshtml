@@ -1,0 +1,104 @@
+@model Dashboard.Models.ViewModels.EditUserVM
+@{
+  ViewData["Title"] = "Edit User";
+}
+
+<div class="row">
+  <div class="col-12 col-lg-8">
+    <div class="card mb-6">
+      <div class="card-header">
+        <h5 class="mb-0">Edit User</h5>
+      </div>
+      <div class="card-body pt-4">
+        @if (ViewData.ModelState.ErrorCount > 0)
+        {
+          <div class="alert alert-danger" role="alert">
+            <div asp-validation-summary="ModelOnly"></div>
+          </div>
+        }
+
+        <form asp-action="Edit" method="post">
+          @Html.AntiForgeryToken()
+          <input type="hidden" asp-for="Id" />
+
+          <div class="row g-6">
+            <div class="col-md-6">
+              <label asp-for="FullName" class="form-label">Full Name</label>
+              <input asp-for="FullName" class="form-control" placeholder="Enter full name" />
+              <span asp-validation-for="FullName" class="text-danger"></span>
+            </div>
+            <div class="col-md-6">
+              <label asp-for="Email" class="form-label">Email</label>
+              <input asp-for="Email" class="form-control" type="email" readonly />
+              <span asp-validation-for="Email" class="text-danger"></span>
+              <div class="form-text">Email cannot be changed</div>
+            </div>
+            <div class="col-md-6">
+              <label asp-for="PhoneNumber" class="form-label">Phone Number</label>
+              <input asp-for="PhoneNumber" class="form-control" placeholder="+1 202 555 0111" />
+              <span asp-validation-for="PhoneNumber" class="text-danger"></span>
+            </div>
+          </div>
+
+          <hr class="my-6 mx-n4" />
+
+          <h5 class="mb-4">Role Management</h5>
+
+          <div class="row g-6">
+            <div class="col-md-6">
+              <label class="form-label">Current Role(s)</label>
+              <div class="p-3 border rounded bg-light">
+                @if (Model.CurrentRoles != null && Model.CurrentRoles.Any())
+                {
+                  @foreach (var role in Model.CurrentRoles)
+                  {
+                    var badgeClass = role switch
+                    {
+                      "Executive" => "bg-label-danger",
+                      "Sales" => "bg-label-success",
+                      "Marketing" => "bg-label-info",
+                      "Finance" => "bg-label-warning",
+                      "Inventory" => "bg-label-secondary",
+                      "HumanResources" => "bg-label-primary",
+                      "CustomerService" => "bg-label-dark",
+                      _ => "bg-label-secondary"
+                    };
+                    <span class="badge @badgeClass me-1 mb-1 fs-6">@role</span>
+                  }
+                }
+                else
+                {
+                  <span class="text-muted">No roles assigned</span>
+                }
+              </div>
+            </div>
+            <div class="col-md-6">
+              <label asp-for="NewRole" class="form-label">Assign New Role</label>
+              <select asp-for="NewRole" class="form-select">
+                <option value="">-- Select Role --</option>
+                @if (ViewBag.AllRoles != null)
+                {
+                  @foreach (var role in ViewBag.AllRoles)
+                  {
+                    <option value="@role">@role</option>
+                  }
+                }
+              </select>
+              <span asp-validation-for="NewRole" class="text-danger"></span>
+              <div class="form-text">Selecting a role will replace the current role(s)</div>
+            </div>
+          </div>
+
+          <div class="mt-6 d-flex gap-3">
+            <button type="submit" class="btn btn-primary">
+              <i class="icon-base bx bx-save me-1"></i> Save Changes
+            </button>
+            <a asp-action="Index" class="btn btn-outline-secondary">
+              <i class="icon-base bx bx-x me-1"></i> Cancel
+            </a>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>

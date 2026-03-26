@@ -1,0 +1,84 @@
+@model Dashboard.Models.ViewModels.WarehouseCreateVM
+@{
+    Layout = "~/Views/Shared/_ContentNavbarLayout.cshtml";
+    ViewData["Title"] = "Create Warehouse";
+}
+
+<div class="row">
+  <div class="col-12 col-lg-8">
+    <div class="card mb-6">
+      <div class="card-header">
+        <h5 class="mb-0">Create New Warehouse</h5>
+      </div>
+      <div class="card-body pt-4">
+        @if (ViewData.ModelState.ErrorCount > 0)
+        {
+          <div class="alert alert-danger" role="alert">
+            <div asp-validation-summary="ModelOnly"></div>
+          </div>
+        }
+
+        <form asp-action="Create" method="post">
+          @Html.AntiForgeryToken()
+
+          <div class="row g-6">
+            <div class="col-md-6">
+              <label asp-for="WarehouseCode" class="form-label">Warehouse Code</label>
+              <input asp-for="WarehouseCode" class="form-control" placeholder="Enter warehouse code" />
+              <span asp-validation-for="WarehouseCode" class="text-danger"></span>
+            </div>
+            <div class="col-md-6">
+              <label asp-for="WarehouseName" class="form-label">Warehouse Name</label>
+              <input asp-for="WarehouseName" class="form-control" placeholder="Enter warehouse name" />
+              <span asp-validation-for="WarehouseName" class="text-danger"></span>
+            </div>
+            <div class="col-md-6">
+              <label asp-for="BranchID" class="form-label">Branch</label>
+              <select asp-for="BranchID" class="form-select">
+                <option value="">-- Select Branch --</option>
+                @if (ViewBag.Branches != null)
+                {
+                  @foreach (var branch in ViewBag.Branches)
+                  {
+                    <option value="@branch.BranchID">@branch.BranchName</option>
+                  }
+                }
+              </select>
+              <span asp-validation-for="BranchID" class="text-danger"></span>
+            </div>
+            <div class="col-12">
+              <label asp-for="AddressLine" class="form-label">Address</label>
+              <input asp-for="AddressLine" class="form-control" placeholder="Enter address" />
+              <span asp-validation-for="AddressLine" class="text-danger"></span>
+            </div>
+            <div class="col-md-6">
+              <label asp-for="City" class="form-label">City</label>
+              <input asp-for="City" class="form-control" placeholder="Enter city" />
+              <span asp-validation-for="City" class="text-danger"></span>
+            </div>
+            <div class="col-md-6">
+              <label asp-for="Province" class="form-label">Province</label>
+              <input asp-for="Province" class="form-control" placeholder="Enter province" />
+              <span asp-validation-for="Province" class="text-danger"></span>
+            </div>
+            <div class="col-md-6">
+              <div class="form-check mt-2">
+                <input asp-for="IsActive" class="form-check-input" type="checkbox" />
+                <label asp-for="IsActive" class="form-check-label">Is Active</label>
+              </div>
+            </div>
+          </div>
+
+          <div class="mt-6 d-flex gap-3">
+            <button type="submit" class="btn btn-primary">
+              <i class="icon-base bx bx-save me-1"></i> Save
+            </button>
+            <a asp-action="Index" class="btn btn-outline-secondary">
+              <i class="icon-base bx bx-x me-1"></i> Cancel
+            </a>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>

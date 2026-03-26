@@ -1,0 +1,52 @@
+@model Dashboard.Models.ViewModels.SalesChannelEditVM
+@{
+    Layout = "~/Views/Shared/_ContentNavbarLayout.cshtml";
+    ViewData["Title"] = "Edit Sales Channel";
+}
+
+<div class="row">
+    <div class="col-12 col-lg-8">
+        <div class="card mb-6">
+            <div class="card-header">
+                <h5 class="mb-0">Edit Sales Channel</h5>
+            </div>
+            <div class="card-body pt-4">
+                <form asp-action="SalesChannels_Edit" method="post">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" asp-for="SalesChannelID" />
+                    <div class="row g-6">
+                        <div class="col-md-6">
+                            <label asp-for="ChannelCode" class="form-label">Channel Code</label>
+                            <input asp-for="ChannelCode" class="form-control" />
+                            <span asp-validation-for="ChannelCode" class="text-danger"></span>
+                        </div>
+                        <div class="col-md-6">
+                            <label asp-for="ChannelName" class="form-label">Channel Name</label>
+                            <input asp-for="ChannelName" class="form-control" />
+                            <span asp-validation-for="ChannelName" class="text-danger"></span>
+                        </div>
+                        <div class="col-12">
+                            <label asp-for="Description" class="form-label">Description</label>
+                            <textarea asp-for="Description" class="form-control" rows="3"></textarea>
+                            <span asp-validation-for="Description" class="text-danger"></span>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-check form-switch mb-2">
+                                <input asp-for="IsActive" class="form-check-input" type="checkbox" />
+                                <label asp-for="IsActive" class="form-check-label">Active</label>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mt-6 d-flex gap-3">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="icon-base bx bx-save me-1"></i> Save Changes
+                        </button>
+                        <a asp-action="SalesChannels_Index" class="btn btn-outline-secondary">
+                            <i class="icon-base bx bx-x me-1"></i> Cancel
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>

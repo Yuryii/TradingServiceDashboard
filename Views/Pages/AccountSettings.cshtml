@@ -1,0 +1,110 @@
+@model Dashboard.Models.ViewModels.UpdateProfileVM
+@{
+  ViewData["Title"] = "Account settings - Account";
+}
+
+@section PageScripts {
+<script src="~/js/pages-account-settings-account.js"></script>
+}
+
+@* ************** Content ************** *@
+<div class="row">
+  <div class="col-md-12">
+    <div class="nav-align-top">
+      <ul class="nav nav-pills flex-column flex-md-row mb-6 gap-md-0 gap-2">
+        <li class="nav-item">
+          <a class="nav-link active" href="javascript:void(0);"><i class="icon-base bx bx-user icon-sm me-1_5"></i> Account</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="@Url.Action("AccountSettingsNotifications", "Pages")"><i class="icon-base bx bx-bell icon-sm me-1_5"></i> Notifications</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="@Url.Action("AccountSettingsConnections", "Pages")"><i class="icon-base bx bx-link-alt icon-sm me-1_5"></i> Connections</a>
+        </li>
+      </ul>
+    </div>
+    <div class="card mb-6">
+      <!-- Account -->
+      <div class="card-body">
+        <div class="d-flex align-items-start align-items-sm-center gap-6 pb-4 border-bottom">
+          <img src="~/img/avatars/1.png" alt="user-avatar" class="d-block w-px-100 h-px-100 rounded" id="uploadedAvatar" />
+          <div class="button-wrapper">
+            <label for="upload" class="btn btn-primary me-3 mb-4" tabindex="0">
+              <span class="d-none d-sm-block">Upload new photo</span>
+              <i class="icon-base bx bx-upload d-block d-sm-none"></i>
+              <input type="file" id="upload" class="account-file-input" hidden accept="image/png, image/jpeg" />
+            </label>
+            <button type="button" class="btn btn-outline-secondary account-image-reset mb-4">
+              <i class="icon-base bx bx-reset d-block d-sm-none"></i>
+              <span class="d-none d-sm-block">Reset</span>
+            </button>
+            <div>Allowed JPG, GIF or PNG. Max size of 800K</div>
+          </div>
+        </div>
+      </div>
+      <div class="card-body pt-4">
+        <form asp-action="AccountSettings" asp-controller="Pages" method="post">
+          @Html.AntiForgeryToken()
+          <div asp-validation-summary="ModelOnly" class="alert alert-danger d-none" role="alert"></div>
+          <div class="row g-6">
+            <div class="col-md-6">
+              <label asp-for="FullName" class="form-label">Full Name</label>
+              <input asp-for="FullName" class="form-control" type="text" autofocus />
+              <span asp-validation-for="FullName" class="text-danger"></span>
+            </div>
+            <div class="col-md-6">
+              <label asp-for="UserName" class="form-label">Username</label>
+              <input asp-for="UserName" class="form-control" type="text" readonly />
+              <span asp-validation-for="UserName" class="text-danger"></span>
+            </div>
+            <div class="col-md-6">
+              <label asp-for="Email" class="form-label">E-mail</label>
+              <input asp-for="Email" class="form-control" type="text" readonly />
+              <span asp-validation-for="Email" class="text-danger"></span>
+            </div>
+            <div class="col-md-6">
+              <label asp-for="EmployeeID" class="form-label">Employee ID</label>
+              <input asp-for="EmployeeID" class="form-control" type="text" readonly />
+              <span asp-validation-for="EmployeeID" class="text-danger"></span>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label" for="phoneNumber">Phone Number</label>
+              <div class="input-group input-group-merge">
+                <span class="input-group-text">+1</span>
+                <input asp-for="PhoneNumber" type="text" id="phoneNumber" name="phoneNumber" class="form-control" placeholder="202 555 0111" />
+              </div>
+              <span asp-validation-for="PhoneNumber" class="text-danger"></span>
+            </div>
+          </div>
+          <hr class="my-6 mx-n4" />
+          <h5 class="mb-4">Change Password</h5>
+          <p class="mb-0 text-body">Leave password fields empty if you don't want to change it.</p>
+          <div class="row g-6 mt-3">
+            <div class="col-md-6">
+              <label asp-for="CurrentPassword" class="form-label">Current Password</label>
+              <input asp-for="CurrentPassword" class="form-control" type="password" placeholder="Enter current password" />
+              <span asp-validation-for="CurrentPassword" class="text-danger"></span>
+            </div>
+          </div>
+          <div class="row g-6 mt-2">
+            <div class="col-md-6">
+              <label asp-for="NewPassword" class="form-label">New Password</label>
+              <input asp-for="NewPassword" class="form-control" type="password" placeholder="Enter new password" />
+              <span asp-validation-for="NewPassword" class="text-danger"></span>
+            </div>
+            <div class="col-md-6">
+              <label asp-for="ConfirmPassword" class="form-label">Confirm New Password</label>
+              <input asp-for="ConfirmPassword" class="form-control" type="password" placeholder="Confirm new password" />
+              <span asp-validation-for="ConfirmPassword" class="text-danger"></span>
+            </div>
+          </div>
+          <div class="mt-6">
+            <button type="submit" class="btn btn-primary me-3">Save changes</button>
+            <button type="reset" class="btn btn-outline-secondary">Cancel</button>
+          </div>
+        </form>
+      </div>
+      <!-- /Account -->
+    </div>
+  </div>
+</div>

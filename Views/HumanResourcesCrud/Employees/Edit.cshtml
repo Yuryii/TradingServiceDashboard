@@ -1,0 +1,171 @@
+@model Dashboard.Models.ViewModels.EmployeeEditVM
+@{
+    Layout = "~/Views/Shared/_ContentNavbarLayout.cshtml";
+    ViewData["Title"] = "Edit Employee";
+}
+
+<div class="row">
+  <div class="col-12 col-lg-10">
+    <div class="card mb-6">
+      <div class="card-header">
+        <h5 class="mb-0">Edit Employee</h5>
+      </div>
+      <div class="card-body pt-4">
+        @if (ViewData.ModelState.ErrorCount > 0)
+        {
+          <div class="alert alert-danger" role="alert">
+            <div asp-validation-summary="ModelOnly"></div>
+          </div>
+        }
+
+        <form asp-action="Employees_Edit" method="post">
+          @Html.AntiForgeryToken()
+          <input type="hidden" asp-for="EmployeeID" />
+          <input type="hidden" asp-for="CreatedAt" />
+
+          <h6 class="mb-4">Basic Information</h6>
+          <div class="row g-6">
+            <div class="col-md-6">
+              <label asp-for="EmployeeCode" class="form-label">Employee Code</label>
+              <input asp-for="EmployeeCode" class="form-control" />
+              <span asp-validation-for="EmployeeCode" class="text-danger"></span>
+            </div>
+            <div class="col-md-6">
+              <label asp-for="FullName" class="form-label">Full Name</label>
+              <input asp-for="FullName" class="form-control" />
+              <span asp-validation-for="FullName" class="text-danger"></span>
+            </div>
+            <div class="col-md-4">
+              <label asp-for="Gender" class="form-label">Gender</label>
+              <select asp-for="Gender" class="form-select">
+                <option value="">-- Select --</option>
+                <option value="Male" selected="@(Model.Gender == "Male")">Male</option>
+                <option value="Female" selected="@(Model.Gender == "Female")">Female</option>
+              </select>
+            </div>
+            <div class="col-md-4">
+              <label asp-for="DateOfBirth" class="form-label">Date of Birth</label>
+              <input asp-for="DateOfBirth" class="form-control" type="date" />
+            </div>
+            <div class="col-md-4">
+              <label asp-for="Phone" class="form-label">Phone</label>
+              <input asp-for="Phone" class="form-control" />
+            </div>
+            <div class="col-md-6">
+              <label asp-for="Email" class="form-label">Email</label>
+              <input asp-for="Email" class="form-control" type="email" />
+              <span asp-validation-for="Email" class="text-danger"></span>
+            </div>
+            <div class="col-md-6">
+              <label asp-for="AddressLine" class="form-label">Address</label>
+              <input asp-for="AddressLine" class="form-control" />
+            </div>
+          </div>
+
+          <hr class="my-6 mx-n4" />
+          <h6 class="mb-4">Employment Details</h6>
+          <div class="row g-6">
+            <div class="col-md-6">
+              <label asp-for="DepartmentID" class="form-label">Department</label>
+              <select asp-for="DepartmentID" class="form-select">
+                <option value="">-- Select Department --</option>
+                @if (ViewBag.Departments != null)
+                {
+                  @foreach (var dept in ViewBag.Departments)
+                  {
+                    <option value="@dept.DepartmentID" selected="@(dept.DepartmentID == Model.DepartmentID)">@dept.DepartmentName</option>
+                  }
+                }
+              </select>
+              <span asp-validation-for="DepartmentID" class="text-danger"></span>
+            </div>
+            <div class="col-md-6">
+              <label asp-for="PositionID" class="form-label">Position</label>
+              <select asp-for="PositionID" class="form-select">
+                <option value="">-- Select Position --</option>
+                @if (ViewBag.Positions != null)
+                {
+                  @foreach (var pos in ViewBag.Positions)
+                  {
+                    <option value="@pos.PositionID" selected="@(pos.PositionID == Model.PositionID)">@pos.PositionName</option>
+                  }
+                }
+              </select>
+              <span asp-validation-for="PositionID" class="text-danger"></span>
+            </div>
+            <div class="col-md-6">
+              <label asp-for="BranchID" class="form-label">Branch</label>
+              <select asp-for="BranchID" class="form-select">
+                <option value="">-- Select Branch --</option>
+                @if (ViewBag.Branches != null)
+                {
+                  @foreach (var branch in ViewBag.Branches)
+                  {
+                    <option value="@branch.BranchID" selected="@(branch.BranchID == Model.BranchID)">@branch.BranchName</option>
+                  }
+                }
+              </select>
+            </div>
+            <div class="col-md-6">
+              <label asp-for="ManagerID" class="form-label">Manager</label>
+              <select asp-for="ManagerID" class="form-select">
+                <option value="">-- Select Manager --</option>
+                @if (ViewBag.Managers != null)
+                {
+                  @foreach (var mgr in ViewBag.Managers)
+                  {
+                    <option value="@mgr.EmployeeID" selected="@(mgr.EmployeeID == Model.ManagerID)">@mgr.FullName</option>
+                  }
+                }
+              </select>
+            </div>
+            <div class="col-md-6">
+              <label asp-for="EmploymentType" class="form-label">Employment Type</label>
+              <select asp-for="EmploymentType" class="form-select">
+                <option value="FullTime" selected="@(Model.EmploymentType == "FullTime")">Full Time</option>
+                <option value="PartTime" selected="@(Model.EmploymentType == "PartTime")">Part Time</option>
+                <option value="Contract" selected="@(Model.EmploymentType == "Contract")">Contract</option>
+                <option value="Intern" selected="@(Model.EmploymentType == "Intern")">Intern</option>
+              </select>
+              <span asp-validation-for="EmploymentType" class="text-danger"></span>
+            </div>
+            <div class="col-md-6">
+              <label asp-for="HireDate" class="form-label">Hire Date</label>
+              <input asp-for="HireDate" class="form-control" type="date" />
+              <span asp-validation-for="HireDate" class="text-danger"></span>
+            </div>
+            <div class="col-md-6">
+              <label asp-for="TerminationDate" class="form-label">Termination Date</label>
+              <input asp-for="TerminationDate" class="form-control" type="date" />
+            </div>
+            <div class="col-md-6">
+              <label asp-for="TerminationReason" class="form-label">Termination Reason</label>
+              <input asp-for="TerminationReason" class="form-control" />
+            </div>
+            <div class="col-md-6">
+              <label asp-for="BaseSalary" class="form-label">Base Salary</label>
+              <input asp-for="BaseSalary" class="form-control" type="number" step="0.01" />
+              <span asp-validation-for="BaseSalary" class="text-danger"></span>
+            </div>
+            <div class="col-md-6">
+              <label asp-for="IsActive" class="form-label">Status</label>
+              <select asp-for="IsActive" class="form-select">
+                <option value="true" selected="@(Model.IsActive)">Active</option>
+                <option value="false" selected="@(!Model.IsActive)">Inactive</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="mt-6 d-flex gap-3">
+            <button type="submit" class="btn btn-primary">
+              <i class="icon-base bx bx-save me-1"></i> Save Changes
+            </button>
+            <a asp-action="Employees_Index" class="btn btn-outline-secondary">
+              <i class="icon-base bx bx-x me-1"></i> Cancel
+            </a>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,307 @@
+@{
+    Layout = "~/Views/Shared/_ContentNavbarLayout.cshtml";
+    ViewData["Title"] = "Thong bao";
+}
+
+@section VendorStyles {
+}
+
+<div class="row">
+    <div class="col-12 mb-4">
+        <div class="d-flex align-items-center justify-content-between">
+            <div>
+                <h4 class="mb-0"><i class="icon-base bx bx-bell me-2 text-primary"></i>Thong bao</h4>
+                <p class="text-muted mb-0">Tat ca thong bao cua ban</p>
+            </div>
+            <div class="d-flex gap-2">
+                <button class="btn btn-outline-secondary btn-sm" id="markAllReadBtnTop">
+                    <i class="icon-base bx bx-envelope-open me-1"></i> Danh dau tat ca da doc
+                </button>
+                <select class="form-select form-select-sm" id="filterCategory" style="width: auto;">
+                    <option value="">Tat ca loai</option>
+                    <option value="Finance">Tai chinh</option>
+                    <option value="Inventory">Kho hang</option>
+                    <option value="HumanResources">Nhan su</option>
+                    <option value="Sales">Ban hang</option>
+                    <option value="CustomerService">Cham soc KH</option>
+                    <option value="Marketing">Marketing</option>
+                    <option value="Executive">Giam doc</option>
+                </select>
+                <select class="form-select form-select-sm" id="filterSeverity" style="width: auto;">
+                    <option value="">Tat ca muc do</option>
+                    <option value="Critical">Critical</option>
+                    <option value="Warning">Warning</option>
+                    <option value="Info">Info</option>
+                </select>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-body">
+                <!-- Summary cards -->
+                <div class="row mb-4" id="summaryCards">
+                    <div class="col-md-3 col-6 mb-3">
+                        <div class="card border-primary shadow-none mb-0">
+                            <div class="card-body text-center py-3">
+                                <h3 class="mb-0 text-primary" id="totalCount">0</h3>
+                                <small class="text-muted">Tong so</small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3 col-6 mb-3">
+                        <div class="card border-danger shadow-none mb-0">
+                            <div class="card-body text-center py-3">
+                                <h3 class="mb-0 text-danger" id="unreadCount">0</h3>
+                                <small class="text-muted">Chua doc</small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3 col-6 mb-3">
+                        <div class="card border-warning shadow-none mb-0">
+                            <div class="card-body text-center py-3">
+                                <h3 class="mb-0 text-warning" id="criticalCount">0</h3>
+                                <small class="text-muted">Critical</small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3 col-6 mb-3">
+                        <div class="card border-success shadow-none mb-0">
+                            <div class="card-body text-center py-3">
+                                <h3 class="mb-0 text-success" id="todayCount">0</h3>
+                                <small class="text-muted">Hom nay</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Notifications Table -->
+                <div class="table-responsive">
+                    <table class="table table-hover table-striped" id="notificationTable">
+                        <thead>
+                            <tr>
+                                <th style="width: 50px;"></th>
+                                <th>Tieu de</th>
+                                <th>Loai</th>
+                                <th>Muc do</th>
+                                <th>Thoi gian</th>
+                                <th style="width: 100px;">Hanh dong</th>
+                            </tr>
+                        </thead>
+                        <tbody id="notificationTableBody">
+                            <tr>
+                                <td colspan="6" class="text-center py-5 text-muted">
+                                    <i class="icon-base bx bx-loader-alt fs-1 d-block mb-2 mx-auto"></i>
+                                    Dang tai...
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Pagination -->
+                <div class="d-flex justify-content-between align-items-center mt-3" id="paginationArea">
+                    <div class="text-muted small" id="paginationInfo"></div>
+                    <div id="paginationButtons"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section PageScripts {
+<script>
+var currentPage = 1;
+var pageSize = 20;
+var currentCategory = '';
+var currentSeverity = '';
+var totalItems = 0;
+
+function loadNotifications() {
+    var url = '/Notification/GetAll?page=' + currentPage + '&pageSize=' + pageSize;
+    if (currentCategory) url += '&category=' + encodeURIComponent(currentCategory);
+    if (currentSeverity) url += '&severity=' + encodeURIComponent(currentSeverity);
+
+    fetch(url)
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+            renderTable(data);
+            updatePagination();
+        })
+        .catch(function(err) {
+            console.error('Load notifications failed:', err);
+        });
+
+    // Load summary
+    fetch('/Notification/GetUnreadCount')
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+            document.getElementById('unreadCount').textContent = data.count;
+        });
+}
+
+function renderTable(notifications) {
+    var tbody = document.getElementById('notificationTableBody');
+    if (!notifications || notifications.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="6" class="text-center py-5 text-muted"><i class="icon-base bx bx-bell-off fs-1 d-block mb-2 mx-auto"></i>Khong co thong bao nao</td></tr>';
+        return;
+    }
+
+    var html = '';
+    notifications.forEach(function(n) {
+        var severityClass = getSeverityBadgeClass(n.Severity);
+        var iconBgClass = getIconBgClass(n.Category);
+        var readClass = n.IsRead ? 'opacity-50' : '';
+        var timeStr = formatTime(n.CreatedAt);
+        var actionUrl = n.ActionUrl ? '\'' + n.ActionUrl + '\'' : 'null';
+
+        html += '<tr class="' + readClass + '">' +
+            '<td class="text-center">' +
+            '  <div class="avatar ' + iconBgClass + ' avatar-sm">' +
+            '    <span class="avatar-initial rounded-circle">' +
+            '      <i class="icon-base ' + getCategoryIcon(n.Category) + '"></i>' +
+            '    </span>' +
+            '  </div>' +
+            '</td>' +
+            '<td>' +
+            '  <div class="d-flex flex-column">' +
+            '    <strong class="mb-1">' + escapeHtml(n.Title) + '</strong>' +
+            '    <small class="text-muted">' + escapeHtml(n.Message) + '</small>' +
+            '  </div>' +
+            '</td>' +
+            '<td><span class="badge bg-label-secondary">' + n.Category + '</span></td>' +
+            '<td><span class="badge ' + severityClass + '">' + n.Severity + '</span></td>' +
+            '<td><small class="text-muted">' + timeStr + '</small></td>' +
+            '<td>' +
+            '  <div class="d-flex gap-1">' +
+            '    <button class="btn btn-outline-primary btn-sm" onclick="goToNotification(' + n.NotificationID + ', ' + actionUrl + ')">' +
+            '      <i class="icon-base bx bx-show"></i>' +
+            '    </button>' +
+            '    <button class="btn btn-outline-secondary btn-sm" onclick="markSingleRead(' + n.NotificationID + ')">' +
+            '      <i class="icon-base bx bx-envelope-open"></i>' +
+            '    </button>' +
+            '  </div>' +
+            '</td>' +
+            '</tr>';
+    });
+    tbody.innerHTML = html;
+}
+
+function updatePagination() {
+    var totalPages = Math.ceil(totalItems / pageSize);
+    var info = document.getElementById('paginationInfo');
+    var btns = document.getElementById('paginationButtons');
+    if (!info || !btns) return;
+
+    info.textContent = 'Trang ' + currentPage + ' / ' + (totalPages || 1);
+
+    var html = '';
+    if (currentPage > 1) {
+        html += '<button class="btn btn-outline-secondary btn-sm me-1" onclick="goPage(' + (currentPage - 1) + ')"><i class="icon-base bx bx-chevron-left"></i></button>';
+    }
+    for (var p = Math.max(1, currentPage - 2); p <= Math.min(totalPages, currentPage + 2); p++) {
+        html += '<button class="btn ' + (p === currentPage ? 'btn-primary' : 'btn-outline-secondary') + ' btn-sm me-1" onclick="goPage(' + p + ')">' + p + '</button>';
+    }
+    if (currentPage < totalPages) {
+        html += '<button class="btn btn-outline-secondary btn-sm" onclick="goPage(' + (currentPage + 1) + ')"><i class="icon-base bx bx-chevron-right"></i></button>';
+    }
+    btns.innerHTML = html;
+}
+
+function goPage(p) {
+    currentPage = p;
+    loadNotifications();
+}
+
+function goToNotification(id, actionUrl) {
+    if (actionUrl && actionUrl !== 'null' && actionUrl !== 'undefined') {
+        fetch('/Notification/MarkAsRead?id=' + id, { method: 'POST' });
+        window.location.href = actionUrl;
+    }
+}
+
+function markSingleRead(id) {
+    fetch('/Notification/MarkAsRead?id=' + id, { method: 'POST' })
+        .then(function() { loadNotifications(); });
+}
+
+document.getElementById('markAllReadBtnTop')?.addEventListener('click', function() {
+    fetch('/Notification/MarkAllRead', { method: 'POST' })
+        .then(function() { loadNotifications(); });
+});
+
+document.getElementById('filterCategory')?.addEventListener('change', function() {
+    currentCategory = this.value;
+    currentPage = 1;
+    loadNotifications();
+});
+
+document.getElementById('filterSeverity')?.addEventListener('change', function() {
+    currentSeverity = this.value;
+    currentPage = 1;
+    loadNotifications();
+});
+
+function getSeverityBadgeClass(severity) {
+    switch (severity) {
+        case 'Critical': return 'bg-danger';
+        case 'Warning': return 'bg-warning text-dark';
+        case 'Info': return 'bg-info';
+        case 'Success': return 'bg-success';
+        default: return 'bg-secondary';
+    }
+}
+
+function getIconBgClass(category) {
+    switch (category) {
+        case 'Finance': return 'bg-label-danger';
+        case 'Inventory': return 'bg-label-warning';
+        case 'HumanResources': return 'bg-label-success';
+        case 'Sales': return 'bg-label-primary';
+        case 'CustomerService': return 'bg-label-info';
+        case 'Marketing': return 'bg-label-dark';
+        case 'Executive': return 'bg-label-secondary';
+        default: return 'bg-label-primary';
+    }
+}
+
+function getCategoryIcon(category) {
+    switch (category) {
+        case 'Finance': return 'bx-dollar';
+        case 'Inventory': return 'bx-box';
+        case 'HumanResources': return 'bx-user';
+        case 'Sales': return 'bx-shopping-bag';
+        case 'CustomerService': return 'bx-headphone';
+        case 'Marketing': return 'bx-trending-up';
+        case 'Executive': return 'bx-briefcase';
+        default: return 'bx-bell';
+    }
+}
+
+function formatTime(isoString) {
+    var date = new Date(isoString);
+    var now = new Date();
+    var diffMin = Math.floor((now - date) / 60000);
+    if (diffMin < 1) return 'Vua xong';
+    if (diffMin < 60) return diffMin + ' phut truoc';
+    var diffHrs = Math.floor(diffMin / 60);
+    if (diffHrs < 24) return diffHrs + ' gio truoc';
+    var diffDays = Math.floor(diffHrs / 24);
+    if (diffDays < 7) return diffDays + ' ngay truoc';
+    return date.toLocaleDateString('vi-VN') + ' ' + date.toLocaleTimeString('vi-VN', {hour:'2-digit', minute:'2-digit'});
+}
+
+function escapeHtml(text) {
+    if (!text) return '';
+    var div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+// Load on page ready
+document.addEventListener('DOMContentLoaded', loadNotifications);
+</script>
+}

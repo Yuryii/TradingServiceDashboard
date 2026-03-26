@@ -1,0 +1,960 @@
+@model MarketingDashboardViewModel
+@{
+  ViewData["Title"] = "Marketing Dashboard";
+  var now = DateTime.Now;
+  var defaultFrom = new DateTime(now.Year, 1, 1).ToString("yyyy-MM-dd");
+  var defaultTo = now.ToString("yyyy-MM-dd");
+  var currentFrom = Context.Request.Query["from"].FirstOrDefault() ?? defaultFrom;
+  var currentTo = Context.Request.Query["to"].FirstOrDefault() ?? defaultTo;
+}
+@section VendorStyles {
+<link rel="stylesheet" href="~/vendor/libs/apex-charts/apex-charts.css" />
+}
+@section VendorScripts {
+<script src="~/vendor/libs/apex-charts/apexcharts.js"></script>
+}
+@* Always render chart data - individual guards protect each chart render *@
+<script>
+window.dashboardCharts = window.dashboardCharts || {};
+window.dashboardCharts.orderChart = @Html.Raw(Json.Serialize(Model.CampaignPerformanceChart));
+window.dashboardCharts.revenueChart = @Html.Raw(Json.Serialize(Model.CampaignPerformanceChart));
+window.dashboardCharts.leadTrend = @Html.Raw(Json.Serialize(Model.LeadTrendChart));
+window.dashboardCharts.marketingFunnel = @Html.Raw(Json.Serialize(Model.MarketingFunnelChart));
+window.dashboardCharts.channelSpendRevenue = @Html.Raw(Json.Serialize(Model.ChannelSpendRevenueChart));
+window.dashboardCharts.cplVsConversion = @Html.Raw(Json.Serialize(Model.CplVsConversionScatterChart));
+window.dashboardCharts.landingPage = @Html.Raw(Json.Serialize(Model.LandingPageChart));
+window.dashboardCharts.cohortRetention = @Html.Raw(Json.Serialize(Model.CohortRetentionChart));
+window.dashboardCharts.timeSlotHeatmap = @Html.Raw(Json.Serialize(Model.TimeSlotHeatmap));
+</script>
+@section PageScripts {
+<script src="~/js/dashboards-analytics.js"></script>
+}
+
+<div class="row">
+  <div class="col-xxl-8 mb-6 order-0">
+    <div class="card">
+      <div class="d-flex align-items-start row">
+        <div class="col-sm-7">
+          <div class="card-body">
+            <h5 class="card-title text-primary mb-3">Marketing Performance 🎯</h5>
+            <p class="mb-6">Welcome to the Marketing Dashboard. Track campaigns and engagement.</p>
+            <a href="javascript:;" class="btn btn-sm btn-outline-primary">View Campaigns</a>
+          </div>
+        </div>
+        <div class="col-sm-5 text-center text-sm-left">
+          <div class="card-body pb-0 px-0 px-md-6">
+            <img src="~/img/illustrations/man-with-laptop.png" height="175" alt="Marketing Dashboard" />
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="col-xxl-4 col-lg-12 col-md-4 order-1">
+    <div class="row">
+      <div class="col-lg-6 col-md-12 col-6 mb-6">
+        <div class="card h-100">
+          <div class="card-body">
+            <div class="card-title d-flex align-items-start justify-content-between mb-4">
+              <div class="avatar flex-shrink-0">
+                <img src="~/img/icons/unicons/chart-success.png" alt="Reach" class="rounded" />
+              </div>
+              <div class="dropdown">
+                <button class="btn p-0" type="button" id="cardOpt1" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                  <i class="icon-base bx bx-dots-vertical-rounded text-body-secondary"></i>
+                </button>
+                <div class="dropdown-menu dropdown-menu-end" aria-labelledby="cardOpt1">
+                  <a class="dropdown-item" href="javascript:void(0);">View More</a>
+                </div>
+              </div>
+            </div>
+            <p class="mb-1">@Model.TotalReach.Title</p>
+            <h4 class="card-title mb-3">@Model.TotalReach.Value</h4>
+            <small class="text-success fw-medium"><i class="icon-base bx bx-up-arrow-alt"></i> @Model.TotalReach.TrendLabel</small>
+          </div>
+        </div>
+      </div>
+      <div class="col-lg-6 col-md-12 col-6 mb-6">
+        <div class="card h-100">
+          <div class="card-body">
+            <div class="card-title d-flex align-items-start justify-content-between mb-4">
+              <div class="avatar flex-shrink-0">
+                <img src="~/img/icons/unicons/wallet-info.png" alt="Engagement" class="rounded" />
+              </div>
+              <div class="dropdown">
+                <button class="btn p-0" type="button" id="cardOpt2" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                  <i class="icon-base bx bx-dots-vertical-rounded text-body-secondary"></i>
+                </button>
+                <div class="dropdown-menu dropdown-menu-end" aria-labelledby="cardOpt2">
+                  <a class="dropdown-item" href="javascript:void(0);">View More</a>
+                </div>
+              </div>
+            </div>
+            <p class="mb-1">@Model.EngagementRate.Title</p>
+            <h4 class="card-title mb-3">@Model.EngagementRate.Value</h4>
+            <small class="text-success fw-medium"><i class="icon-base bx bx-up-arrow-alt"></i> @Model.EngagementRate.TrendLabel</small>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="card mb-4">
+  <div class="card-body">
+    <form method="get" class="row g-3 align-items-end">
+      <div class="col-auto">
+        <label class="form-label">From</label>
+        <input type="date" name="from" class="form-control form-control-sm" value="@currentFrom" />
+      </div>
+      <div class="col-auto">
+        <label class="form-label">To</label>
+        <input type="date" name="to" class="form-control form-control-sm" value="@currentTo" />
+      </div>
+      <div class="col-auto">
+        <button type="submit" class="btn btn-sm btn-primary"><i class="icon-base bx bx-filter-alt"></i> Apply</button>
+      </div>
+      <div class="col-auto">
+        <a href="/Marketing" class="btn btn-sm btn-outline-secondary"><i class="icon-base bx bx-reset"></i> Reset</a>
+      </div>
+      <div class="col-auto ms-auto">
+        <div class="btn-group btn-group-sm" role="group">
+          <button type="button" class="btn btn-outline-primary" onclick="setRange('today')">Today</button>
+          <button type="button" class="btn btn-outline-primary" onclick="setRange('week')">This Week</button>
+          <button type="button" class="btn btn-outline-primary" onclick="setRange('month')">This Month</button>
+          <button type="button" class="btn btn-outline-primary" onclick="setRange('ytd')">YTD</button>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div class="row">
+  <div class="col-12 col-xxl-8 order-2 order-md-3 order-xxl-2 mb-6">
+    <div class="card">
+      <div class="row row-bordered g-0">
+        <div class="col-lg-8">
+          <div class="card-header d-flex align-items-center justify-content-between">
+            <div class="card-title mb-0">
+              <h5 class="m-0 me-2">Campaign Performance</h5>
+            </div>
+            <div class="dropdown">
+              <button class="btn p-0" type="button" id="campaignChart" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                <i class="icon-base bx bx-dots-vertical-rounded icon-lg text-body-secondary"></i>
+              </button>
+              <div class="dropdown-menu dropdown-menu-end" aria-labelledby="campaignChart">
+                <a class="dropdown-item" href="javascript:void(0);">This Month</a>
+                <a class="dropdown-item" href="javascript:void(0);">Last Month</a>
+              </div>
+            </div>
+          </div>
+          <div id="totalRevenueChart" class="px-3"></div>
+        </div>
+        <div class="col-lg-4">
+          <div class="card-body px-xl-9 py-12 d-flex align-items-center flex-column">
+            <div class="text-center mb-6">
+              <h6 class="mb-0">@Model.RoiAchievementPercent% ROI Achievement</h6>
+            </div>
+            <div id="growthChart"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="col-12 col-md-8 col-lg-12 col-xxl-4 order-3 order-md-2 mb-6">
+    <div class="row">
+      <div class="col-6 mb-6">
+        <div class="card h-100">
+          <div class="card-body">
+            <div class="card-title d-flex align-items-start justify-content-between mb-4">
+              <div class="avatar flex-shrink-0">
+                <img src="~/img/icons/unicons/paypal.png" alt="Leads" class="rounded" />
+              </div>
+              <div class="dropdown">
+                <button class="btn p-0" type="button" id="cardOpt3" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                  <i class="icon-base bx bx-dots-vertical-rounded text-body-secondary"></i>
+                </button>
+                <div class="dropdown-menu dropdown-menu-end" aria-labelledby="cardOpt3">
+                  <a class="dropdown-item" href="javascript:void(0);">View More</a>
+                </div>
+              </div>
+            </div>
+            <p class="mb-1">@Model.NewLeads.Title</p>
+            <h4 class="card-title mb-3">@Model.NewLeads.Value</h4>
+            <small class="text-success fw-medium"><i class="icon-base bx bx-up-arrow-alt"></i> @Model.NewLeads.TrendLabel</small>
+          </div>
+        </div>
+      </div>
+      <div class="col-6 mb-6">
+        <div class="card h-100">
+          <div class="card-body">
+            <div class="card-title d-flex align-items-start justify-content-between mb-4">
+              <div class="avatar flex-shrink-0">
+                <img src="~/img/icons/unicons/cc-primary.png" alt="Conversions" class="rounded" />
+              </div>
+              <div class="dropdown">
+                <button class="btn p-0" type="button" id="cardOpt4" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                  <i class="icon-base bx bx-dots-vertical-rounded text-body-secondary"></i>
+                </button>
+                <div class="dropdown-menu" aria-labelledby="cardOpt4">
+                  <a class="dropdown-item" href="javascript:void(0);">View More</a>
+                </div>
+              </div>
+            </div>
+            <p class="mb-1">@Model.Conversions.Title</p>
+            <h4 class="card-title mb-3">@Model.Conversions.Value</h4>
+            <small class="text-success fw-medium"><i class="icon-base bx bx-up-arrow-alt"></i> @Model.Conversions.TrendLabel</small>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+@* New KPI Cards Row - CPL, ROAS, Marketing ROI, CAC *@
+<div class="row">
+  <div class="col-lg-3 col-sm-6 mb-6">
+    <div class="card h-100">
+      <div class="card-body">
+        <div class="card-title d-flex align-items-start justify-content-between mb-4">
+          <div class="avatar flex-shrink-0">
+            <img src="~/img/icons/unicons/credit-card.png" alt="CPL" class="rounded" />
+          </div>
+          <div class="dropdown">
+            <button class="btn p-0" type="button" id="cardOptCpl" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+              <i class="icon-base bx bx-dots-vertical-rounded text-body-secondary"></i>
+            </button>
+            <div class="dropdown-menu dropdown-menu-end" aria-labelledby="cardOptCpl">
+              <a class="dropdown-item" href="javascript:void(0);">View More</a>
+            </div>
+          </div>
+        </div>
+        <p class="mb-1">@Model.Cpl.Title</p>
+        <h4 class="card-title mb-3">@Model.Cpl.Value</h4>
+        <small class="text-success fw-medium"><i class="icon-base bx bx-up-arrow-alt"></i> @Model.Cpl.TrendLabel</small>
+      </div>
+    </div>
+  </div>
+  <div class="col-lg-3 col-sm-6 mb-6">
+    <div class="card h-100">
+      <div class="card-body">
+        <div class="card-title d-flex align-items-start justify-content-between mb-4">
+          <div class="avatar flex-shrink-0">
+            <img src="~/img/icons/unicons/chart-line.png" alt="ROAS" class="rounded" />
+          </div>
+          <div class="dropdown">
+            <button class="btn p-0" type="button" id="cardOptRoas" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+              <i class="icon-base bx bx-dots-vertical-rounded text-body-secondary"></i>
+            </button>
+            <div class="dropdown-menu dropdown-menu-end" aria-labelledby="cardOptRoas">
+              <a class="dropdown-item" href="javascript:void(0);">View More</a>
+            </div>
+          </div>
+        </div>
+        <p class="mb-1">@Model.Roas.Title</p>
+        <h4 class="card-title mb-3">@Model.Roas.Value</h4>
+        <small class="text-success fw-medium"><i class="icon-base bx bx-up-arrow-alt"></i> @Model.Roas.TrendLabel</small>
+      </div>
+    </div>
+  </div>
+  <div class="col-lg-3 col-sm-6 mb-6">
+    <div class="card h-100">
+      <div class="card-body">
+        <div class="card-title d-flex align-items-start justify-content-between mb-4">
+          <div class="avatar flex-shrink-0">
+            <img src="~/img/icons/unicons/chart-success.png" alt="Marketing ROI" class="rounded" />
+          </div>
+          <div class="dropdown">
+            <button class="btn p-0" type="button" id="cardOptRoi" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+              <i class="icon-base bx bx-dots-vertical-rounded text-body-secondary"></i>
+            </button>
+            <div class="dropdown-menu dropdown-menu-end" aria-labelledby="cardOptRoi">
+              <a class="dropdown-item" href="javascript:void(0);">View More</a>
+            </div>
+          </div>
+        </div>
+        <p class="mb-1">@Model.Roi.Title</p>
+        <h4 class="card-title mb-3">@Model.Roi.Value</h4>
+        <small class="text-success fw-medium"><i class="icon-base bx bx-up-arrow-alt"></i> @Model.Roi.TrendLabel</small>
+      </div>
+    </div>
+  </div>
+  <div class="col-lg-3 col-sm-6 mb-6">
+    <div class="card h-100">
+      <div class="card-body">
+        <div class="card-title d-flex align-items-start justify-content-between mb-4">
+          <div class="avatar flex-shrink-0">
+            <img src="~/img/icons/unicons/wallet-info.png" alt="CAC" class="rounded" />
+          </div>
+          <div class="dropdown">
+            <button class="btn p-0" type="button" id="cardOptCac" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+              <i class="icon-base bx bx-dots-vertical-rounded text-body-secondary"></i>
+            </button>
+            <div class="dropdown-menu dropdown-menu-end" aria-labelledby="cardOptCac">
+              <a class="dropdown-item" href="javascript:void(0);">View More</a>
+            </div>
+          </div>
+        </div>
+        <p class="mb-1">@Model.Cac.Title</p>
+        <h4 class="card-title mb-3">@Model.Cac.Value</h4>
+        <small class="text-success fw-medium"><i class="icon-base bx bx-up-arrow-alt"></i> @Model.Cac.TrendLabel</small>
+      </div>
+    </div>
+  </div>
+</div>
+
+@* Chart Section 1: Lead Trend + Marketing Funnel *@
+@if (Model.LeadTrendChart.Series.Any() || Model.MarketingFunnelChart.Series.Any())
+{
+<div class="row">
+  <div class="col-lg-6 mb-6">
+    <div class="card h-100">
+      <div class="card-header d-flex justify-content-between">
+        <div class="card-title mb-0">
+          <h5 class="mb-1 me-2">Lead Trend (Leads & SQL)</h5>
+        </div>
+        <div class="dropdown">
+          <button class="btn p-0" type="button" id="leadTrendOpt" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+            <i class="icon-base bx bx-dots-vertical-rounded icon-lg text-body-secondary"></i>
+          </button>
+          <div class="dropdown-menu dropdown-menu-end" aria-labelledby="leadTrendOpt">
+            <a class="dropdown-item" href="javascript:void(0);">Refresh</a>
+          </div>
+        </div>
+      </div>
+      <div class="card-body">
+        <div id="leadTrendChart"></div>
+      </div>
+    </div>
+  </div>
+  <div class="col-lg-6 mb-6">
+    <div class="card h-100">
+      <div class="card-header d-flex justify-content-between">
+        <div class="card-title mb-0">
+          <h5 class="mb-1 me-2">Marketing Funnel</h5>
+        </div>
+        <div class="dropdown">
+          <button class="btn p-0" type="button" id="marketingFunnelOpt" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+            <i class="icon-base bx bx-dots-vertical-rounded icon-lg text-body-secondary"></i>
+          </button>
+          <div class="dropdown-menu dropdown-menu-end" aria-labelledby="marketingFunnelOpt">
+            <a class="dropdown-item" href="javascript:void(0);">Refresh</a>
+          </div>
+        </div>
+      </div>
+      <div class="card-body">
+        <div id="marketingFunnelChart"></div>
+      </div>
+    </div>
+  </div>
+</div>
+}
+
+@* Chart Section 2: Channel Spend vs Revenue + CPL vs Conversion Scatter *@
+@if (Model.ChannelSpendRevenueChart.Series.Any() || Model.CplVsConversionScatterChart.Series.Any())
+{
+<div class="row">
+  <div class="col-lg-6 mb-6">
+    <div class="card h-100">
+      <div class="card-header d-flex justify-content-between">
+        <div class="card-title mb-0">
+          <h5 class="mb-1 me-2">Channel Spend vs Revenue</h5>
+        </div>
+        <div class="dropdown">
+          <button class="btn p-0" type="button" id="channelSpendOpt" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+            <i class="icon-base bx bx-dots-vertical-rounded icon-lg text-body-secondary"></i>
+          </button>
+          <div class="dropdown-menu dropdown-menu-end" aria-labelledby="channelSpendOpt">
+            <a class="dropdown-item" href="javascript:void(0);">Refresh</a>
+          </div>
+        </div>
+      </div>
+      <div class="card-body">
+        <div id="channelSpendRevenueChart"></div>
+      </div>
+    </div>
+  </div>
+  <div class="col-lg-6 mb-6">
+    <div class="card h-100">
+      <div class="card-header d-flex justify-content-between">
+        <div class="card-title mb-0">
+          <h5 class="mb-1 me-2">CPL vs Lead-to-Sale Rate</h5>
+        </div>
+        <div class="dropdown">
+          <button class="btn p-0" type="button" id="cplConversionOpt" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+            <i class="icon-base bx bx-dots-vertical-rounded icon-lg text-body-secondary"></i>
+          </button>
+          <div class="dropdown-menu dropdown-menu-end" aria-labelledby="cplConversionOpt">
+            <a class="dropdown-item" href="javascript:void(0);">Refresh</a>
+          </div>
+        </div>
+      </div>
+      <div class="card-body">
+        <div id="cplVsConversionScatterChart"></div>
+      </div>
+    </div>
+  </div>
+</div>
+}
+
+@* Chart Section 3: Landing Page Bar + Cohort Retention Line *@
+@if (Model.LandingPageChart.Series.Any() || Model.CohortRetentionChart.Series.Any())
+{
+<div class="row">
+  <div class="col-lg-6 mb-6">
+    <div class="card h-100">
+      <div class="card-header d-flex justify-content-between">
+        <div class="card-title mb-0">
+          <h5 class="mb-1 me-2">Landing Page Performance</h5>
+        </div>
+        <div class="dropdown">
+          <button class="btn p-0" type="button" id="landingPageOpt" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+            <i class="icon-base bx bx-dots-vertical-rounded icon-lg text-body-secondary"></i>
+          </button>
+          <div class="dropdown-menu dropdown-menu-end" aria-labelledby="landingPageOpt">
+            <a class="dropdown-item" href="javascript:void(0);">Refresh</a>
+          </div>
+        </div>
+      </div>
+      <div class="card-body">
+        <div id="landingPageChart"></div>
+      </div>
+    </div>
+  </div>
+  <div class="col-lg-6 mb-6">
+    <div class="card h-100">
+      <div class="card-header d-flex justify-content-between">
+        <div class="card-title mb-0">
+          <h5 class="mb-1 me-2">Cohort Retention</h5>
+        </div>
+        <div class="dropdown">
+          <button class="btn p-0" type="button" id="cohortRetentionOpt" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+            <i class="icon-base bx bx-dots-vertical-rounded icon-lg text-body-secondary"></i>
+          </button>
+          <div class="dropdown-menu dropdown-menu-end" aria-labelledby="cohortRetentionOpt">
+            <a class="dropdown-item" href="javascript:void(0);">Refresh</a>
+          </div>
+        </div>
+      </div>
+      <div class="card-body">
+        <div id="cohortRetentionChart"></div>
+      </div>
+    </div>
+  </div>
+</div>
+}
+
+@* Chart Section 4: TimeSlot Heatmap (Full Width) *@
+@if (Model.TimeSlotHeatmap.Data != null && Model.TimeSlotHeatmap.Data.Any())
+{
+<div class="row">
+  <div class="col-12 mb-6">
+    <div class="card h-100">
+      <div class="card-header d-flex justify-content-between">
+        <div class="card-title mb-0">
+          <h5 class="mb-1 me-2">Ad Performance by Time Slot</h5>
+        </div>
+        <div class="dropdown">
+          <button class="btn p-0" type="button" id="timeSlotHeatmapOpt" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+            <i class="icon-base bx bx-dots-vertical-rounded icon-lg text-body-secondary"></i>
+          </button>
+          <div class="dropdown-menu dropdown-menu-end" aria-labelledby="timeSlotHeatmapOpt">
+            <a class="dropdown-item" href="javascript:void(0);">Refresh</a>
+          </div>
+        </div>
+      </div>
+      <div class="card-body">
+        <div id="timeSlotHeatmapChart"></div>
+      </div>
+    </div>
+  </div>
+</div>
+}
+
+<div class="row">
+  <div class="col-md-6 col-lg-4 order-0 mb-6">
+    <div class="card h-100">
+      <div class="card-header d-flex justify-content-between">
+        <div class="card-title mb-0">
+          <h5 class="mb-1 me-2">Active Campaigns</h5>
+          <p class="card-subtitle">Running Marketing Campaigns</p>
+        </div>
+      </div>
+      <div class="card-body">
+        <ul class="p-0 m-0">
+          @if (Model.ActiveCampaigns.Any())
+          {
+            @foreach (var campaign in Model.ActiveCampaigns.Take(5))
+            {
+              <li class="d-flex align-items-center mb-5">
+                <div class="avatar flex-shrink-0 me-3">
+                  <span class="avatar-initial rounded @campaign.IconBgClass"><i class="@campaign.IconClass"></i></span>
+                </div>
+                <div class="d-flex w-100 flex-wrap align-items-center justify-content-between gap-2">
+                  <div class="me-2">
+                    <h6 class="mb-0">@campaign.Name</h6>
+                    <small>@campaign.Subtitle</small>
+                  </div>
+                  <div class="user-progress">
+                    <h6 class="mb-0">@campaign.FormattedValue</h6>
+                  </div>
+                </div>
+              </li>
+            }
+          }
+          else
+          {
+            <li class="d-flex align-items-center mb-5">
+              <div class="avatar flex-shrink-0 me-3">
+                <span class="avatar-initial rounded bg-label-primary"><i class="icon-base bx bx-bulb"></i></span>
+              </div>
+              <div class="d-flex w-100 flex-wrap align-items-center justify-content-between gap-2">
+                <div class="me-2">
+                  <h6 class="mb-0">Brand Awareness</h6>
+                  <small>Social Media</small>
+                </div>
+                <div class="user-progress"><h6 class="mb-0">85%</h6></div>
+              </div>
+            </li>
+          }
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-6 col-lg-4 order-1 mb-6">
+    <div class="card h-100">
+      <div class="card-header d-flex justify-content-between">
+        <div class="card-title mb-0">
+          <h5 class="mb-1 me-2">Social Media</h5>
+          <p class="card-subtitle">Platform Performance</p>
+        </div>
+      </div>
+      <div class="card-body pt-4">
+        <ul class="p-0 m-0">
+          @if (Model.SocialMediaPerformance.Any())
+          {
+            @foreach (var sm in Model.SocialMediaPerformance.Take(5))
+            {
+              <li class="d-flex align-items-center mb-6">
+                <div class="avatar flex-shrink-0 me-3">
+                  <img src="~/img/icons/unicons/wallet.png" alt="@sm.Column1" class="rounded" />
+                </div>
+                <div class="d-flex w-100 flex-wrap align-items-center justify-content-between gap-2">
+                  <div class="me-2">
+                    <small class="d-block">@sm.Column1</small>
+                    <h6 class="fw-normal mb-0">@sm.Column2</h6>
+                  </div>
+                  <div class="user-progress d-flex align-items-center gap-2">
+                    <h6 class="fw-normal mb-0">@sm.Column3</h6>
+                  </div>
+                </div>
+              </li>
+            }
+          }
+          else
+          {
+            <li class="d-flex align-items-center mb-6">
+              <div class="avatar flex-shrink-0 me-3">
+                <img src="~/img/icons/unicons/wallet.png" alt="Facebook" class="rounded" />
+              </div>
+              <div class="d-flex w-100 flex-wrap align-items-center justify-content-between gap-2">
+                <div class="me-2">
+                  <small class="d-block">Facebook</small>
+                  <h6 class="fw-normal mb-0">Followers</h6>
+                </div>
+                <div class="user-progress d-flex align-items-center gap-2">
+                  <h6 class="fw-normal mb-0">125K</h6>
+                </div>
+              </div>
+            </li>
+          }
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-6 col-lg-4 order-2 mb-6">
+    <div class="card h-100">
+      <div class="card-header d-flex justify-content-between">
+        <div class="card-title mb-0">
+          <h5 class="mb-1 me-2">Budget Allocation</h5>
+          <p class="card-subtitle">Marketing Spend</p>
+        </div>
+      </div>
+      <div class="card-body">
+        <ul class="p-0 m-0">
+          @if (Model.BudgetAllocation.Any())
+          {
+            @foreach (var budget in Model.BudgetAllocation.Take(5))
+            {
+              <li class="d-flex align-items-center mb-5">
+                <div class="avatar flex-shrink-0 me-3">
+                  <span class="avatar-initial rounded @budget.IconBgClass"><i class="@budget.IconClass"></i></span>
+                </div>
+                <div class="d-flex w-100 flex-wrap align-items-center justify-content-between gap-2">
+                  <div class="me-2">
+                    <h6 class="mb-0">@budget.Name</h6>
+                    <small>@budget.Subtitle</small>
+                  </div>
+                  <div class="user-progress">
+                    <h6 class="mb-0">@budget.FormattedValue</h6>
+                  </div>
+                </div>
+              </li>
+            }
+          }
+          else
+          {
+            <li class="d-flex align-items-center mb-5">
+              <div class="avatar flex-shrink-0 me-3">
+                <span class="avatar-initial rounded bg-label-primary">FB</span>
+              </div>
+              <div class="d-flex w-100 flex-wrap align-items-center justify-content-between gap-2">
+                <div class="me-2">
+                  <h6 class="mb-0">Facebook Ads</h6>
+                  <small>30% of budget</small>
+                </div>
+                <div class="user-progress"><h6 class="mb-0">$12K</h6></div>
+              </div>
+            </li>
+          }
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+
+@if (Model.CampaignPerformanceChart.Series.Any())
+{
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      var chartData = @Html.Raw(Json.Serialize(Model.CampaignPerformanceChart));
+      var chartEl = document.querySelector('#totalRevenueChart');
+      if (chartEl && typeof ApexCharts !== 'undefined') {
+        var options = {
+          chart: { height: 300, stacked: true, type: 'bar', toolbar: { show: false } },
+          plotOptions: { bar: { horizontal: false, columnWidth: '30%', borderRadius: 8, borderRadiusApplication: 'around' } },
+          colors: ['#6965fd', '#03c3ec'],
+          dataLabels: { enabled: false },
+          stroke: { curve: 'smooth', width: 6, lineCap: 'round', colors: [cardColor] },
+          legend: { show: true, horizontalAlign: 'left', position: 'top', markers: { size: 4, radius: 12, shape: 'circle', strokeWidth: 0 }, fontSize: '13px', fontFamily: config.fontFamily, labels: { colors: legendColor, useSeriesColors: false }, itemMargin: { horizontal: 10 } },
+          grid: { strokeDashArray: 7, borderColor: borderColor, padding: { top: 0, bottom: -8, left: 20, right: 20 } },
+          fill: { opacity: [1, 1] },
+          xaxis: { categories: chartData.categories || [], labels: { style: { fontSize: '13px', fontFamily: config.fontFamily, colors: labelColor } }, axisTicks: { show: false }, axisBorder: { show: false } },
+          yaxis: { labels: { style: { fontSize: '13px', fontFamily: config.fontFamily, colors: labelColor } } },
+          states: { hover: { filter: { type: 'none' } }, active: { filter: { type: 'none' } } },
+          series: chartData.series || []
+        };
+        new ApexCharts(chartEl, options).render();
+      }
+    });
+  </script>
+}
+
+@if (Model.RoiAchievementPercent > 0)
+{
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      var growthEl = document.querySelector('#growthChart');
+      if (growthEl && typeof ApexCharts !== 'undefined') {
+        var options = {
+          series: [@Model.RoiAchievementPercent],
+          labels: ['ROI'],
+          chart: { height: 200, type: 'radialBar' },
+          plotOptions: { radialBar: { size: 150, offsetY: 10, startAngle: -150, endAngle: 150, hollow: { size: '55%' }, track: { background: cardColor, strokeWidth: '100%' }, dataLabels: { name: { offsetY: 15, color: legendColor, fontSize: '15px', fontWeight: '500', fontFamily: config.fontFamily }, value: { offsetY: -25, color: headingColor, fontSize: '22px', fontWeight: '500', fontFamily: config.fontFamily } } },
+          colors: ['#6965fd'],
+          fill: { type: 'gradient', gradient: { shade: 'dark', shadeIntensity: 0.5, gradientToColors: ['#6965fd'], inverseColors: true, opacityFrom: 1, opacityTo: 0.6, stops: [30, 70, 100] } },
+          stroke: { dashArray: 5 },
+          grid: { padding: { top: -35, bottom: -10 } },
+          states: { hover: { filter: { type: 'none' } }, active: { filter: { type: 'none' } } }
+        };
+        new ApexCharts(growthEl, options).render();
+      }
+    });
+  </script>
+}
+
+@if (Model.LeadTrendChart.Series.Any())
+{
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      // Lead Trend Chart
+      var leadTrendEl = document.querySelector('#leadTrendChart');
+      if (leadTrendEl && typeof ApexCharts !== 'undefined') {
+        var leadTrendData = @Html.Raw(Json.Serialize(Model.LeadTrendChart));
+        var leadTrendOptions = {
+          chart: {
+            height: 280,
+            type: 'line',
+            toolbar: { show: false },
+            fontFamily: config.fontFamily,
+            foreColor: labelColor,
+            zoom: { enabled: true }
+          },
+          colors: ['#6965fd', '#03c3ec', '#71dd88', '#ffab00'],
+          dataLabels: { enabled: false },
+          stroke: { curve: 'smooth', width: 3, lineCap: 'round' },
+          legend: { show: true, horizontalAlign: 'left', position: 'top', markers: { size: 4, radius: 12, shape: 'circle', strokeWidth: 0 }, fontSize: '13px', fontFamily: config.fontFamily, labels: { colors: legendColor, useSeriesColors: false }, itemMargin: { horizontal: 10 } },
+          grid: { strokeDashArray: 7, borderColor: borderColor, padding: { top: -10, bottom: -10, left: 10, right: 10 } },
+          xaxis: {
+            categories: leadTrendData.categories || [],
+            labels: { style: { fontSize: '13px', fontFamily: config.fontFamily, colors: labelColor } },
+            axisTicks: { show: false },
+            axisBorder: { show: false }
+          },
+          yaxis: {
+            labels: { style: { fontSize: '13px', fontFamily: config.fontFamily, colors: labelColor }, formatter: function (val) { return val.toLocaleString(); } }
+          },
+          tooltip: { theme: 'dark' },
+          series: leadTrendData.series || []
+        };
+        new ApexCharts(leadTrendEl, leadTrendOptions).render();
+      }
+
+      // Marketing Funnel Chart
+      var marketingFunnelEl = document.querySelector('#marketingFunnelChart');
+      if (marketingFunnelEl && typeof ApexCharts !== 'undefined') {
+        var marketingFunnelData = @Html.Raw(Json.Serialize(Model.MarketingFunnelChart));
+        var marketingFunnelOptions = {
+          chart: {
+            height: 280,
+            type: 'bar',
+            toolbar: { show: false },
+            fontFamily: config.fontFamily,
+            foreColor: labelColor
+          },
+          colors: ['#6965fd', '#03c3ec', '#71dd88', '#ffab00', '#ff3e1d'],
+          plotOptions: {
+            bar: { horizontal: false, columnWidth: '40%', borderRadius: 8, borderRadiusApplication: 'around', dataLabels: { position: 'top' } }
+          },
+          dataLabels: { enabled: true, formatter: function (val) { return val.toLocaleString(); }, style: { fontSize: '12px', fontFamily: config.fontFamily, colors: [headingColor] } },
+          legend: { show: true, horizontalAlign: 'left', position: 'top', markers: { size: 4, radius: 12, shape: 'circle', strokeWidth: 0 }, fontSize: '13px', fontFamily: config.fontFamily, labels: { colors: legendColor, useSeriesColors: false }, itemMargin: { horizontal: 10 } },
+          grid: { strokeDashArray: 7, borderColor: borderColor, padding: { top: 0, bottom: -8, left: 10, right: 10 } },
+          xaxis: {
+            categories: marketingFunnelData.categories || [],
+            labels: { style: { fontSize: '13px', fontFamily: config.fontFamily, colors: labelColor } },
+            axisTicks: { show: false },
+            axisBorder: { show: false }
+          },
+          yaxis: {
+            labels: { style: { fontSize: '13px', fontFamily: config.fontFamily, colors: labelColor }, formatter: function (val) { return val.toLocaleString(); } }
+          },
+          tooltip: { theme: 'dark' },
+          series: marketingFunnelData.series || []
+        };
+        new ApexCharts(marketingFunnelEl, marketingFunnelOptions).render();
+      }
+
+      // Channel Spend vs Revenue Chart
+      var channelSpendEl = document.querySelector('#channelSpendRevenueChart');
+      if (channelSpendEl && typeof ApexCharts !== 'undefined') {
+        var channelSpendData = @Html.Raw(Json.Serialize(Model.ChannelSpendRevenueChart));
+        var channelSpendOptions = {
+          chart: {
+            height: 280,
+            type: 'bar',
+            toolbar: { show: false },
+            fontFamily: config.fontFamily,
+            foreColor: labelColor
+          },
+          colors: ['#ff3e1d', '#71dd88'],
+          plotOptions: {
+            bar: { horizontal: false, columnWidth: '35%', borderRadius: 8, borderRadiusApplication: 'around' }
+          },
+          dataLabels: { enabled: false },
+          legend: { show: true, horizontalAlign: 'left', position: 'top', markers: { size: 4, radius: 12, shape: 'circle', strokeWidth: 0 }, fontSize: '13px', fontFamily: config.fontFamily, labels: { colors: legendColor, useSeriesColors: false }, itemMargin: { horizontal: 10 } },
+          grid: { strokeDashArray: 7, borderColor: borderColor, padding: { top: -10, bottom: -10, left: 10, right: 10 } },
+          xaxis: {
+            categories: channelSpendData.categories || [],
+            labels: { style: { fontSize: '13px', fontFamily: config.fontFamily, colors: labelColor } },
+            axisTicks: { show: false },
+            axisBorder: { show: false }
+          },
+          yaxis: {
+            labels: { style: { fontSize: '13px', fontFamily: config.fontFamily, colors: labelColor }, formatter: function (val) { return '$' + val.toLocaleString(); } }
+          },
+          tooltip: { theme: 'dark', y: { formatter: function (val) { return '$' + val.toLocaleString(); } } },
+          series: channelSpendData.series || []
+        };
+        new ApexCharts(channelSpendEl, channelSpendOptions).render();
+      }
+
+      // CPL vs Conversion Scatter Chart
+      var cplConversionEl = document.querySelector('#cplVsConversionScatterChart');
+      if (cplConversionEl && typeof ApexCharts !== 'undefined') {
+        var cplConversionData = @Html.Raw(Json.Serialize(Model.CplVsConversionScatterChart));
+        var cplConversionOptions = {
+          chart: {
+            height: 280,
+            type: 'scatter',
+            toolbar: { show: false },
+            fontFamily: config.fontFamily,
+            foreColor: labelColor,
+            zoom: { enabled: true }
+          },
+          colors: ['#6965fd', '#03c3ec'],
+          dataLabels: { enabled: true, formatter: function (val) { return val.toFixed(1); }, style: { fontSize: '11px', fontFamily: config.fontFamily, colors: [headingColor] } },
+          legend: { show: true, horizontalAlign: 'left', position: 'top', markers: { size: 6, radius: 12, shape: 'circle', strokeWidth: 0 }, fontSize: '13px', fontFamily: config.fontFamily, labels: { colors: legendColor, useSeriesColors: false }, itemMargin: { horizontal: 10 } },
+          grid: { strokeDashArray: 7, borderColor: borderColor, padding: { top: -10, bottom: -10, left: 10, right: 10 } },
+          xaxis: {
+            title: { text: 'CPL', style: { fontSize: '12px', fontFamily: config.fontFamily, color: labelColor } },
+            labels: { style: { fontSize: '13px', fontFamily: config.fontFamily, colors: labelColor }, formatter: function (val) { return '$' + val.toFixed(0); } },
+            axisTicks: { show: false },
+            axisBorder: { show: false }
+          },
+          yaxis: {
+            title: { text: 'Conversion %', style: { fontSize: '12px', fontFamily: config.fontFamily, color: labelColor } },
+            labels: { style: { fontSize: '13px', fontFamily: config.fontFamily, colors: labelColor }, formatter: function (val) { return val.toFixed(1) + '%'; } }
+          },
+          tooltip: { theme: 'dark' },
+          series: cplConversionData.series || []
+        };
+        new ApexCharts(cplConversionEl, cplConversionOptions).render();
+      }
+
+      // Landing Page Chart
+      var landingPageEl = document.querySelector('#landingPageChart');
+      if (landingPageEl && typeof ApexCharts !== 'undefined') {
+        var landingPageData = @Html.Raw(Json.Serialize(Model.LandingPageChart));
+        var landingPageOptions = {
+          chart: {
+            height: 280,
+            type: 'bar',
+            toolbar: { show: false },
+            fontFamily: config.fontFamily,
+            foreColor: labelColor
+          },
+          colors: ['#6965fd', '#03c3ec', '#71dd88'],
+          plotOptions: {
+            bar: { horizontal: true, barHeight: '60%', borderRadius: 8, borderRadiusApplication: 'around' }
+          },
+          dataLabels: { enabled: true, formatter: function (val) { return val.toLocaleString(); }, style: { fontSize: '11px', fontFamily: config.fontFamily, colors: [headingColor] } },
+          legend: { show: true, horizontalAlign: 'left', position: 'top', markers: { size: 4, radius: 12, shape: 'circle', strokeWidth: 0 }, fontSize: '13px', fontFamily: config.fontFamily, labels: { colors: legendColor, useSeriesColors: false }, itemMargin: { horizontal: 10 } },
+          grid: { strokeDashArray: 7, borderColor: borderColor, padding: { top: 0, bottom: 0, left: 10, right: 10 } },
+          xaxis: {
+            categories: landingPageData.categories || [],
+            labels: { style: { fontSize: '13px', fontFamily: config.fontFamily, colors: labelColor } },
+            axisTicks: { show: false },
+            axisBorder: { show: false }
+          },
+          yaxis: {
+            labels: { style: { fontSize: '12px', fontFamily: config.fontFamily, colors: labelColor } }
+          },
+          tooltip: { theme: 'dark' },
+          series: landingPageData.series || []
+        };
+        new ApexCharts(landingPageEl, landingPageOptions).render();
+      }
+
+      // Cohort Retention Chart
+      var cohortRetentionEl = document.querySelector('#cohortRetentionChart');
+      if (cohortRetentionEl && typeof ApexCharts !== 'undefined') {
+        var cohortRetentionData = @Html.Raw(Json.Serialize(Model.CohortRetentionChart));
+        var cohortRetentionOptions = {
+          chart: {
+            height: 280,
+            type: 'line',
+            toolbar: { show: false },
+            fontFamily: config.fontFamily,
+            foreColor: labelColor,
+            zoom: { enabled: true }
+          },
+          colors: ['#6965fd', '#03c3ec', '#71dd88', '#ffab00', '#ff3e1d'],
+          stroke: { curve: 'smooth', width: 3, lineCap: 'round' },
+          dataLabels: { enabled: false },
+          legend: { show: true, horizontalAlign: 'left', position: 'top', markers: { size: 4, radius: 12, shape: 'circle', strokeWidth: 0 }, fontSize: '13px', fontFamily: config.fontFamily, labels: { colors: legendColor, useSeriesColors: false }, itemMargin: { horizontal: 10 } },
+          grid: { strokeDashArray: 7, borderColor: borderColor, padding: { top: -10, bottom: -10, left: 10, right: 10 } },
+          xaxis: {
+            categories: cohortRetentionData.categories || [],
+            labels: { style: { fontSize: '13px', fontFamily: config.fontFamily, colors: labelColor } },
+            axisTicks: { show: false },
+            axisBorder: { show: false }
+          },
+          yaxis: {
+            labels: { style: { fontSize: '13px', fontFamily: config.fontFamily, colors: labelColor }, formatter: function (val) { return val.toFixed(0) + '%'; } }
+          },
+          tooltip: { theme: 'dark', y: { formatter: function (val) { return val.toFixed(1) + '%'; } } },
+          series: cohortRetentionData.series || []
+        };
+        new ApexCharts(cohortRetentionEl, cohortRetentionOptions).render();
+      }
+
+      // TimeSlot Heatmap Chart
+      var timeSlotHeatmapEl = document.querySelector('#timeSlotHeatmapChart');
+      if (timeSlotHeatmapEl && typeof ApexCharts !== 'undefined') {
+        var timeSlotData = @Html.Raw(Json.Serialize(Model.TimeSlotHeatmap));
+        var timeSlotHeatmapOptions = {
+          chart: {
+            height: 320,
+            type: 'heatmap',
+            toolbar: { show: false },
+            fontFamily: config.fontFamily,
+            foreColor: labelColor
+          },
+          colors: ['#6965fd', '#03c3ec', '#71dd88'],
+          dataLabels: { enabled: true, style: { fontSize: '11px', fontFamily: config.fontFamily, colors: [headingColor] } },
+          legend: { show: true, horizontalAlign: 'left', position: 'top', markers: { size: 6, radius: 12, shape: 'circle', strokeWidth: 0 }, fontSize: '13px', fontFamily: config.fontFamily, labels: { colors: legendColor, useSeriesColors: false }, itemMargin: { horizontal: 10 } },
+          grid: { strokeDashArray: 7, borderColor: borderColor, padding: { top: -10, bottom: -10, left: 10, right: 10 } },
+          plotOptions: {
+            heatmap: {
+              radius: 4,
+              colorScale: {
+                ranges: [
+                  { from: 0, to: 25, name: 'Low', color: '#ff3e1d' },
+                  { from: 26, to: 50, name: 'Medium', color: '#ffab00' },
+                  { from: 51, to: 75, name: 'High', color: '#03c3ec' },
+                  { from: 76, to: 100, name: 'Excellent', color: '#71dd88' }
+                ]
+              }
+            }
+          },
+          xaxis: {
+            categories: timeSlotData.xCategories || [],
+            labels: { style: { fontSize: '13px', fontFamily: config.fontFamily, colors: labelColor } },
+            axisTicks: { show: false },
+            axisBorder: { show: false }
+          },
+          yaxis: {
+            categories: timeSlotData.yCategories || [],
+            labels: { style: { fontSize: '13px', fontFamily: config.fontFamily, colors: labelColor } }
+          },
+          tooltip: { theme: 'dark', y: { formatter: function (val) { return val.toLocaleString(); } } },
+          series: timeSlotData.data || []
+        };
+        new ApexCharts(timeSlotHeatmapEl, timeSlotHeatmapOptions).render();
+      }
+    });
+  </script>
+}
+
+<script>
+function setRange(type) {
+    var today = new Date();
+    var toInput = document.querySelector('form[method="get"] input[name="to"]');
+    var fromInput = document.querySelector('form[method="get"] input[name="from"]');
+    if (!fromInput || !toInput) return;
+
+    var to = new Date(today);
+    var from = new Date(today);
+
+    if (type === 'today') {
+        from = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+        to = from;
+    } else if (type === 'week') {
+        var day = today.getDay();
+        var diff = today.getDate() - day + (day === 0 ? -6 : 1);
+        from = new Date(today.getFullYear(), today.getMonth(), diff);
+        to = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+    } else if (type === 'month') {
+        from = new Date(today.getFullYear(), today.getMonth(), 1);
+        to = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+    } else if (type === 'ytd') {
+        from = new Date(today.getFullYear(), 0, 1);
+        to = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+    }
+
+    fromInput.value = from.toISOString().split('T')[0];
+    toInput.value = to.toISOString().split('T')[0];
+    fromInput.closest('form').submit();
+}
+</script>

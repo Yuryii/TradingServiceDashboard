@@ -1,0 +1,201 @@
+@model NotificationConfigEditVM
+@{
+    Layout = "~/Views/Shared/_ContentNavbarLayout.cshtml";
+    ViewData["Title"] = "Chinh sua cau hinh";
+}
+
+<div class="row">
+    <div class="col-12 mb-4">
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <h4 class="mb-0"><i class="icon-base bx bx-edit me-2 text-primary"></i>Chinh sua cau hinh</h4>
+                <p class="text-muted mb-0">@Model.NotificationName</p>
+            </div>
+            <a asp-action="List" class="btn btn-outline-secondary btn-sm">
+                <i class="icon-base bx bx-arrow-back me-1"></i> Tro ve
+            </a>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-xl-8">
+        <div class="card">
+            <div class="card-body">
+                <form asp-action="Edit" method="post">
+                    <input type="hidden" asp-for="ConfigID" />
+                    <input type="hidden" asp-for="NotificationCode" />
+                    <input type="hidden" asp-for="NotificationName" />
+
+                    <!-- Readonly info -->
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Ma thong bao</label>
+                            <input type="text" class="form-control" value="@Model.NotificationCode" readonly />
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Ten thong bao</label>
+                            <input type="text" class="form-control" value="@Model.NotificationName" readonly />
+                        </div>
+                    </div>
+
+                    <!-- Enabled -->
+                    <div class="form-check form-switch mb-4">
+                        <input class="form-check-input" type="checkbox" asp-for="IsEnabled" />
+                        <label class="form-check-label" asp-for="IsEnabled">
+                            <strong>Bat / Tat thong bao nay</strong>
+                        </label>
+                    </div>
+
+                    <hr class="my-4" />
+                    <h5 class="mb-3">Chi tiet cau hinh</h5>
+
+                    <div class="row">
+                        <!-- Check Interval -->
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Chu ky kiem tra</label>
+                            <select class="form-select" asp-for="CheckIntervalMinutes">
+                                <option value="1">1 phut</option>
+                                <option value="5">5 phut</option>
+                                <option value="10">10 phut</option>
+                                <option value="15">15 phut</option>
+                                <option value="30">30 phut</option>
+                                <option value="60">1 gio</option>
+                                <option value="1440">1 ngay (Daily)</option>
+                            </select>
+                            <small class="text-muted">Tan suat job kiem tra dieu kien thong bao</small>
+                        </div>
+
+                        <!-- Delay Hours -->
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label" asp-for="DelayHours">Thoi gian tre (gio)</label>
+                            <input type="number" class="form-control" asp-for="DelayHours" min="0" placeholder="VD: 24 = 1 ngay" />
+                            <small class="text-muted">Thoi gian cho phep truoc khi kich hoat</small>
+                        </div>
+
+                        <!-- Threshold 1 -->
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label" asp-for="ThresholdValue">Nguong 1 (Decimal)</label>
+                            <input type="number" class="form-control" asp-for="ThresholdValue" step="any" placeholder="VD: 50000000 = 50 triệu" />
+                            <small class="text-muted">VD: so tien toi thieu de canh bao don hang lon</small>
+                        </div>
+
+                        <!-- Threshold 2 -->
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label" asp-for="ThresholdValue2">Nguong 2 (Decimal)</label>
+                            <input type="number" class="form-control" asp-for="ThresholdValue2" step="any" placeholder="VD: 100000000" />
+                            <small class="text-muted">Nguong phu, VD: muc Critical</small>
+                        </div>
+
+                        <!-- Allowed Roles -->
+                        <div class="col-md-12 mb-3">
+                            <label class="form-label">Vai tro nhan thong bao</label>
+                            <div class="row">
+                                @{
+                                    var roles = new[] { "Executive", "Finance", "Sales", "Marketing", "Inventory", "HumanResources", "CustomerService" };
+                                    var selectedRoles = string.IsNullOrEmpty(Model.AllowedRoles)
+                                        ? new string[0]
+                                        : Model.AllowedRoles.Split(',', StringSplitOptions.RemoveEmptyEntries);
+                                }
+                                @foreach (var role in roles)
+                                {
+                                    var isChecked = selectedRoles.Contains(role) || Model.AllowedRoles == "*";
+                                    <div class="col-md-3">
+                                        <div class="form-check">
+                                            <input class="form-check-input role-check"
+                                                type="checkbox"
+                                                name="SelectedRoles"
+                                                value="@role"
+                                                id="role_@role"
+                                                @(isChecked ? "checked" : "") />
+                                            <label class="form-check-label" for="role_@role">@role</label>
+                                        </div>
+                                    </div>
+                                }
+                            </div>
+                            <small class="text-muted">Chon vai tro se nhan duoc thong bao nay</small>
+                            <input type="hidden" id="AllowedRoles" name="AllowedRoles" value="@Model.AllowedRoles" />
+                        </div>
+
+                        <!-- Icon Class -->
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label" asp-for="IconClass">Icon (BoxIcon class)</label>
+                            <input type="text" class="form-control" asp-for="IconClass" placeholder="VD: bx-bell" />
+                            <small class="text-muted">BoxIcon class, VD: bx-error, bx-dollar, bx-gift</small>
+                        </div>
+
+                        <!-- Icon Bg Class -->
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label" asp-for="IconBgClass">Icon Background</label>
+                            <select class="form-select" asp-for="IconBgClass">
+                                <option value="bg-label-primary">Primary</option>
+                                <option value="bg-label-success">Success</option>
+                                <option value="bg-label-danger">Danger</option>
+                                <option value="bg-label-warning">Warning</option>
+                                <option value="bg-label-info">Info</option>
+                                <option value="bg-label-secondary">Secondary</option>
+                                <option value="bg-label-dark">Dark</option>
+                            </select>
+                        </div>
+
+                        <!-- Action URL -->
+                        <div class="col-md-12 mb-3">
+                            <label class="form-label" asp-for="ActionUrl">Lien ket (Action URL)</label>
+                            <input type="text" class="form-control" asp-for="ActionUrl" placeholder="VD: /Finance, /Sales" />
+                            <small class="text-muted">Trang se chuyen toi khi nguoi dung click thong bao</small>
+                        </div>
+
+                        <!-- Description -->
+                        <div class="col-md-12 mb-3">
+                            <label class="form-label" asp-for="Description">Mo ta</label>
+                            <textarea class="form-control" asp-for="Description" rows="2" placeholder="Mo ta chi tiet ve thong bao nay..."></textarea>
+                        </div>
+                    </div>
+
+                    <div class="d-flex justify-content-end gap-2 mt-4">
+                        <a asp-action="List" class="btn btn-outline-secondary">Huy</a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="icon-base bx bx-save me-1"></i> Luu cau hinh
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sidebar info -->
+    <div class="col-xl-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Thong tin</h5>
+            </div>
+            <div class="card-body">
+                <dl class="row mb-0">
+                    <dt class="col-5 text-muted small">Ma:</dt>
+                    <dd class="col-7"><code>@Model.NotificationCode</code></dd>
+                    <dt class="col-5 text-muted small">Module:</dt>
+                    <dd class="col-7"><span class="badge bg-label-secondary">@ViewBag.Category</span></dd>
+                </dl>
+                <hr />
+                <p class="small text-muted mb-2">Su dung component <code>SelectedRoles</code> de chon vai tro. Sau khi luu, gia tri se duoc luu vao truong <code>AllowedRoles</code>.</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section PageScripts {
+<script>
+    // Update AllowedRoles hidden field from checkboxes
+    function updateAllowedRoles() {
+        var roles = Array.from(document.querySelectorAll('.role-check:checked')).map(function(cb) { return cb.value; });
+        document.getElementById('AllowedRoles').value = roles.length > 0 ? roles.join(',') : '*';
+    }
+
+    document.querySelectorAll('.role-check').forEach(function(cb) {
+        cb.addEventListener('change', updateAllowedRoles);
+    });
+
+    // Initialize
+    updateAllowedRoles();
+</script>
+}
