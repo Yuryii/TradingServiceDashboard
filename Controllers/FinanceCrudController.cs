@@ -23,6 +23,11 @@ public class FinanceCrudController : Controller
 
     public IActionResult Index() => View();
 
+    #region Export
+    public async Task<IActionResult> Expense_Export() => await Export("Expense", "Expense");
+    public async Task<IActionResult> ExpenseCategory_Export() => await Export("ExpenseCategory", "ExpenseCategory");
+    #endregion
+
     #region Expenses
     public async Task<IActionResult> Expenses_Index()
     {

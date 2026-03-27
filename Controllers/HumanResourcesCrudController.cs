@@ -52,6 +52,17 @@ public class HumanResourcesCrudController : Controller
     }
     #endregion
 
+    #region Export
+    public async Task<IActionResult> Position_Export() => await Export("Position", "Position");
+    public async Task<IActionResult> Employee_Export() => await Export("Employee", "Employee");
+    public async Task<IActionResult> Attendance_Export() => await Export("Attendance", "Attendance");
+    public async Task<IActionResult> LeaveRequest_Export() => await Export("LeaveRequest", "LeaveRequest");
+    public async Task<IActionResult> Payroll_Export() => await Export("Payroll", "Payroll");
+    public async Task<IActionResult> PerformanceReview_Export() => await Export("PerformanceReview", "PerformanceReview");
+    public async Task<IActionResult> JobOpening_Export() => await Export("JobOpening", "JobOpening");
+    public async Task<IActionResult> Applicant_Export() => await Export("Applicant", "Applicant");
+    #endregion
+
     #region Employees
     public async Task<IActionResult> Employees() {
         var items = await _context.Employees.Include(e => e.Department).Include(e => e.Position).AsNoTracking().OrderBy(e => e.FullName)

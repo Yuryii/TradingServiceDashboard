@@ -189,6 +189,19 @@ public class SalesCrudController : Controller
 
     #endregion
 
+    #region Export
+    public async Task<IActionResult> Customers_Export() => await Export("Customer", "Customer");
+    public async Task<IActionResult> CustomerGroups_Export() => await Export("CustomerGroup", "CustomerGroup");
+    public async Task<IActionResult> SalesChannels_Export() => await Export("SalesChannel", "SalesChannel");
+    public async Task<IActionResult> OpportunityStages_Export() => await Export("OpportunityStage", "OpportunityStage");
+    public async Task<IActionResult> Opportunities_Export() => await Export("Opportunity", "Opportunity");
+    public async Task<IActionResult> Quotes_Export() => await Export("Quote", "Quote");
+    public async Task<IActionResult> SalesOrders_Export() => await Export("SalesOrder", "SalesOrder");
+    public async Task<IActionResult> SalesInvoices_Export() => await Export("SalesInvoice", "SalesInvoice");
+    public async Task<IActionResult> SalesReturns_Export() => await Export("SalesReturn", "SalesReturn");
+    public async Task<IActionResult> CustomerPayments_Export() => await Export("CustomerPayment", "CustomerPayment");
+    #endregion
+
     #region CustomerGroups
 
     public async Task<IActionResult> CustomerGroups()

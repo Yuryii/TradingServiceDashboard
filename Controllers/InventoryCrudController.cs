@@ -36,6 +36,17 @@ public class InventoryCrudController : Controller
         return View(model);
     }
 
+    #region Export
+    public async Task<IActionResult> Product_Export() => await Export("Product", "Product");
+    public async Task<IActionResult> ProductCategory_Export() => await Export("ProductCategory", "ProductCategory");
+    public async Task<IActionResult> Warehouse_Export() => await Export("Warehouse", "Warehouse");
+    public async Task<IActionResult> Supplier_Export() => await Export("Supplier", "Supplier");
+    public async Task<IActionResult> PurchaseOrder_Export() => await Export("PurchaseOrder", "PurchaseOrder");
+    public async Task<IActionResult> PurchaseReceipt_Export() => await Export("PurchaseReceipt", "PurchaseReceipt");
+    public async Task<IActionResult> PurchaseInvoice_Export() => await Export("PurchaseInvoice", "PurchaseInvoice");
+    public async Task<IActionResult> SupplierPayment_Export() => await Export("SupplierPayment", "SupplierPayment");
+    #endregion
+
     #region Products
     public async Task<IActionResult> Products()
     {

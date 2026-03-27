@@ -628,6 +628,12 @@ window.dashboardCharts.timeSlotHeatmap = @Html.Raw(Json.Serialize(Model.TimeSlot
 {
   <script>
     document.addEventListener('DOMContentLoaded', function () {
+      var config = window.config || {};
+      var cardColor = config.colors.cardColor || '#ffffff';
+      var headingColor = config.colors.headingColor || '#566a7f';
+      var legendColor = config.colors.bodyColor || '#697a8d';
+      var labelColor = config.colors.textMuted || '#a1acb8';
+      var borderColor = config.colors.borderColor || '#eceef1';
       var chartData = @Html.Raw(Json.Serialize(Model.CampaignPerformanceChart));
       var chartEl = document.querySelector('#totalRevenueChart');
       if (chartEl && typeof ApexCharts !== 'undefined') {
@@ -655,10 +661,16 @@ window.dashboardCharts.timeSlotHeatmap = @Html.Raw(Json.Serialize(Model.TimeSlot
 {
   <script>
     document.addEventListener('DOMContentLoaded', function () {
+      var config = window.config || {};
+      var cardColor = config.colors.cardColor || '#ffffff';
+      var headingColor = config.colors.headingColor || '#566a7f';
+      var legendColor = config.colors.bodyColor || '#697a8d';
+      var labelColor = config.colors.textMuted || '#a1acb8';
+      var borderColor = config.colors.borderColor || '#eceef1';
       var growthEl = document.querySelector('#growthChart');
       if (growthEl && typeof ApexCharts !== 'undefined') {
         var options = {
-          series: [@Model.RoiAchievementPercent],
+          series: [(@Model.RoiAchievementPercent > 0 ? @Model.RoiAchievementPercent : 0)],
           labels: ['ROI'],
           chart: { height: 200, type: 'radialBar' },
           plotOptions: { radialBar: { size: 150, offsetY: 10, startAngle: -150, endAngle: 150, hollow: { size: '55%' }, track: { background: cardColor, strokeWidth: '100%' }, dataLabels: { name: { offsetY: 15, color: legendColor, fontSize: '15px', fontWeight: '500', fontFamily: config.fontFamily }, value: { offsetY: -25, color: headingColor, fontSize: '22px', fontWeight: '500', fontFamily: config.fontFamily } } },
@@ -678,6 +690,12 @@ window.dashboardCharts.timeSlotHeatmap = @Html.Raw(Json.Serialize(Model.TimeSlot
 {
   <script>
     document.addEventListener('DOMContentLoaded', function () {
+      var config = window.config || {};
+      var cardColor = config.colors.cardColor || '#ffffff';
+      var headingColor = config.colors.headingColor || '#566a7f';
+      var legendColor = config.colors.bodyColor || '#697a8d';
+      var labelColor = config.colors.textMuted || '#a1acb8';
+      var borderColor = config.colors.borderColor || '#eceef1';
       // Lead Trend Chart
       var leadTrendEl = document.querySelector('#leadTrendChart');
       if (leadTrendEl && typeof ApexCharts !== 'undefined') {

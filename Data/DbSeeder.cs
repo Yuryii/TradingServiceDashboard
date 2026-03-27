@@ -434,7 +434,10 @@ public class DbSeeder
         var leads = new List<MarketingLead>();
         for (int i = 1; i <= 60; i++)
         {
-            var month = (i - 1) % 12 + 1;
+            var baseYear = 2025;
+            var offsetMonths = (i - 1) % 12 + 10;
+            var year = baseYear + offsetMonths / 12;
+            var month = offsetMonths % 12 == 0 ? 12 : offsetMonths % 12;
             var day = (i - 1) % 28 + 1;
             leads.Add(new MarketingLead
             {
@@ -448,7 +451,7 @@ public class DbSeeder
                 Email = $"lead{i}@email.com",
                 Phone = $"+84-90{i % 100:D2}-XXX-XXXX",
                 LeadScore = (i % 100) + 1,
-                CreatedDate = new DateTime(2026, month, day)
+                CreatedDate = new DateTime(year, month, day)
             });
         }
         _context.MarketingLeads.AddRange(leads);
@@ -465,7 +468,7 @@ public class DbSeeder
         var quotes = new List<Quote>();
         for (int i = 1; i <= 20; i++)
         {
-            var quoteDate = new DateTime(2026, 1, 1).AddDays(i);
+            var quoteDate = new DateTime(2026, 1, 1).AddDays(-30 + i);
             var subtotal = 1000+(i*100);
             quotes.Add(new Quote
             {
@@ -498,9 +501,12 @@ public class DbSeeder
         var opportunities = new List<Opportunity>();
         for (int i = 1; i <= 48; i++)
         {
-            var month = (i - 1) % 12 + 1;
+            var baseYear = 2025;
+            var offsetMonths = (i - 1) % 12 + 10;
+            var year = baseYear + offsetMonths / 12;
+            var month = offsetMonths % 12 == 0 ? 12 : offsetMonths % 12;
             var day = (i - 1) % 28 + 1;
-            var closeDate = new DateTime(2026, month, day);
+            var closeDate = new DateTime(year, month, day);
             var isWon = i % 3 == 0;
             opportunities.Add(new Opportunity
             {
@@ -537,9 +543,11 @@ public class DbSeeder
         var orders = new List<SalesOrder>();
         for (int i = 1; i <= 60; i++)
         {
-            var month = (i - 1) % 12 + 1;
+            var baseYear = 2025;
+            var offsetMonths = (i - 1) % 12 + 10;
+            var year = baseYear + offsetMonths / 12;
+            var month = offsetMonths % 12 == 0 ? 12 : offsetMonths % 12;
             var day = (i - 1) % 28 + 1;
-            var year = 2026;
             var orderDate = new DateTime(year, month, day);
             var subtotal = 2000 + (i * 200);
             orders.Add(new SalesOrder
@@ -577,7 +585,7 @@ public class DbSeeder
         var products = await _context.Products.ToListAsync();
 
         var details = new List<SalesOrderDetail>();
-        for (int i = 1; i <= 30; i++)
+        for (int i = 1; i <= 120; i++)
         {
             var quantity = 1+(i%10);
             var unitPrice = 50+(i*10);
@@ -608,7 +616,11 @@ public class DbSeeder
         var invoices = new List<SalesInvoice>();
         for (int i = 1; i <= 20; i++)
         {
-            var invoiceDate = new DateTime(2026, 2, 1).AddDays(i);
+            var baseYear = 2025;
+            var offsetMonths = (i - 1) % 6 + 10;
+            var year = baseYear + offsetMonths / 12;
+            var month = offsetMonths % 12 == 0 ? 12 : offsetMonths % 12;
+            var invoiceDate = new DateTime(year, month, 1).AddDays(i - 1);
             var subtotal = 1800+(i*180);
             var total = subtotal*1.1m-(i%4==0?90:0);
             invoices.Add(new SalesInvoice
@@ -700,7 +712,11 @@ public class DbSeeder
         var orders = new List<PurchaseOrder>();
         for (int i = 1; i <= 20; i++)
         {
-            var orderDate = new DateTime(2026, 1, 1).AddDays(i);
+            var baseYear = 2025;
+            var offsetMonths = (i - 1) % 6 + 10;
+            var year = baseYear + offsetMonths / 12;
+            var month = offsetMonths % 12 == 0 ? 12 : offsetMonths % 12;
+            var orderDate = new DateTime(year, month, 1).AddDays(i - 1);
             var subtotal = 1500+(i*150);
             orders.Add(new PurchaseOrder
             {
@@ -927,9 +943,12 @@ public class DbSeeder
         var expenses = new List<Expense>();
         for (int i = 1; i <= 60; i++)
         {
-            var month = (i - 1) % 12 + 1;
+            var baseYear = 2025;
+            var offsetMonths = (i - 1) % 12 + 10;
+            var year = baseYear + offsetMonths / 12;
+            var month = offsetMonths % 12 == 0 ? 12 : offsetMonths % 12;
             var day = (i - 1) % 28 + 1;
-            var expenseDate = new DateTime(2026, month, day);
+            var expenseDate = new DateTime(year, month, day);
             var isApproved = i % 2 == 0;
             expenses.Add(new Expense
             {
@@ -1234,8 +1253,11 @@ public class DbSeeder
         var spends = new List<MarketingSpendDaily>();
         for (int i = 1; i <= 36; i++)
         {
-            var month = (i - 1) % 12 + 1;
-            var spendDate = new DateTime(2026, month, 15);
+            var baseYear = 2025;
+            var offsetMonths = (i - 1) % 12 + 10;
+            var year = baseYear + offsetMonths / 12;
+            var month = offsetMonths % 12 == 0 ? 12 : offsetMonths % 12;
+            var spendDate = new DateTime(year, month, 15);
             var amount = 500 + (i * 50);
             var impressions = 5000 + (i * 500);
             var clicks = 200 + (i * 20);
@@ -1264,7 +1286,11 @@ public class DbSeeder
         var snapshots = new List<InventorySnapshot>();
         for (int i = 1; i <= 20; i++)
         {
-            var snapshotDate = new DateTime(2026, 11, 1).AddDays(i%30);
+            var baseYear = 2025;
+            var offsetMonths = (i - 1) % 6 + 10;
+            var year = baseYear + offsetMonths / 12;
+            var month = offsetMonths % 12 == 0 ? 12 : offsetMonths % 12;
+            var snapshotDate = new DateTime(year, month, 1).AddDays((i - 1) % 28);
             var qoh = 100+(i*10);
             var avgCost = 30+(i*3);
             snapshots.Add(new InventorySnapshot
@@ -1291,7 +1317,7 @@ public class DbSeeder
         var histories = new List<OpportunityStageHistory>();
         for (int i = 1; i <= 20; i++)
         {
-            var changeDate = new DateTime(2026, 12, 1).AddDays(i);
+            var changeDate = new DateTime(2026, 3, 1).AddDays(i - 10);
             histories.Add(new OpportunityStageHistory
             {
                 OpportunityID = opportunities[(i-1)%opportunities.Count].OpportunityID,

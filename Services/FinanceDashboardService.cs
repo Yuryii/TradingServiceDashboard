@@ -742,12 +742,23 @@ public class FinanceDashboardService : IFinanceDashboardService
     public async Task<ChartDataDto> GetCustomerProfitScatterChartAsync(DateTime? fromDate = null, DateTime? toDate = null)
     {
         var scatter = await GetRevenueVsProfitScatterAsync(fromDate, toDate);
+        if (!scatter.Any())
+        {
+            return new ChartDataDto
+            {
+                Categories = new List<string>(),
+                ChartTitle = "Customer Revenue vs Profit",
+                ChartType = "scatter",
+                Series = new List<ChartSeriesDto>()
+            };
+        }
+        var flatData = scatter.SelectMany(s => new[] { s.X, s.Y }).ToList();
         return new ChartDataDto
         {
             Categories = scatter.Select(s => s.Label).ToList(),
             ChartTitle = "Customer Revenue vs Profit",
             ChartType = "scatter",
-            Series = new List<ChartSeriesDto> { new() { Name = "Customers", Data = scatter.Select(s => s.X).ToList() } }
+            Series = new List<ChartSeriesDto> { new() { Name = "Customers", Data = flatData } }
         };
     }
 

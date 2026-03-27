@@ -558,7 +558,7 @@ window.dashboardCharts.arApAgingStacked = @Html.Raw(Json.Serialize(Model.ArApAgi
       var growthEl = document.querySelector('#growthChart');
       if (growthEl && typeof ApexCharts !== 'undefined') {
         var options = {
-          series: [@Model.ProfitMarginPercent],
+          series: [(@Model.ProfitMarginPercent > 0 ? @Model.ProfitMarginPercent : 0)],
           labels: ['Margin'],
           chart: { height: 200, type: 'radialBar' },
           plotOptions: { radialBar: { size: 150, offsetY: 10, startAngle: -150, endAngle: 150, hollow: { size: '55%' }, track: { background: cardColor, strokeWidth: '100%' }, dataLabels: { name: { offsetY: 15, color: legendColor, fontSize: '15px', fontWeight: '500', fontFamily: config.fontFamily }, value: { offsetY: -25, color: headingColor, fontSize: '22px', fontWeight: '500', fontFamily: config.fontFamily } } },
@@ -751,11 +751,17 @@ window.dashboardCharts.arApAgingStacked = @Html.Raw(Json.Serialize(Model.ArApAgi
         var scatterEl = document.querySelector('#customerProfitScatterChart');
         if (scatterEl && typeof ApexCharts !== 'undefined') {
           var scatterData = @Html.Raw(Json.Serialize(Model.CustomerProfitScatterChart));
-          var pts = (scatterData.data || []).map(function(p){ return [p.x||0, p.y||0]; });
+          var seriesData = (scatterData.series && scatterData.series[0] && Array.isArray(scatterData.series[0].data) ? scatterData.series[0].data : null);
+          var hasData = seriesData && seriesData.length > 0;
+          var pts = hasData ? seriesData.map(function(v, i, arr) {
+            var x = v != null ? Number(v) : 0;
+            var y = i === 1 ? (v != null ? Number(v) : x * 0.3) : (seriesData[1] != null ? Number(seriesData[1]) : x * 0.3);
+            return [x, y];
+          }) : null;
           var scatterOptions = {
             series: [{
               name: 'Customers',
-              data: pts.length > 0 ? pts : [[50000,15000],[80000,25000],[120000,40000],[60000,18000],[95000,32000],[45000,12000],[110000,38000],[70000,22000]]
+              data: hasData && pts ? pts : [[50000,15000,1],[80000,25000,1],[120000,40000,1],[60000,18000,1],[95000,32000,1],[45000,12000,1],[110000,38000,1],[70000,22000,1]]
             }],
             chart: { height: 300, type: 'scatter', toolbar: { show: false }, fontFamily: config.fontFamily, zoom: { enabled: true, type: 'xy' } },
             colors: ['#6965fd'],

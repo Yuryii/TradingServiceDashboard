@@ -22,6 +22,7 @@
                     </a>
                 </div>
                 <form id="excelImportForm-@mid" enctype="multipart/form-data">
+                    @Html.AntiForgeryToken()
                     <div class="mb-3">
                         <label class="form-label">Select Excel File (.xlsx)</label>
                         <input type="file" name="file" id="excelFile-@mid" class="form-control" accept=".xlsx,.xls" required />
@@ -51,12 +52,16 @@
                 <button type="button" class="btn btn-success d-none" id="btnExcelImport-@mid">
                     <i class="icon-base bx bx-upload me-1"></i> Import
                 </button>
+                <div id="excelImportWarning-@mid" class="d-none text-end flex-grow-1">
+                    <span class="badge bg-warning text-dark">
+                        <i class="icon-base bx bx-exclamation-triangle me-1"></i>Fix validation errors before importing
+                    </span>
+                </div>
             </div>
         </div>
     </div>
 </div>
 
-@section Scripts {
 <script>
 (function() {
     var mid = '@mid';
@@ -85,7 +90,8 @@
 
         var rows = data.previewRows || [];
         rows.forEach(function(row) {
-            var tr = $('<tr>');
+            var isInvalid = row._isInvalid;
+            var tr = $('<tr>').addClass(isInvalid ? 'table-danger' : 'table-success');
             headers.forEach(function(h) { tr.append('<td>' + (row[h] || '') + '</td>'); });
             table.find('tbody').append(tr);
         });
@@ -95,6 +101,10 @@
         showErrors(data.errors);
     }
 
+    function getToken() {
+        return $('input[name="__RequestVerificationToken"]', '#excelImportForm-' + mid).val();
+    }
+
     $('#btnExcelPreview-' + mid).click(function() {
         var fileInput = $('#excelFile-' + mid)[0];
         if (!fileInput.files || fileInput.files.length === 0) {
@@ -102,16 +112,23 @@
             return;
         }
 
+        var btn = $(this);
+        btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm me-1"></span> Loading...');
+
         var formData = new FormData();
         formData.append('file', fileInput.files[0]);
+        var token = getToken();
+        if (token) formData.append('__RequestVerificationToken', token);
 
         $.ajax({
             url: previewUrl,
             data: formData,
+            headers: token ? { 'RequestVerificationToken': token } : {},
             processData: false,
             contentType: false,
             type: 'POST',
             success: function(data) {
+                btn.prop('disabled', false).html('<i class="icon-base bx bx-search me-1"></i> Preview');
                 if (data.error) {
                     alert(data.error);
                     return;
@@ -119,15 +136,17 @@
                 validatedRows = data;
                 $('#excelPreviewArea-' + mid).removeClass('d-none');
                 renderPreview(data);
+                $('#btnExcelPreview-' + mid).addClass('d-none');
+                $('#excelImportWarning-' + mid).addClass('d-none');
+                $('#btnExcelImport-' + mid).addClass('d-none');
                 if (data.invalidRows === 0 && data.totalRows > 0) {
-                    $('#btnExcelPreview-' + mid).addClass('d-none');
                     $('#btnExcelImport-' + mid).removeClass('d-none');
-                } else if (data.totalRows > 0) {
-                    $('#btnExcelPreview-' + mid).addClass('d-none');
-                    $('#btnExcelImport-' + mid).removeClass('d-none');
+                } else if (data.totalRows > 0 && data.invalidRows > 0) {
+                    $('#excelImportWarning-' + mid).removeClass('d-none');
                 }
             },
             error: function(xhr) {
+                btn.prop('disabled', false).html('<i class="icon-base bx bx-search me-1"></i> Preview');
                 alert('Preview failed: ' + (xhr.responseJSON && xhr.responseJSON.error || xhr.statusText));
             }
         });
@@ -142,12 +161,15 @@
 
         var formData = new FormData();
         formData.append('file', fileInput.files[0]);
+        var token = getToken();
+        if (token) formData.append('__RequestVerificationToken', token);
 
-        $('#btnExcelImport-' + mid).prop('disabled', true).html('<span class="spinner-border spinner-border-sm me-1"></span> Importing...');
+        $(this).prop('disabled', true).html('<span class="spinner-border spinner-border-sm me-1"></span> Importing...');
 
         $.ajax({
             url: importUrl,
             data: formData,
+            headers: token ? { 'RequestVerificationToken': token } : {},
             processData: false,
             contentType: false,
             type: 'POST',
@@ -174,8 +196,9 @@
     $('#excelFile-' + mid).change(function() {
         $('#excelPreviewArea-' + mid).addClass('d-none');
         $('#excelResultArea-' + mid).addClass('d-none');
-        $('#btnExcelPreview-' + mid).removeClass('d-none');
+        $('#btnExcelPreview-' + mid).removeClass('d-none').html('<i class="icon-base bx bx-search me-1"></i> Preview');
         $('#btnExcelImport-' + mid).addClass('d-none');
+        $('#excelImportWarning-' + mid).addClass('d-none');
     });
 
     var modal = document.getElementById('excelImportModal-' + mid);
@@ -184,10 +207,10 @@
             $('#excelPreviewArea-' + mid).addClass('d-none');
             $('#excelResultArea-' + mid).addClass('d-none');
             $('#excelFile-' + mid).val('');
-            $('#btnExcelPreview-' + mid).removeClass('d-none');
+            $('#btnExcelPreview-' + mid).removeClass('d-none').html('<i class="icon-base bx bx-search me-1"></i> Preview');
             $('#btnExcelImport-' + mid).addClass('d-none');
+            $('#excelImportWarning-' + mid).addClass('d-none');
         });
     }
 })();
 </script>
-}

@@ -113,6 +113,12 @@ public class ExecutiveCrudController : Controller
     }
     #endregion
 
+    #region Export
+    public async Task<IActionResult> Region_Export() => await Export("Region", "Region");
+    public async Task<IActionResult> Branch_Export() => await Export("Branch", "Branch");
+    public async Task<IActionResult> Department_Export() => await Export("Department", "Department");
+    #endregion
+
     #region Departments
     public IActionResult Departments_Index()
     {

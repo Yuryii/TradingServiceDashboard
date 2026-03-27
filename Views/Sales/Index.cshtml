@@ -8,19 +8,26 @@
   var currentTo = Context.Request.Query["to"].FirstOrDefault() ?? defaultTo;
 }
 @section VendorStyles {
-<link rel="stylesheet" href="~/vendor/libs/apex-charts/apexcharts.css" />
+<link rel="stylesheet" href="~/vendor/libs/apex-charts/apex-charts.css" />
 }
 @section VendorScripts {
 <script src="~/vendor/libs/apex-charts/apexcharts.js"></script>
 }
-@* Always render chart data - individual guards protect each chart render *@
+@* Inject all dashboardCharts so dashboards-analytics.js doesn't throw ReferenceError on missing keys *@
 <script>
 window.dashboardCharts = window.dashboardCharts || {};
-window.dashboardCharts.orderChart = @Html.Raw(Json.Serialize(Model.SalesOverviewChart));
-window.dashboardCharts.revenueChart = @Html.Raw(Json.Serialize(Model.SalesOverviewChart));
-window.dashboardCharts.revenueBySalesperson = @Html.Raw(Json.Serialize(Model.RevenueBySalespersonChart));
-window.dashboardCharts.revenueByChannel = @Html.Raw(Json.Serialize(Model.RevenueByChannelChart));
-window.dashboardCharts.pipelineByStage = @Html.Raw(Json.Serialize(Model.PipelineByStageChart));
+Object.assign(window.dashboardCharts, {
+  orderChart: @Html.Raw(Json.Serialize(Model.SalesOverviewChart)),
+  revenueChart: @Html.Raw(Json.Serialize(Model.SalesOverviewChart)),
+  revenueBySalesperson: @Html.Raw(Json.Serialize(Model.RevenueBySalespersonChart)),
+  revenueByChannel: @Html.Raw(Json.Serialize(Model.RevenueByChannelChart)),
+  pipelineByStage: @Html.Raw(Json.Serialize(Model.PipelineByStageChart)),
+  // Charts not in SalesDashboardViewModel — provide empty fallbacks to avoid JS errors
+  orderStatistics: { series: [], labels: [] },
+  incomeChart: { series: [], categories: [] },
+  expensesChart: { numericValue: 0 },
+  profileReportChart: { series: [] }
+});
 </script>
 @section PageScripts {
 <script src="~/js/dashboards-analytics.js"></script>
@@ -523,23 +530,31 @@ window.dashboardCharts.pipelineByStage = @Html.Raw(Json.Serialize(Model.Pipeline
   </div>
 </div>
 
-@if (Model.SalesOverviewChart.Series.Any())
-{
-  <script>
-    document.addEventListener('DOMContentLoaded', function () {
+@* Theme colors are local inside wwwroot/js/dashboards-analytics.js — inline scripts must define their own fallbacks or charts throw ReferenceError and stay blank. *@
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+      var cfg = window.config || {};
+      var cols = cfg.colors || {};
+      var cardColor = cols.cardColor || '#ffffff';
+      var headingColor = cols.headingColor || '#566a7f';
+      var legendColor = cols.bodyColor || '#697a8d';
+      var labelColor = cols.textMuted || '#a1acb8';
+      var borderColor = cols.borderColor || '#eceef1';
+      var fontFamily = cfg.fontFamily || 'Plus Jakarta Sans';
+
       // Pipeline Funnel Chart
       var funnelData = @Html.Raw(Json.Serialize(Model.PipelineFunnelChart));
       var funnelEl = document.querySelector('#pipelineFunnelChart');
       if (funnelEl && typeof ApexCharts !== 'undefined') {
         new ApexCharts(funnelEl, {
-          chart: { height: 280, type: 'bar', toolbar: { show: false }, fontFamily: config.fontFamily, foreColor: labelColor },
+          chart: { height: 280, type: 'bar', toolbar: { show: false }, fontFamily: fontFamily, foreColor: labelColor },
           colors: ['#6965fd', '#03c3ec', '#71dd88', '#ffab00', '#8592a3'],
           dataLabels: { enabled: true, formatter: function(val) { return typeof val === 'number' ? (val >= 1000 ? (val/1000).toFixed(0) + 'K' : val) : val; } },
           plotOptions: { bar: { horizontal: false, columnWidth: '55%', borderRadius: 6, borderRadiusApplication: 'end' } },
-          legend: { show: true, position: 'top', horizontalAlign: 'left', fontSize: '12px', fontFamily: config.fontFamily, labels: { colors: legendColor } },
+          legend: { show: true, position: 'top', horizontalAlign: 'left', fontSize: '12px', fontFamily: fontFamily, labels: { colors: legendColor } },
           grid: { strokeDashArray: 7, borderColor: borderColor, padding: { top: -10, bottom: -10, left: 10, right: 10 } },
-          xaxis: { categories: funnelData.categories || [], labels: { style: { fontSize: '12px', fontFamily: config.fontFamily, colors: labelColor } }, axisTicks: { show: false }, axisBorder: { show: false } },
-          yaxis: { labels: { style: { fontSize: '13px', fontFamily: config.fontFamily, colors: labelColor } } },
+          xaxis: { categories: funnelData.categories || [], labels: { style: { fontSize: '12px', fontFamily: fontFamily, colors: labelColor } }, axisTicks: { show: false }, axisBorder: { show: false } },
+          yaxis: { labels: { style: { fontSize: '13px', fontFamily: fontFamily, colors: labelColor } } },
           tooltip: { theme: 'dark' },
           series: funnelData.series || []
         }).render();
@@ -550,14 +565,14 @@ window.dashboardCharts.pipelineByStage = @Html.Raw(Json.Serialize(Model.Pipeline
       var fcEl = document.querySelector('#forecastChart');
       if (fcEl && typeof ApexCharts !== 'undefined') {
         new ApexCharts(fcEl, {
-          chart: { height: 280, type: 'area', toolbar: { show: false }, fontFamily: config.fontFamily, foreColor: labelColor },
+          chart: { height: 280, type: 'area', toolbar: { show: false }, fontFamily: fontFamily, foreColor: labelColor },
           colors: ['#6965fd', '#8592a3'],
           dataLabels: { enabled: false },
           stroke: { curve: 'smooth', width: 3 },
-          legend: { show: true, position: 'top', horizontalAlign: 'left', fontSize: '13px', fontFamily: config.fontFamily, labels: { colors: legendColor }, markers: { size: 4, radius: 12, shape: 'circle' } },
+          legend: { show: true, position: 'top', horizontalAlign: 'left', fontSize: '13px', fontFamily: fontFamily, labels: { colors: legendColor }, markers: { size: 4, radius: 12, shape: 'circle' } },
           grid: { strokeDashArray: 7, borderColor: borderColor, padding: { top: -10, bottom: -10, left: 10, right: 10 } },
-          xaxis: { categories: fcData.categories || [], labels: { style: { fontSize: '13px', fontFamily: config.fontFamily, colors: labelColor } }, axisTicks: { show: false }, axisBorder: { show: false } },
-          yaxis: { labels: { style: { fontSize: '13px', fontFamily: config.fontFamily, colors: labelColor }, formatter: function(val) { return typeof val === 'number' ? (val >= 1000 ? '$' + (val/1000).toFixed(0) + 'K' : val) : val; } } },
+          xaxis: { categories: fcData.categories || [], labels: { style: { fontSize: '13px', fontFamily: fontFamily, colors: labelColor } }, axisTicks: { show: false }, axisBorder: { show: false } },
+          yaxis: { labels: { style: { fontSize: '13px', fontFamily: fontFamily, colors: labelColor }, formatter: function(val) { return typeof val === 'number' ? (val >= 1000 ? '$' + (val/1000).toFixed(0) + 'K' : val) : val; } } },
           fill: { opacity: [0.85, 0.85], type: 'gradient', gradient: { shade: 'light', type: 'vertical', shadeIntensity: 0.5, gradientToColors: ['#6965fd44', '#03c3ec44'], opacityFrom: 0.85, opacityTo: 0.55, stops: [0, 100] } },
           tooltip: { theme: 'dark', y: { formatter: function(val) { return typeof val === 'number' ? '$' + val.toLocaleString() : val; } } },
           series: fcData.series || []
@@ -569,14 +584,14 @@ window.dashboardCharts.pipelineByStage = @Html.Raw(Json.Serialize(Model.Pipeline
       var spEl = document.querySelector('#salespersonBarChart');
       if (spEl && typeof ApexCharts !== 'undefined') {
         new ApexCharts(spEl, {
-          chart: { height: 280, type: 'bar', toolbar: { show: false }, fontFamily: config.fontFamily, foreColor: labelColor },
+          chart: { height: 280, type: 'bar', toolbar: { show: false }, fontFamily: fontFamily, foreColor: labelColor },
           colors: ['#6965fd'],
           dataLabels: { enabled: false },
           plotOptions: { bar: { horizontal: true, barHeight: '65%', borderRadius: 6, borderRadiusApplication: 'end' } },
           legend: { show: false },
           grid: { strokeDashArray: 7, borderColor: borderColor, padding: { top: -10, bottom: -10, left: 10, right: 10 } },
-          xaxis: { categories: spData.categories || [], labels: { style: { fontSize: '12px', fontFamily: config.fontFamily, colors: labelColor }, formatter: function(val) { return typeof val === 'number' ? (val >= 1000 ? '$' + (val/1000).toFixed(0) + 'K' : val) : val; } }, axisTicks: { show: false }, axisBorder: { show: false } },
-          yaxis: { labels: { style: { fontSize: '12px', fontFamily: config.fontFamily, colors: labelColor } } },
+          xaxis: { categories: spData.categories || [], labels: { style: { fontSize: '12px', fontFamily: fontFamily, colors: labelColor }, formatter: function(val) { return typeof val === 'number' ? (val >= 1000 ? '$' + (val/1000).toFixed(0) + 'K' : val) : val; } }, axisTicks: { show: false }, axisBorder: { show: false } },
+          yaxis: { labels: { style: { fontSize: '12px', fontFamily: fontFamily, colors: labelColor } } },
           tooltip: { theme: 'dark', y: { formatter: function(val) { return typeof val === 'number' ? '$' + val.toLocaleString() : val; } } },
           series: spData.series || []
         }).render();
@@ -586,17 +601,27 @@ window.dashboardCharts.pipelineByStage = @Html.Raw(Json.Serialize(Model.Pipeline
       var scatterData = @Html.Raw(Json.Serialize(Model.OrderMarginScatterChart));
       var scatterEl = document.querySelector('#orderMarginScatterChart');
       if (scatterEl && typeof ApexCharts !== 'undefined') {
-        var scatterPoints = (scatterData.data || []).map(function(p) { return [p.x || 0, p.y || 0, p.size || 1]; });
+        var scatterRaw = (scatterData.series && scatterData.series[0] && Array.isArray(scatterData.series[0].data) ? scatterData.series[0].data : null);
+        var scatterPoints = null;
+        if (scatterRaw && scatterRaw.length > 0) {
+          var pts = [];
+          for (var i = 0; i < scatterRaw.length; i += 3) {
+            if (i + 1 < scatterRaw.length) {
+              pts.push([Number(scatterRaw[i]) || 0, Number(scatterRaw[i+1]) || 0, Number(scatterRaw[i+2]) || 1]);
+            }
+          }
+          if (pts.length > 0) scatterPoints = pts;
+        }
         new ApexCharts(scatterEl, {
-          chart: { height: 280, type: 'scatter', toolbar: { show: false }, fontFamily: config.fontFamily, foreColor: labelColor },
+          chart: { height: 280, type: 'scatter', toolbar: { show: false }, fontFamily: fontFamily, foreColor: labelColor },
           colors: ['#6965fd'],
           dataLabels: { enabled: false },
           legend: { show: false },
           grid: { strokeDashArray: 7, borderColor: borderColor, padding: { top: -10, bottom: -10, left: 10, right: 10 } },
-          xaxis: { labels: { style: { fontSize: '12px', fontFamily: config.fontFamily, colors: labelColor }, title: { text: 'Order Value ($)', style: { fontSize: '12px', color: labelColor } } },
-          yaxis: { labels: { style: { fontSize: '12px', fontFamily: config.fontFamily, colors: labelColor }, title: { text: 'Margin %', style: { fontSize: '12px', color: labelColor } } },
+          xaxis: { labels: { style: { fontSize: '12px', fontFamily: fontFamily, colors: labelColor }, title: { text: 'Order Value ($)', style: { fontSize: '12px', color: labelColor } } },},
+          yaxis: { labels: { style: { fontSize: '12px', fontFamily: fontFamily, colors: labelColor }, title: { text: 'Margin %', style: { fontSize: '12px', color: labelColor } } },},
           tooltip: { theme: 'dark' },
-          series: [{ name: 'Products', data: scatterPoints.length > 0 ? scatterPoints : [[5000, 25], [8000, 30], [12000, 35], [3000, 18], [15000, 40], [20000, 28], [7000, 22], [10000, 38]] }]
+          series: [{ name: 'Products', data: scatterPoints || [[5000, 25, 1], [8000, 30, 1], [12000, 35, 1], [3000, 18, 1], [15000, 40, 1], [20000, 28, 1], [7000, 22, 1], [10000, 38, 1]] }]
         }).render();
       }
 
@@ -605,14 +630,14 @@ window.dashboardCharts.pipelineByStage = @Html.Raw(Json.Serialize(Model.Pipeline
       var paretoEl = document.querySelector('#paretoChart');
       if (paretoEl && typeof ApexCharts !== 'undefined') {
         new ApexCharts(paretoEl, {
-          chart: { height: 280, type: 'bar', toolbar: { show: false }, fontFamily: config.fontFamily, foreColor: labelColor },
+          chart: { height: 280, type: 'bar', toolbar: { show: false }, fontFamily: fontFamily, foreColor: labelColor },
           colors: ['#03c3ec'],
           dataLabels: { enabled: false },
           plotOptions: { bar: { horizontal: true, barHeight: '65%', borderRadius: 6, borderRadiusApplication: 'end' } },
           legend: { show: false },
           grid: { strokeDashArray: 7, borderColor: borderColor, padding: { top: -10, bottom: -10, left: 10, right: 10 } },
-          xaxis: { categories: paretoData.categories || [], labels: { style: { fontSize: '11px', fontFamily: config.fontFamily, colors: labelColor }, formatter: function(val) { return typeof val === 'number' ? (val >= 1000 ? '$' + (val/1000).toFixed(0) + 'K' : val) : val; } }, axisTicks: { show: false }, axisBorder: { show: false } },
-          yaxis: { labels: { style: { fontSize: '12px', fontFamily: config.fontFamily, colors: labelColor } } },
+          xaxis: { categories: paretoData.categories || [], labels: { style: { fontSize: '11px', fontFamily: fontFamily, colors: labelColor }, formatter: function(val) { return typeof val === 'number' ? (val >= 1000 ? '$' + (val/1000).toFixed(0) + 'K' : val) : val; } }, axisTicks: { show: false }, axisBorder: { show: false } },
+          yaxis: { labels: { style: { fontSize: '12px', fontFamily: fontFamily, colors: labelColor } } },
           tooltip: { theme: 'dark', y: { formatter: function(val) { return typeof val === 'number' ? '$' + val.toLocaleString() : val; } } },
           series: paretoData.series || []
         }).render();
@@ -623,14 +648,14 @@ window.dashboardCharts.pipelineByStage = @Html.Raw(Json.Serialize(Model.Pipeline
       var chEl = document.querySelector('#revenueByChannelBarChart');
       if (chEl && typeof ApexCharts !== 'undefined') {
         new ApexCharts(chEl, {
-          chart: { height: 280, type: 'bar', toolbar: { show: false }, fontFamily: config.fontFamily, foreColor: labelColor },
+          chart: { height: 280, type: 'bar', toolbar: { show: false }, fontFamily: fontFamily, foreColor: labelColor },
           colors: ['#6965fd', '#03c3ec'],
           dataLabels: { enabled: false },
           plotOptions: { bar: { horizontal: false, columnWidth: '40%', borderRadius: 6, borderRadiusApplication: 'around' } },
-          legend: { show: true, position: 'top', horizontalAlign: 'left', fontSize: '12px', fontFamily: config.fontFamily, labels: { colors: legendColor }, markers: { size: 4, radius: 12, shape: 'circle' } },
+          legend: { show: true, position: 'top', horizontalAlign: 'left', fontSize: '12px', fontFamily: fontFamily, labels: { colors: legendColor }, markers: { size: 4, radius: 12, shape: 'circle' } },
           grid: { strokeDashArray: 7, borderColor: borderColor, padding: { top: -10, bottom: -10, left: 10, right: 10 } },
-          xaxis: { categories: chData.categories || [], labels: { style: { fontSize: '13px', fontFamily: config.fontFamily, colors: labelColor } }, axisTicks: { show: false }, axisBorder: { show: false } },
-          yaxis: { labels: { style: { fontSize: '13px', fontFamily: config.fontFamily, colors: labelColor }, formatter: function(val) { return typeof val === 'number' ? (val >= 1000 ? '$' + (val/1000).toFixed(0) + 'K' : val) : val; } } },
+          xaxis: { categories: chData.categories || [], labels: { style: { fontSize: '13px', fontFamily: fontFamily, colors: labelColor } }, axisTicks: { show: false }, axisBorder: { show: false } },
+          yaxis: { labels: { style: { fontSize: '13px', fontFamily: fontFamily, colors: labelColor }, formatter: function(val) { return typeof val === 'number' ? (val >= 1000 ? '$' + (val/1000).toFixed(0) + 'K' : val) : val; } } },
           tooltip: { theme: 'dark', y: { formatter: function(val) { return typeof val === 'number' ? '$' + val.toLocaleString() : val; } } },
           series: chData.series || []
         }).render();
@@ -642,27 +667,33 @@ window.dashboardCharts.pipelineByStage = @Html.Raw(Json.Serialize(Model.Pipeline
       if (heatmapEl && typeof ApexCharts !== 'undefined') {
         var yCats = heatmapData.yCategories || [];
         new ApexCharts(heatmapEl, {
-          chart: { height: 300, type: 'heatmap', toolbar: { show: false }, fontFamily: config.fontFamily, foreColor: labelColor },
+          chart: { height: 300, type: 'heatmap', toolbar: { show: false }, fontFamily: fontFamily, foreColor: labelColor },
           colors: ['#6965fd'],
           dataLabels: { enabled: false },
           stroke: { width: 1, colors: [cardColor] },
-          legend: { show: true, position: 'top', horizontalAlign: 'left', fontSize: '12px', fontFamily: config.fontFamily, labels: { colors: legendColor } },
+          legend: { show: true, position: 'top', horizontalAlign: 'left', fontSize: '12px', fontFamily: fontFamily, labels: { colors: legendColor } },
           grid: { padding: { top: -10, bottom: -10, left: 10, right: 10 } },
-          xaxis: { labels: { style: { fontSize: '11px', fontFamily: config.fontFamily, colors: labelColor } }, axisTicks: { show: false }, axisBorder: { show: false }, categories: heatmapData.xCategories || [] },
-          yaxis: { labels: { style: { fontSize: '11px', fontFamily: config.fontFamily, colors: labelColor } } },
+          xaxis: { labels: { style: { fontSize: '11px', fontFamily: fontFamily, colors: labelColor } }, axisTicks: { show: false }, axisBorder: { show: false }, categories: heatmapData.xCategories || [] },
+          yaxis: { labels: { style: { fontSize: '11px', fontFamily: fontFamily, colors: labelColor } } },
           plotOptions: { heatmap: { radius: 3, colorScale: { ranges: [{ from: 0, to: 0, name: 'None', color: '#f3f4f6' }, { from: 1, to: 10000, name: 'Low', color: '#dce6ff' }, { from: 10001, to: 50000, name: 'Medium', color: '#0984e3' }, { from: 50001, to: 500000, name: 'High', color: '#012874' }] } } },
           series: yCats.map(function(yCat, i) { return { name: yCat, data: (heatmapData.data || []).filter(function(d) { return d.y === yCat; }).map(function(d) { return d.value || 0; }) }; }),
           tooltip: { theme: 'dark', y: { formatter: function(val) { return typeof val === 'number' ? '$' + val.toLocaleString() : val; } } }
         }).render();
       }
-    });
-  </script>
-}
+  });
+</script>
 
-@if (Model.SalesOverviewChart.Series.Any())
-{
-  <script>
-    document.addEventListener('DOMContentLoaded', function () {
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+      var cfg = window.config || {};
+      var cols = cfg.colors || {};
+      var cardColor = cols.cardColor || '#ffffff';
+      var headingColor = cols.headingColor || '#566a7f';
+      var legendColor = cols.bodyColor || '#697a8d';
+      var labelColor = cols.textMuted || '#a1acb8';
+      var borderColor = cols.borderColor || '#eceef1';
+      var fontFamily = cfg.fontFamily || 'Plus Jakarta Sans';
+
       var chartData = @Html.Raw(Json.Serialize(Model.SalesOverviewChart));
       var chartEl = document.querySelector('#totalRevenueChart');
       if (chartEl && typeof ApexCharts !== 'undefined') {
@@ -672,31 +703,38 @@ window.dashboardCharts.pipelineByStage = @Html.Raw(Json.Serialize(Model.Pipeline
           colors: ['#6965fd', '#03c3ec'],
           dataLabels: { enabled: false },
           stroke: { curve: 'smooth', width: 6, lineCap: 'round', colors: [cardColor] },
-          legend: { show: true, horizontalAlign: 'left', position: 'top', markers: { size: 4, radius: 12, shape: 'circle', strokeWidth: 0 }, fontSize: '13px', fontFamily: config.fontFamily, labels: { colors: legendColor, useSeriesColors: false }, itemMargin: { horizontal: 10 } },
+          legend: { show: true, horizontalAlign: 'left', position: 'top', markers: { size: 4, radius: 12, shape: 'circle', strokeWidth: 0 }, fontSize: '13px', fontFamily: fontFamily, labels: { colors: legendColor, useSeriesColors: false }, itemMargin: { horizontal: 10 } },
           grid: { strokeDashArray: 7, borderColor: borderColor, padding: { top: 0, bottom: -8, left: 20, right: 20 } },
           fill: { opacity: [1, 1] },
-          xaxis: { categories: chartData.categories || [], labels: { style: { fontSize: '13px', fontFamily: config.fontFamily, colors: labelColor } }, axisTicks: { show: false }, axisBorder: { show: false } },
-          yaxis: { labels: { style: { fontSize: '13px', fontFamily: config.fontFamily, colors: labelColor } } },
+          xaxis: { categories: chartData.categories || [], labels: { style: { fontSize: '13px', fontFamily: fontFamily, colors: labelColor } }, axisTicks: { show: false }, axisBorder: { show: false } },
+          yaxis: { labels: { style: { fontSize: '13px', fontFamily: fontFamily, colors: labelColor } } },
           states: { hover: { filter: { type: 'none' } }, active: { filter: { type: 'none' } } },
           series: chartData.series || []
         };
         new ApexCharts(chartEl, options).render();
       }
-    });
-  </script>
-}
+  });
+</script>
 
 @if (Model.TargetAchievementPercent > 0)
 {
   <script>
     document.addEventListener('DOMContentLoaded', function () {
+      var cfg = window.config || {};
+      var cols = cfg.colors || {};
+      var cardColor = cols.cardColor || '#ffffff';
+      var headingColor = cols.headingColor || '#566a7f';
+      var legendColor = cols.bodyColor || '#697a8d';
+      var fontFamily = cfg.fontFamily || 'Plus Jakarta Sans';
+      var achievementPct = @Model.TargetAchievementPercent;
+
       var growthEl = document.querySelector('#growthChart');
       if (growthEl && typeof ApexCharts !== 'undefined') {
         var options = {
-          series: [@Model.TargetAchievementPercent],
+          series: [achievementPct],
           labels: ['Achievement'],
           chart: { height: 200, type: 'radialBar' },
-          plotOptions: { radialBar: { size: 150, offsetY: 10, startAngle: -150, endAngle: 150, hollow: { size: '55%' }, track: { background: cardColor, strokeWidth: '100%' }, dataLabels: { name: { offsetY: 15, color: legendColor, fontSize: '15px', fontWeight: '500', fontFamily: config.fontFamily }, value: { offsetY: -25, color: headingColor, fontSize: '22px', fontWeight: '500', fontFamily: config.fontFamily } } },
+          plotOptions: { radialBar: { size: 150, offsetY: 10, startAngle: -150, endAngle: 150, hollow: { size: '55%' }, track: { background: cardColor, strokeWidth: '100%' }, dataLabels: { name: { offsetY: 15, color: legendColor, fontSize: '15px', fontWeight: '500', fontFamily: fontFamily }, value: { offsetY: -25, color: headingColor, fontSize: '22px', fontWeight: '500', fontFamily: fontFamily } } },
           colors: ['#6965fd'],
           fill: { type: 'gradient', gradient: { shade: 'dark', shadeIntensity: 0.5, gradientToColors: ['#6965fd'], inverseColors: true, opacityFrom: 1, opacityTo: 0.6, stops: [30, 70, 100] } },
           stroke: { dashArray: 5 },

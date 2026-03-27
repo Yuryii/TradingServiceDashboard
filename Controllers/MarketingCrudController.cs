@@ -39,6 +39,12 @@ public class MarketingCrudController : Controller
         return View(vm);
     }
 
+    #region Export
+    public async Task<IActionResult> MarketingCampaign_Export() => await Export("MarketingCampaign", "MarketingCampaign");
+    public async Task<IActionResult> MarketingLead_Export() => await Export("MarketingLead", "MarketingLead");
+    public async Task<IActionResult> MarketingSpendDailies_Export() => await Export("MarketingSpendDaily", "MarketingSpendDaily");
+    #endregion
+
     #region MarketingCampaigns
 
     public IActionResult MarketingCampaignsIndex()

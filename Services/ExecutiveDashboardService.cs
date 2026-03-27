@@ -609,10 +609,10 @@ public class ExecutiveDashboardService : IExecutiveDashboardService
         {
             stages.Add(new FunnelStageDto { Stage = "Leads", Count = leads, Value = leads, ConversionRate = 100 });
             stages.Add(new FunnelStageDto { Stage = "Opportunities", Count = opportunities, Value = opportunities, ConversionRate = opportunities > 0 ? Math.Round((decimal)opportunities / leads * 100, 1) : 0 });
-            stages.Add(new FunnelStageDto { Stage = "Quotes", Count = quotes, Value = quotes, ConversionRate = quotes > 0 ? Math.Round((decimal)quotes / opportunities * 100, 1) : 0 });
-            stages.Add(new FunnelStageDto { Stage = "Orders", Count = orders, Value = orders, ConversionRate = orders > 0 ? Math.Round((decimal)orders / quotes * 100, 1) : 0 });
-            stages.Add(new FunnelStageDto { Stage = "Delivered", Count = delivered, Value = delivered, ConversionRate = delivered > 0 ? Math.Round((decimal)delivered / orders * 100, 1) : 0 });
-            stages.Add(new FunnelStageDto { Stage = "Paid", Count = paid, Value = paid, ConversionRate = paid > 0 ? Math.Round((decimal)paid / delivered * 100, 1) : 0 });
+            stages.Add(new FunnelStageDto { Stage = "Quotes", Count = quotes, Value = quotes, ConversionRate = quotes > 0 ? Math.Round((decimal)quotes / (opportunities > 0 ? opportunities : 1) * 100, 1) : 0 });
+            stages.Add(new FunnelStageDto { Stage = "Orders", Count = orders, Value = orders, ConversionRate = orders > 0 && quotes > 0 ? Math.Round((decimal)orders / quotes * 100, 1) : 0 });
+            stages.Add(new FunnelStageDto { Stage = "Delivered", Count = delivered, Value = delivered, ConversionRate = delivered > 0 && orders > 0 ? Math.Round((decimal)delivered / orders * 100, 1) : 0 });
+            stages.Add(new FunnelStageDto { Stage = "Paid", Count = paid, Value = paid, ConversionRate = paid > 0 && delivered > 0 ? Math.Round((decimal)paid / delivered * 100, 1) : 0 });
         }
 
         return stages;
@@ -1007,10 +1007,10 @@ public class ExecutiveDashboardService : IExecutiveDashboardService
             {
                 new() { Stage = "Leads", Count = leads, ConversionRate = 100 },
                 new() { Stage = "Opportunities", Count = opportunities, ConversionRate = opportunities > 0 ? Math.Round((decimal)opportunities / leads * 100, 1) : 0 },
-                new() { Stage = "Quotes", Count = quotes, ConversionRate = quotes > 0 ? Math.Round((decimal)quotes / opportunities * 100, 1) : 0 },
-                new() { Stage = "Orders", Count = orders, ConversionRate = orders > 0 ? Math.Round((decimal)orders / quotes * 100, 1) : 0 },
-                new() { Stage = "Delivered", Count = delivered, ConversionRate = delivered > 0 ? Math.Round((decimal)delivered / orders * 100, 1) : 0 },
-                new() { Stage = "Paid", Count = paid, ConversionRate = paid > 0 ? Math.Round((decimal)paid / delivered * 100, 1) : 0 }
+                new() { Stage = "Quotes", Count = quotes, ConversionRate = quotes > 0 ? Math.Round((decimal)quotes / (opportunities > 0 ? opportunities : 1) * 100, 1) : 0 },
+                new() { Stage = "Orders", Count = orders, ConversionRate = orders > 0 && quotes > 0 ? Math.Round((decimal)orders / quotes * 100, 1) : 0 },
+                new() { Stage = "Delivered", Count = delivered, ConversionRate = delivered > 0 && orders > 0 ? Math.Round((decimal)delivered / orders * 100, 1) : 0 },
+                new() { Stage = "Paid", Count = paid, ConversionRate = paid > 0 && delivered > 0 ? Math.Round((decimal)paid / delivered * 100, 1) : 0 }
             };
         }
 

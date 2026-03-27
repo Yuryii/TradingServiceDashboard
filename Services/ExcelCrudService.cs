@@ -788,7 +788,7 @@ public class ExcelCrudService
         return data;
     }
 
-    private Dictionary<string, object?> PropDict(Type type, List<PropertyInfo> props, object entity)
+    private static Dictionary<string, object?> PropDict(Type type, List<PropertyInfo> props, object entity)
     {
         var dict = new Dictionary<string, object?>(StringComparer.OrdinalIgnoreCase);
         foreach (var p in props)

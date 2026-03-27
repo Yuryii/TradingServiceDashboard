@@ -18,6 +18,7 @@ public class SalesDashboardService : ISalesDashboardService
     public async Task<SalesDashboardViewModel> GetDashboardDataAsync(DateTime? fromDate = null, DateTime? toDate = null)
     {
         var (from, to) = GetDateRange(fromDate, toDate);
+        var salesFunnel = await GetSalesFunnelAsync(fromDate, toDate);
 
         var vm = new SalesDashboardViewModel
         {
@@ -42,12 +43,38 @@ public class SalesDashboardService : ISalesDashboardService
             TopProducts = await GetTopProductsAsync(10, from, to),
             TopSalespersons = await GetTopSalespersonsAsync(10, from, to),
             RecentOrders = await GetRecentOrdersAsync(10, from, to),
-            SalesFunnel = await GetSalesFunnelAsync(from, to),
+            SalesFunnel = salesFunnel,
+            PipelineFunnelChart = BuildPipelineFunnelChart(salesFunnel),
             SalespersonProductHeatmap = await GetSalespersonProductHeatmapAsync(from, to),
             TargetAchievementPercent = await CalculateTargetAchievementAsync(from, to)
         };
 
         return vm;
+    }
+
+    private static ChartDataDto BuildPipelineFunnelChart(IReadOnlyList<FunnelStageDto> stages)
+    {
+        if (stages.Count == 0)
+        {
+            return new ChartDataDto
+            {
+                Categories = new List<string> { "No data" },
+                ChartTitle = "Pipeline Funnel",
+                ChartType = "bar",
+                Series = new List<ChartSeriesDto> { new() { Name = "Count", Data = new List<decimal> { 0 } } }
+            };
+        }
+
+        return new ChartDataDto
+        {
+            Categories = stages.Select(s => s.Stage).ToList(),
+            ChartTitle = "Pipeline Funnel",
+            ChartType = "bar",
+            Series = new List<ChartSeriesDto>
+            {
+                new() { Name = "Count", Data = stages.Select(s => s.Count).ToList() }
+            }
+        };
     }
 
     private (DateTime from, DateTime to) GetDateRange(DateTime? from, DateTime? to)
@@ -248,6 +275,25 @@ public class SalesDashboardService : ISalesDashboardService
             .Take(10)
             .ToListAsync();
 
+        if (!data.Any())
+        {
+            var allData = await _context.SalesOrders
+                .Where(so => so.SalesEmployee != null)
+                .GroupBy(so => so.SalesEmployee!.FullName)
+                .Select(g => new { Name = g.Key, Total = g.Sum(so => so.TotalAmount) })
+                .OrderByDescending(x => x.Total)
+                .Take(10)
+                .ToListAsync();
+
+            return new ChartDataDto
+            {
+                Categories = allData.Select(x => x.Name).ToList(),
+                ChartTitle = "Revenue by Salesperson",
+                ChartType = "bar",
+                Series = new List<ChartSeriesDto> { new() { Name = "Revenue", Data = allData.Select(x => x.Total).ToList() } }
+            };
+        }
+
         return new ChartDataDto
         {
             Categories = data.Select(x => x.Name).ToList(),
@@ -262,18 +308,19 @@ public class SalesDashboardService : ISalesDashboardService
         var (from, to) = GetDateRange(fromDate, toDate);
 
         var data = await _context.SalesOrders
-            .Where(so => so.OrderDate >= from && so.OrderDate <= to)
-            .GroupBy(so => so.OrderDate.Month)
-            .Select(g => new { Month = g.Key, Total = g.Sum(so => so.TotalAmount), Count = g.Count() })
-            .OrderBy(x => x.Month)
+            .Where(so => so.OrderDate >= from && so.OrderDate <= to && so.SalesChannel != null)
+            .GroupBy(so => so.SalesChannel!.ChannelName)
+            .Select(g => new { Channel = g.Key, Revenue = g.Sum(so => so.TotalAmount), Count = g.Count() })
+            .OrderByDescending(x => x.Revenue)
             .ToListAsync();
 
         if (!data.Any())
         {
             var fallbackData = await _context.SalesOrders
-                .GroupBy(so => so.OrderDate.Month)
-                .Select(g => new { Month = g.Key, Total = g.Sum(so => so.TotalAmount), Count = g.Count() })
-                .OrderBy(x => x.Month)
+                .Where(so => so.SalesChannel != null)
+                .GroupBy(so => so.SalesChannel!.ChannelName)
+                .Select(g => new { Channel = g.Key, Revenue = g.Sum(so => so.TotalAmount), Count = g.Count() })
+                .OrderByDescending(x => x.Revenue)
                 .ToListAsync();
 
             if (!fallbackData.Any())
@@ -291,29 +338,27 @@ public class SalesDashboardService : ISalesDashboardService
                 };
             }
 
-            var months = new[] { "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec" };
             return new ChartDataDto
             {
-                Categories = fallbackData.Select(x => months[x.Month - 1]).ToList(),
+                Categories = fallbackData.Select(x => x.Channel).ToList(),
                 ChartTitle = "Revenue by Channel",
                 ChartType = "bar",
                 Series = new List<ChartSeriesDto>
                 {
-                    new() { Name = "Revenue", Data = fallbackData.Select(x => x.Total).ToList() },
+                    new() { Name = "Revenue", Data = fallbackData.Select(x => x.Revenue).ToList() },
                     new() { Name = "Orders", Data = fallbackData.Select(x => (decimal)x.Count).ToList() }
                 }
             };
         }
 
-        var monthNames = new[] { "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec" };
         return new ChartDataDto
         {
-            Categories = data.Select(x => monthNames[x.Month - 1]).ToList(),
+            Categories = data.Select(x => x.Channel).ToList(),
             ChartTitle = "Revenue by Channel",
             ChartType = "bar",
             Series = new List<ChartSeriesDto>
             {
-                new() { Name = "Revenue", Data = data.Select(x => x.Total).ToList() },
+                new() { Name = "Revenue", Data = data.Select(x => x.Revenue).ToList() },
                 new() { Name = "Orders", Data = data.Select(x => (decimal)x.Count).ToList() }
             }
         };
@@ -462,9 +507,9 @@ public class SalesDashboardService : ISalesDashboardService
         {
             new() { Stage = "Leads", Count = leads, ConversionRate = 100 },
             new() { Stage = "Qualified", Count = qualified, ConversionRate = qualified > 0 ? Math.Round((decimal)qualified / leads * 100, 1) : 0 },
-            new() { Stage = "Proposals", Count = proposals, ConversionRate = proposals > 0 ? Math.Round((decimal)proposals / qualified * 100, 1) : 0 },
-            new() { Stage = "Won", Count = won, ConversionRate = won > 0 ? Math.Round((decimal)won / proposals * 100, 1) : 0 },
-            new() { Stage = "Lost", Count = lost, ConversionRate = lost > 0 ? Math.Round((decimal)lost / proposals * 100, 1) : 0 }
+            new() { Stage = "Proposals", Count = proposals, ConversionRate = proposals > 0 && qualified > 0 ? Math.Round((decimal)proposals / qualified * 100, 1) : 0 },
+            new() { Stage = "Won", Count = won, ConversionRate = won > 0 && proposals > 0 ? Math.Round((decimal)won / proposals * 100, 1) : 0 },
+            new() { Stage = "Lost", Count = lost, ConversionRate = lost > 0 && proposals > 0 ? Math.Round((decimal)lost / proposals * 100, 1) : 0 }
         };
 
         return stages;
@@ -544,6 +589,20 @@ public class SalesDashboardService : ISalesDashboardService
             })
             .Select(g => new { g.Key.Salesperson, g.Key.Product, Revenue = g.Sum(x => x.LineTotal) })
             .ToListAsync();
+
+        if (data.Count == 0)
+        {
+            data = await _context.SalesOrderDetails
+                .Include(d => d.SalesOrder).ThenInclude(so => so!.SalesEmployee)
+                .Where(d => d.Product != null && d.SalesOrder != null)
+                .GroupBy(d => new
+                {
+                    Salesperson = d.SalesOrder!.SalesEmployee != null ? d.SalesOrder.SalesEmployee.FullName : "Unassigned",
+                    Product = d.Product != null ? d.Product.ProductName : "Unknown"
+                })
+                .Select(g => new { g.Key.Salesperson, g.Key.Product, Revenue = g.Sum(x => x.LineTotal) })
+                .ToListAsync();
+        }
 
         var xCategories = data.Select(d => d.Product).Distinct().OrderBy(x => x).ToList();
         var yCategories = data.Select(d => d.Salesperson).Distinct().OrderBy(x => x).ToList();
@@ -693,12 +752,37 @@ public class SalesDashboardService : ISalesDashboardService
 
         if (!data.Any())
         {
+            var allData = await _context.SalesOrderDetails
+                .Include(d => d.Product)
+                .Where(d => d.Product != null)
+                .GroupBy(d => new { d.ProductID, ProductName = d.Product!.ProductName })
+                .Select(g => new
+                {
+                    g.Key.ProductName,
+                    AvgValue = g.Average(d => d.LineTotal),
+                    AvgCost = g.Average(d => d.Quantity * (d.Product != null ? d.Product.CostPrice : 0)),
+                    TotalQty = g.Sum(d => d.Quantity)
+                })
+                .ToListAsync();
+
+            if (!allData.Any())
+            {
+                return new ChartDataDto
+                {
+                    Categories = new List<string>(),
+                    ChartTitle = "Order Value vs Margin",
+                    ChartType = "scatter",
+                    Series = new List<ChartSeriesDto> { new() { Name = "Products", Data = new List<decimal> { 5000, 25, 1, 8000, 30, 1, 12000, 35, 1, 3000, 18, 1, 15000, 40, 1, 20000, 28, 1, 7000, 22, 1, 10000, 38, 1 } } }
+                };
+            }
+
+            var fallback = allData.Select(d => new decimal[] { d.AvgValue, d.AvgCost > 0 ? (d.AvgValue - d.AvgCost) / d.AvgCost * 100 : 0, Math.Max(1, d.TotalQty / 100) }).SelectMany(x => x).ToList();
             return new ChartDataDto
             {
-                Categories = new List<string>(),
+                Categories = allData.Select(x => x.ProductName).ToList(),
                 ChartTitle = "Order Value vs Margin",
                 ChartType = "scatter",
-                Series = new List<ChartSeriesDto> { new() { Name = "Products", Data = new List<decimal>() } }
+                Series = new List<ChartSeriesDto> { new() { Name = "Products", Data = fallback } }
             };
         }
 

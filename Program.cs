@@ -14,11 +14,16 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
 
 // Add services to the container.
-builder.Services.AddControllersWithViews();
+builder.Services.AddControllersWithViews()
+    .AddJsonOptions(options => options.JsonSerializerOptions.PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase);
 
 // Configure DbContext with SQL Server
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+{
+    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"),
+        sqlOptions => sqlOptions.EnableRetryOnFailure());
+    options.ConfigureWarnings(w => w.Ignore(Microsoft.EntityFrameworkCore.Diagnostics.RelationalEventId.PendingModelChangesWarning));
+});
 
 // Add Memory Cache
 builder.Services.AddMemoryCache();
@@ -129,6 +134,9 @@ using (var scope = app.Services.CreateScope())
     var logger = services.GetRequiredService<ILogger<Program>>();
     try
     {
+        var dbContext = services.GetRequiredService<ApplicationDbContext>();
+        dbContext.Database.Migrate();
+
         var roleSeeder = services.GetRequiredService<RoleSeeder>();
         await roleSeeder.SeedRolesAndUsersAsync();
 
@@ -149,7 +157,10 @@ app.MapControllerRoute(
 app.MapHub<NotificationHub>("/notificationHub");
 
 // Hangfire Dashboard
-app.UseHangfireDashboard();
+app.UseHangfireDashboard("/hangfire", new Hangfire.DashboardOptions
+{
+    DashboardTitle = "Dashboard Jobs"
+});
 
 // Start Hangfire recurring jobs
 NotificationJobs.RegisterJobs();

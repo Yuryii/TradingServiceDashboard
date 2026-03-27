@@ -438,11 +438,11 @@ public class MarketingDashboardService : IMarketingDashboardService
         return new List<FunnelStageDto>
         {
             new() { Stage = "Impressions", Count = impressions, ConversionRate = 100 },
-            new() { Stage = "Clicks", Count = clicks, ConversionRate = clicks > 0 ? Math.Round((decimal)clicks / impressions * 100, 1) : 0 },
-            new() { Stage = "Leads", Count = leads, ConversionRate = leads > 0 ? Math.Round((decimal)leads / clicks * 100, 1) : 0 },
-            new() { Stage = "MQL", Count = mql, ConversionRate = mql > 0 ? Math.Round((decimal)mql / leads * 100, 1) : 0 },
-            new() { Stage = "SQL", Count = sql, ConversionRate = sql > 0 ? Math.Round((decimal)sql / mql * 100, 1) : 0 },
-            new() { Stage = "Sales", Count = sales, ConversionRate = sales > 0 ? Math.Round((decimal)sales / sql * 100, 1) : 0 }
+            new() { Stage = "Clicks", Count = clicks, ConversionRate = impressions > 0 ? Math.Round((decimal)clicks / impressions * 100, 1) : 0 },
+            new() { Stage = "Leads", Count = leads, ConversionRate = clicks > 0 ? Math.Round((decimal)leads / clicks * 100, 1) : 0 },
+            new() { Stage = "MQL", Count = mql, ConversionRate = leads > 0 ? Math.Round((decimal)mql / leads * 100, 1) : 0 },
+            new() { Stage = "SQL", Count = sql, ConversionRate = mql > 0 ? Math.Round((decimal)sql / mql * 100, 1) : 0 },
+            new() { Stage = "Sales", Count = sales, ConversionRate = sql > 0 ? Math.Round((decimal)sales / sql * 100, 1) : 0 }
         };
     }
 
@@ -630,12 +630,23 @@ public class MarketingDashboardService : IMarketingDashboardService
     public async Task<ChartDataDto> GetCplVsConversionScatterChartAsync(DateTime? fromDate = null, DateTime? toDate = null)
     {
         var scatter = await GetCplVsConversionScatterAsync(fromDate, toDate);
+        if (!scatter.Any())
+        {
+            return new ChartDataDto
+            {
+                Categories = new List<string>(),
+                ChartTitle = "CPL vs Conversion",
+                ChartType = "scatter",
+                Series = new List<ChartSeriesDto>()
+            };
+        }
+        var flatData = scatter.SelectMany(s => new[] { s.X, s.Y }).ToList();
         return new ChartDataDto
         {
             Categories = scatter.Select(s => s.Label).ToList(),
             ChartTitle = "CPL vs Conversion",
             ChartType = "scatter",
-            Series = new List<ChartSeriesDto> { new() { Name = "Channels", Data = scatter.Select(s => s.X).ToList() } }
+            Series = new List<ChartSeriesDto> { new() { Name = "Channels", Data = flatData } }
         };
     }
 

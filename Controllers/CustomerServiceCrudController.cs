@@ -23,6 +23,10 @@ public class CustomerServiceCrudController : Controller
 
     public IActionResult Index() => View();
 
+    #region Export
+    public async Task<IActionResult> SupportTicket_Export() => await Export("SupportTicket", "SupportTicket");
+    #endregion
+
     #region SupportTickets
     public async Task<IActionResult> SupportTickets_Index()
     {
