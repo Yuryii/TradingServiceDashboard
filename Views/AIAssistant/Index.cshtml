@@ -1,0 +1,230 @@
+@{
+    ViewData["Title"] = "AI Assistant";
+    Layout = "~/Views/Shared/_CommonMasterLayout.cshtml";
+}
+
+<link rel="stylesheet" href="~/css/ai-assistant-chatgpt.css" asp-append-version="true" />
+
+<div class="ai-chatgpt-page">
+    <aside class="cgpt-sidebar">
+        <div class="cgpt-sidebar-top">
+            <div class="cgpt-sidebar-brand">AI Assistant</div>
+            <button type="button" class="cgpt-btn-newchat" onclick="startNewChat()" title="Cuộc trò chuyện mới">
+                <i class="icon-base bx bx-edit"></i>
+                Cuộc trò chuyện mới
+            </button>
+        </div>
+        <div class="cgpt-sidebar-label">Phòng ban</div>
+        <div class="ai-dept-selector" id="deptSelector">
+            <button type="button" class="ai-dept-btn active" data-dept="sales" onclick="selectDepartment('sales')">
+                <i class="icon-base bx bx-trending-up"></i> Sales
+            </button>
+            <button type="button" class="ai-dept-btn" data-dept="finance" onclick="selectDepartment('finance')">
+                <i class="icon-base bx bx-wallet"></i> Finance
+            </button>
+            <button type="button" class="ai-dept-btn" data-dept="marketing" onclick="selectDepartment('marketing')">
+                <i class="icon-base bx bx-megaphone"></i> Marketing
+            </button>
+            <button type="button" class="ai-dept-btn" data-dept="inventory" onclick="selectDepartment('inventory')">
+                <i class="icon-base bx bx-package"></i> Inventory
+            </button>
+            <button type="button" class="ai-dept-btn" data-dept="hr" onclick="selectDepartment('hr')">
+                <i class="icon-base bx bx-user"></i> HR
+            </button>
+            <button type="button" class="ai-dept-btn" data-dept="cskh" onclick="selectDepartment('cskh')">
+                <i class="icon-base bx bx-headphone"></i> CSKH
+            </button>
+        </div>
+    </aside>
+
+    <main class="cgpt-main">
+        @Html.AntiForgeryToken()
+        <div class="ai-page-widget-wrapper" id="pageWidgetContainer"></div>
+    </main>
+</div>
+
+<script>
+    window.AI_CHAT_DEPARTMENT = 'sales';
+    window.AI_CHAT_STANDALONE = true;
+
+    function startNewChat() {
+        var d = window.currentDept || window.AI_CHAT_DEPARTMENT || 'sales';
+        selectDepartment(d);
+    }
+
+    async function selectDepartment(dept) {
+        document.querySelectorAll('.ai-dept-btn').forEach(function(btn) {
+            btn.classList.toggle('active', btn.dataset.dept === dept);
+        });
+
+        window.AI_CHAT_DEPARTMENT = dept;
+
+        var container = document.getElementById('pageWidgetContainer');
+        container.innerHTML = '<div class="d-flex align-items-center justify-content-center flex-grow-1 py-5"><div class="spinner-border text-secondary" role="status"></div></div>';
+
+        try {
+            var token = (typeof window.getCsrfToken === 'function') ? window.getCsrfToken() : '';
+            var response = await fetch('/api/aichat/sessions', {
+                method: 'POST',
+                credentials: 'same-origin',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'RequestVerificationToken': token
+                },
+                body: JSON.stringify({ department: dept })
+            });
+
+            if (!response.ok) throw new Error('Failed to create session');
+
+            var session = await response.json();
+
+            var widgetHtml = '<div class="ai-chat-panel open ai-chatgpt-shell">' +
+                '<header class="cgpt-thread-head">' +
+                '<div class="cgpt-thread-head-left">' +
+                '<div class="cgpt-model-badge">' + escapeHtmlAttr(getDeptName(dept)) + '</div>' +
+                '<span class="cgpt-status">' +
+                '<span class="status-dot cgpt-status-dot" id="aiStatusDot"></span>' +
+                '<span id="aiStatusText">Online</span>' +
+                '</span></div>' +
+                '<button type="button" class="cgpt-icon-btn" onclick="clearCurrentChat()" title="Xóa cuộc trò chuyện">' +
+                '<i class="icon-base bx bx-trash"></i></button>' +
+                '</header>' +
+
+                '<div class="ai-chat-messages" id="aiChatMessages">' +
+                '<div class="ai-chat-empty cgpt-empty" id="aiEmptyState">' +
+                '<div class="cgpt-empty-inner">' +
+                '<div class="cgpt-empty-icon"><i class="icon-base bx ' + getDeptIcon(dept) + '"></i></div>' +
+                '<h2 class="cgpt-empty-title">Xin chào</h2>' +
+                '<p class="cgpt-empty-sub">Tôi là ' + escapeHtmlAttr(getDeptName(dept)) + '. Bạn cần hỗ trợ điều gì?</p>' +
+                '</div></div></div>' +
+
+                '<div class="ai-quick-actions cgpt-suggestions" id="aiQuickActions">' +
+                getQuickActions(dept) +
+                '</div>' +
+
+                '<div class="cgpt-composer-wrap">' +
+                '<div class="ai-chat-input-area cgpt-composer">' +
+                '<textarea id="aiChatInput" class="ai-chat-input" placeholder="Nhập câu hỏi..." rows="1" ' +
+                'onkeydown="handleInputKeydown(event)" oninput="autoResizeInput(this)"></textarea>' +
+                '<button type="button" class="ai-chat-send" id="aiSendBtn" onclick="sendMessage()" disabled>' +
+                '<i class="icon-base bx bx-send"></i></button>' +
+                '</div>' +
+                '<p class="cgpt-disclaimer">Trợ lý có thể mắc lỗi. Hãy kiểm tra thông tin quan trọng.</p>' +
+                '</div></div>';
+
+            container.innerHTML = widgetHtml;
+
+            if (typeof setAIChatSessionId === 'function') {
+                setAIChatSessionId(session.sessionId);
+            }
+            window.currentDept = dept;
+
+            if (typeof connectAIHub === 'function') {
+                connectAIHub();
+            }
+        } catch (err) {
+            container.innerHTML = '<div class="d-flex flex-column align-items-center justify-content-center flex-grow-1 py-5 text-danger"><i class="icon-base bx bx-error-alt" style="font-size:32px;"></i><p class="mt-2 mb-0">Lỗi tạo phiên. Vui lòng thử lại.</p></div>';
+        }
+    }
+
+    function escapeHtmlAttr(s) {
+        if (!s) return '';
+        return String(s)
+            .replace(/&/g, '&amp;')
+            .replace(/"/g, '&quot;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;');
+    }
+
+    function getDeptIcon(dept) {
+        return {
+            sales: 'bx-trending-up',
+            finance: 'bx-wallet',
+            marketing: 'bx-megaphone',
+            inventory: 'bx-package',
+            hr: 'bx-user',
+            cskh: 'bx-headphone'
+        }[dept] || 'bx-bot';
+    }
+
+    function getDeptName(dept) {
+        return {
+            sales: 'Sales Assistant',
+            finance: 'Finance Assistant',
+            marketing: 'Marketing Assistant',
+            inventory: 'Inventory Assistant',
+            hr: 'HR Assistant',
+            cskh: 'CSKH Assistant'
+        }[dept] || 'AI Assistant';
+    }
+
+    function getQuickActions(dept) {
+        var actions = {
+            sales: [
+                { label: 'Doanh số tuần này?', icon: 'bx-line-chart' },
+                { label: 'Top 5 khách hàng', icon: 'bx-star' },
+                { label: 'Cơ hội chậm trễ', icon: 'bx-alarm-exclamation' },
+                { label: 'Pipeline hiện tại', icon: 'bx-filter-alt' }
+            ],
+            finance: [
+                { label: 'Chi phí tháng này?', icon: 'bx-coin-stack' },
+                { label: 'Dòng tiền', icon: 'bx-trending-down' },
+                { label: 'AR/AP aging', icon: 'bx-time-five' },
+                { label: 'Lợi nhuận ròng', icon: 'bx-dollar' }
+            ],
+            marketing: [
+                { label: 'Chiến dịch hiện tại', icon: 'bx-megaphone' },
+                { label: 'ROI chiến dịch', icon: 'bx-pie-chart-alt' },
+                { label: 'Leads mới', icon: 'bx-user-plus' },
+                { label: 'Chi phí quảng cáo', icon: 'bx-credit-card' }
+            ],
+            inventory: [
+                { label: 'Tồn kho hiện tại', icon: 'bx-package' },
+                { label: 'Sản phẩm sắp hết', icon: 'bx-alert-circle' },
+                { label: 'Nhập hàng gần đây', icon: 'bx-truck' },
+                { label: 'Tỷ lệ quay vòng', icon: 'bx-refresh' }
+            ],
+            hr: [
+                { label: 'Nhân sự mới', icon: 'bx-user-plus' },
+                { label: 'Nghỉ phép', icon: 'bx-calendar' },
+                { label: 'Tuyển dụng', icon: 'bx-briefcase' },
+                { label: 'Đánh giá KPI', icon: 'bx-chart' }
+            ],
+            cskh: [
+                { label: 'Ticket đang mở', icon: 'bx-ticket' },
+                { label: 'Phản hồi tiêu cực', icon: 'bx-error' },
+                { label: 'CSAT score', icon: 'bx-star' },
+                { label: 'Khách hàng mới', icon: 'bx-user-plus' }
+            ]
+        };
+
+        var deptActions = actions[dept] || actions.sales;
+        return deptActions.map(function(a) {
+            return '<button type="button" class="ai-quick-action" onclick="sendQuickMessage(\'' +
+                String(a.label).replace(/\\/g, '\\\\').replace(/'/g, "\\'") + '\')">' +
+                '<i class="icon-base ' + a.icon + '" style="margin-right:6px;vertical-align:middle;"></i>' +
+                escapeHtmlAttr(a.label) + '</button>';
+        }).join('');
+    }
+
+    function clearCurrentChat() {
+        if (typeof setAIChatSessionId === 'function') {
+            setAIChatSessionId(null);
+        }
+        var wrap = document.getElementById('aiQuickActions');
+        if (wrap) wrap.style.display = '';
+        var container = document.getElementById('aiChatMessages');
+        if (container) {
+            container.innerHTML = '<div class="ai-chat-empty cgpt-empty" id="aiEmptyState">' +
+                '<div class="cgpt-empty-inner">' +
+                '<div class="cgpt-empty-icon"><i class="icon-base bx ' + getDeptIcon(window.currentDept || 'sales') + '"></i></div>' +
+                '<h2 class="cgpt-empty-title">Đã xóa lịch sử</h2>' +
+                '<p class="cgpt-empty-sub">Nhập câu hỏi bên dưới để bắt đầu cuộc trò chuyện mới.</p>' +
+                '</div></div>';
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        selectDepartment('sales');
+    });
+</script>

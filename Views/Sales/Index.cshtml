@@ -9,11 +9,12 @@
 }
 @section VendorStyles {
 <link rel="stylesheet" href="~/vendor/libs/apex-charts/apex-charts.css" />
+<link rel="stylesheet" href="~/vendor/libs/gridstack/gridstack.min.css" />
 }
 @section VendorScripts {
 <script src="~/vendor/libs/apex-charts/apexcharts.js"></script>
 }
-@* Inject all dashboardCharts so dashboards-analytics.js doesn't throw ReferenceError on missing keys *@
+@* Inject all charts *@
 <script>
 window.dashboardCharts = window.dashboardCharts || {};
 Object.assign(window.dashboardCharts, {
@@ -22,7 +23,6 @@ Object.assign(window.dashboardCharts, {
   revenueBySalesperson: @Html.Raw(Json.Serialize(Model.RevenueBySalespersonChart)),
   revenueByChannel: @Html.Raw(Json.Serialize(Model.RevenueByChannelChart)),
   pipelineByStage: @Html.Raw(Json.Serialize(Model.PipelineByStageChart)),
-  // Charts not in SalesDashboardViewModel — provide empty fallbacks to avoid JS errors
   orderStatistics: { series: [], labels: [] },
   incomeChart: { series: [], categories: [] },
   expensesChart: { numericValue: 0 },
@@ -33,76 +33,24 @@ Object.assign(window.dashboardCharts, {
 <script src="~/js/dashboards-analytics.js"></script>
 }
 
-<div class="row">
-  <div class="col-xxl-8 mb-6 order-0">
-    <div class="card">
-      <div class="d-flex align-items-start row">
-        <div class="col-sm-7">
-          <div class="card-body">
-            <h5 class="card-title text-primary mb-3">Sales Performance 🎉</h5>
-            <p class="mb-6">Welcome to the Sales Dashboard. Track your revenue and orders.</p>
-            <a href="javascript:;" class="btn btn-sm btn-outline-primary">View Reports</a>
-          </div>
-        </div>
-        <div class="col-sm-5 text-center text-sm-left">
-          <div class="card-body pb-0 px-0 px-md-6">
-            <img src="~/img/illustrations/man-with-laptop.png" height="175" alt="Sales Dashboard" />
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-  <div class="col-xxl-4 col-lg-12 col-md-4 order-1">
-    <div class="row">
-      <div class="col-lg-6 col-md-12 col-6 mb-6">
-        <div class="card h-100">
-          <div class="card-body">
-            <div class="card-title d-flex align-items-start justify-content-between mb-4">
-              <div class="avatar flex-shrink-0">
-                <img src="~/img/icons/unicons/chart-success.png" alt="Sales" class="rounded" />
-              </div>
-              <div class="dropdown">
-                <button class="btn p-0" type="button" id="cardOpt1" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                  <i class="icon-base bx bx-dots-vertical-rounded text-body-secondary"></i>
-                </button>
-                <div class="dropdown-menu dropdown-menu-end" aria-labelledby="cardOpt1">
-                  <a class="dropdown-item" href="javascript:void(0);">View More</a>
-                </div>
-              </div>
-            </div>
-            <p class="mb-1">@Model.TotalSales.Title</p>
-            <h4 class="card-title mb-3">@Model.TotalSales.Value</h4>
-            <small class="text-success fw-medium"><i class="icon-base bx bx-up-arrow-alt"></i> @Model.TotalSales.TrendLabel</small>
-          </div>
-        </div>
-      </div>
-      <div class="col-lg-6 col-md-12 col-6 mb-6">
-        <div class="card h-100">
-          <div class="card-body">
-            <div class="card-title d-flex align-items-start justify-content-between mb-4">
-              <div class="avatar flex-shrink-0">
-                <img src="~/img/icons/unicons/wallet-info.png" alt="Orders" class="rounded" />
-              </div>
-              <div class="dropdown">
-                <button class="btn p-0" type="button" id="cardOpt2" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                  <i class="icon-base bx bx-dots-vertical-rounded text-body-secondary"></i>
-                </button>
-                <div class="dropdown-menu dropdown-menu-end" aria-labelledby="cardOpt2">
-                  <a class="dropdown-item" href="javascript:void(0);">View More</a>
-                </div>
-              </div>
-            </div>
-            <p class="mb-1">@Model.TotalOrders.Title</p>
-            <h4 class="card-title mb-3">@Model.TotalOrders.Value</h4>
-            <small class="text-success fw-medium"><i class="icon-base bx bx-up-arrow-alt"></i> @Model.TotalOrders.TrendLabel</small>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
+@* Layout Toolbar *@
+<div class="d-flex align-items-center gap-2 mb-4">
+  <button type="button" class="btn-layout-action" id="btn-layout-edit"
+    onclick="window.dashboardLayoutManager && window.dashboardLayoutManager.toggleEditMode()">
+    <i class="icon-base bx bx-palette me-1"></i> Customize Layout
+  </button>
+  <button type="button" class="btn-layout-action" id="btn-layout-save"
+    onclick="window.dashboardLayoutManager && window.dashboardLayoutManager.saveLayout()">
+    <i class="icon-base bx bx-check me-1"></i> Save
+  </button>
+  <button type="button" class="btn-layout-action" id="btn-layout-reset"
+    onclick="window.dashboardLayoutManager && window.dashboardLayoutManager.resetLayout()">
+    <i class="icon-base bx bx-refresh me-1"></i> Reset
+  </button>
 </div>
 
-<div class="card mb-4">
+@* ============ DATE FILTER (outside grid — never resizable) ============ *@
+<div id="sales-date-filter" class="card mb-4 sales-date-filter-card">
   <div class="card-body">
     <form method="get" class="row g-3 align-items-end">
       <div class="col-auto">
@@ -131,315 +79,441 @@ Object.assign(window.dashboardCharts, {
   </div>
 </div>
 
-<div class="row">
-  <div class="col-12 col-xxl-8 order-2 order-md-3 order-xxl-2 mb-6">
-    <div class="card">
-      <div class="row row-bordered g-0">
-        <div class="col-lg-8">
-          <div class="card-header d-flex align-items-center justify-content-between">
-            <div class="card-title mb-0">
-              <h5 class="m-0 me-2">Sales Overview</h5>
-            </div>
-            <div class="dropdown">
-              <button class="btn p-0" type="button" id="salesChart" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                <i class="icon-base bx bx-dots-vertical-rounded icon-lg text-body-secondary"></i>
-              </button>
-              <div class="dropdown-menu dropdown-menu-end" aria-labelledby="salesChart">
-                <a class="dropdown-item" href="javascript:void(0);">This Week</a>
-                <a class="dropdown-item" href="javascript:void(0);">This Month</a>
-              </div>
+@* ============ GRID ============ *@
+<div id="sales-dashboard-grid-container" style="position: relative;">
+  <div id="sales-dashboard-grid" class="grid-stack">
+
+    @* ---- Row 0: Welcome (8) + Total Sales KPI (4) ---- *@
+    <div class="grid-stack-item"
+         data-widget-id="sales-welcome"
+         data-gs-x="0" data-gs-y="0" data-gs-width="8" data-gs-height="6">
+      <div class="grid-stack-item-content card">
+        <div class="d-flex align-items-start row">
+          <div class="col-sm-7">
+            <div class="card-body">
+              <h5 class="card-title text-primary mb-3">Sales Performance 🎉</h5>
+              <p class="mb-6">Welcome to the Sales Dashboard. Track your revenue and orders.</p>
+              <a href="javascript:;" class="btn btn-sm btn-outline-primary">View Reports</a>
             </div>
           </div>
-          <div id="totalRevenueChart" class="px-3"></div>
-        </div>
-        <div class="col-lg-4">
-          <div class="card-body px-xl-9 py-12 d-flex align-items-center flex-column">
-            <div class="text-center mb-6">
-              <h6 class="mb-0">@Model.TargetAchievementPercent% Target Achievement</h6>
+          <div class="col-sm-5 text-center text-sm-left">
+            <div class="card-body pb-0 px-0 px-md-6">
+              <img src="~/img/illustrations/man-with-laptop.png" height="175" alt="Sales Dashboard" />
             </div>
-            <div id="growthChart"></div>
           </div>
         </div>
       </div>
     </div>
-  </div>
-  <div class="col-12 col-md-8 col-lg-12 col-xxl-4 order-3 order-md-2 mb-6">
-    <div class="row">
-      <div class="col-6 mb-6">
-        <div class="card h-100">
-          <div class="card-body">
-            <div class="card-title d-flex align-items-start justify-content-between mb-4">
-              <div class="avatar flex-shrink-0">
-                <img src="~/img/icons/unicons/paypal.png" alt="Revenue" class="rounded" />
+
+    <div class="grid-stack-item"
+         data-widget-id="sales-kpi-totalsales"
+         data-gs-x="8" data-gs-y="0" data-gs-width="4" data-gs-height="3">
+      <div class="grid-stack-item-content card h-100">
+        <div class="card-body">
+          <div class="card-title d-flex align-items-start justify-content-between mb-4">
+            <div class="avatar flex-shrink-0">
+              <img src="~/img/icons/unicons/chart-success.png" alt="Sales" class="rounded" />
+            </div>
+          </div>
+          <p class="mb-1">@Model.TotalSales.Title</p>
+          <h4 class="card-title mb-3">@Model.TotalSales.Value</h4>
+          <small class="text-success fw-medium"><i class="icon-base bx bx-up-arrow-alt"></i> @Model.TotalSales.TrendLabel</small>
+        </div>
+      </div>
+    </div>
+
+    <div class="grid-stack-item"
+         data-widget-id="sales-kpi-totalorders"
+         data-gs-x="8" data-gs-y="3" data-gs-width="4" data-gs-height="3">
+      <div class="grid-stack-item-content card h-100">
+        <div class="card-body">
+          <div class="card-title d-flex align-items-start justify-content-between mb-4">
+            <div class="avatar flex-shrink-0">
+              <img src="~/img/icons/unicons/wallet-info.png" alt="Orders" class="rounded" />
+            </div>
+          </div>
+          <p class="mb-1">@Model.TotalOrders.Title</p>
+          <h4 class="card-title mb-3">@Model.TotalOrders.Value</h4>
+          <small class="text-success fw-medium"><i class="icon-base bx bx-up-arrow-alt"></i> @Model.TotalOrders.TrendLabel</small>
+        </div>
+      </div>
+    </div>
+
+    @* ---- Row 6: Sales Overview (8) + New Customers + Pending Deals (4) ---- *@
+    <div class="grid-stack-item"
+         data-widget-id="sales-chart-overview"
+         data-gs-x="0" data-gs-y="6" data-gs-width="8" data-gs-height="8">
+      <div class="grid-stack-item-content card h-100">
+        <div class="row row-bordered g-0 h-100">
+          <div class="col-lg-8">
+            <div class="card-header d-flex align-items-center justify-content-between">
+              <div class="card-title mb-0">
+                <h5 class="m-0 me-2">Sales Overview</h5>
               </div>
               <div class="dropdown">
-                <button class="btn p-0" type="button" id="cardOpt3" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                  <i class="icon-base bx bx-dots-vertical-rounded text-body-secondary"></i>
+                <button class="btn p-0" type="button" id="salesChart" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                  <i class="icon-base bx bx-dots-vertical-rounded icon-lg text-body-secondary"></i>
                 </button>
-                <div class="dropdown-menu dropdown-menu-end" aria-labelledby="cardOpt3">
-                  <a class="dropdown-item" href="javascript:void(0);">View More</a>
+                <div class="dropdown-menu dropdown-menu-end" aria-labelledby="salesChart">
+                  <a class="dropdown-item" href="javascript:void(0);">This Week</a>
+                  <a class="dropdown-item" href="javascript:void(0);">This Month</a>
                 </div>
               </div>
             </div>
-            <p class="mb-1">@Model.NewCustomers.Title</p>
-            <h4 class="card-title mb-3">@Model.NewCustomers.Value</h4>
-            <small class="text-success fw-medium"><i class="icon-base bx bx-up-arrow-alt"></i> @Model.NewCustomers.TrendLabel</small>
+            <div id="totalRevenueChart" class="px-3"></div>
           </div>
-        </div>
-      </div>
-      <div class="col-6 mb-6">
-        <div class="card h-100">
-          <div class="card-body">
-            <div class="card-title d-flex align-items-start justify-content-between mb-4">
-              <div class="avatar flex-shrink-0">
-                <img src="~/img/icons/unicons/cc-primary.png" alt="Deals" class="rounded" />
+          <div class="col-lg-4">
+            <div class="card-body px-xl-9 py-12 d-flex align-items-center flex-column">
+              <div class="text-center mb-6">
+                <h6 class="mb-0">@Model.TargetAchievementPercent% Target Achievement</h6>
               </div>
-              <div class="dropdown">
-                <button class="btn p-0" type="button" id="cardOpt4" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                  <i class="icon-base bx bx-dots-vertical-rounded text-body-secondary"></i>
-                </button>
-                <div class="dropdown-menu" aria-labelledby="cardOpt4">
-                  <a class="dropdown-item" href="javascript:void(0);">View More</a>
-                </div>
-              </div>
+              <div id="growthChart"></div>
             </div>
-            <p class="mb-1">@Model.PendingDeals.Title</p>
-            <h4 class="card-title mb-3">@Model.PendingDeals.Value</h4>
-            <small class="text-warning fw-medium"><i class="icon-base bx bx-time"></i> @Model.PendingDeals.TrendLabel</small>
-          </div>
-        </div>
-      </div>
-      <div class="col-6 mb-6">
-        <div class="card h-100">
-          <div class="card-body">
-            <div class="card-title d-flex align-items-start justify-content-between mb-4">
-              <div class="avatar flex-shrink-0"><img src="~/img/icons/unicons/chart-success.png" alt="Win Rate" class="rounded" /></div>
-              <div class="dropdown"><button class="btn p-0" type="button" id="cardWr" data-bs-toggle="dropdown"><i class="icon-base bx bx-dots-vertical-rounded text-body-secondary"></i></button><div class="dropdown-menu dropdown-menu-end"><a class="dropdown-item" href="javascript:void(0);">View More</a></div></div>
-            </div>
-            <p class="mb-1">@Model.WinRate.Title</p>
-            <h4 class="card-title mb-3">@Model.WinRate.Value</h4>
-            <small class="text-success fw-medium"><i class="icon-base bx bx-trophy"></i> @Model.WinRate.TrendLabel</small>
-          </div>
-        </div>
-      </div>
-      <div class="col-6 mb-6">
-        <div class="card h-100">
-          <div class="card-body">
-            <div class="card-title d-flex align-items-start justify-content-between mb-4">
-              <div class="avatar flex-shrink-0"><img src="~/img/icons/unicons/wallet-info.png" alt="AOV" class="rounded" /></div>
-              <div class="dropdown"><button class="btn p-0" type="button" id="cardAov" data-bs-toggle="dropdown"><i class="icon-base bx bx-dots-vertical-rounded text-body-secondary"></i></button><div class="dropdown-menu dropdown-menu-end"><a class="dropdown-item" href="javascript:void(0);">View More</a></div></div>
-            </div>
-            <p class="mb-1">@Model.AverageOrderValue.Title</p>
-            <h4 class="card-title mb-3">@Model.AverageOrderValue.Value</h4>
-            <small class="text-primary fw-medium"><i class="icon-base bx bx-receipt"></i> Avg Order</small>
           </div>
         </div>
       </div>
     </div>
-  </div>
-</div>
 
-<!-- KPI Cards Row 2 -->
-<div class="row">
-  <div class="col-lg-3 col-md-6 col-sm-6 mb-6">
-    <div class="card h-100">
-      <div class="card-body">
-        <div class="card-title d-flex align-items-start justify-content-between mb-3"><div class="avatar flex-shrink-0"><img src="~/img/icons/unicons/paypal.png" alt="GM" class="rounded" /></div><div class="dropdown"><button class="btn p-0" type="button" id="cardGm" data-bs-toggle="dropdown"><i class="icon-base bx bx-dots-vertical-rounded text-body-secondary"></i></button><div class="dropdown-menu dropdown-menu-end"><a class="dropdown-item" href="javascript:void(0);">View More</a></div></div></div>
-        <p class="mb-1">@Model.GrossMargin.Title</p>
-        <h4 class="card-title mb-2">@Model.GrossMargin.Value</h4>
-        <small class="text-success fw-medium"><i class="icon-base bx bx-chart"></i> @Model.GrossMargin.TrendLabel</small>
-      </div>
-    </div>
-  </div>
-  <div class="col-lg-3 col-md-6 col-sm-6 mb-6">
-    <div class="card h-100">
-      <div class="card-body">
-        <div class="card-title d-flex align-items-start justify-content-between mb-3"><div class="avatar flex-shrink-0"><img src="~/img/icons/unicons/chart-success.png" alt="Target" class="rounded" /></div><div class="dropdown"><button class="btn p-0" type="button" id="cardTgt" data-bs-toggle="dropdown"><i class="icon-base bx bx-dots-vertical-rounded text-body-secondary"></i></button><div class="dropdown-menu dropdown-menu-end"><a class="dropdown-item" href="javascript:void(0);">View More</a></div></div></div>
-        <p class="mb-1">@Model.SalesTargetAchievement.Title</p>
-        <h4 class="card-title mb-2">@Model.SalesTargetAchievement.Value</h4>
-        <small class="text-warning fw-medium"><i class="icon-base bx bx-target-lock"></i> @Model.SalesTargetAchievement.TrendLabel</small>
-      </div>
-    </div>
-  </div>
-  <div class="col-lg-3 col-md-6 col-sm-6 mb-6">
-    <div class="card h-100">
-      <div class="card-body">
-        <div class="card-title d-flex align-items-start justify-content-between mb-3"><div class="avatar flex-shrink-0"><img src="~/img/icons/unicons/wallet-info.png" alt="Sales Cycle" class="rounded" /></div><div class="dropdown"><button class="btn p-0" type="button" id="cardSc" data-bs-toggle="dropdown"><i class="icon-base bx bx-dots-vertical-rounded text-body-secondary"></i></button><div class="dropdown-menu dropdown-menu-end"><a class="dropdown-item" href="javascript:void(0);">View More</a></div></div></div>
-        <p class="mb-1">Sales Cycle</p>
-        <h4 class="card-title mb-2">28 days</h4>
-        <small class="text-primary fw-medium"><i class="icon-base bx bx-time"></i> Average</small>
-      </div>
-    </div>
-  </div>
-  <div class="col-lg-3 col-md-6 col-sm-6 mb-6">
-    <div class="card h-100">
-      <div class="card-body">
-        <div class="card-title d-flex align-items-start justify-content-between mb-3"><div class="avatar flex-shrink-0"><img src="~/img/icons/unicons/cc-primary.png" alt="GM%" class="rounded" /></div><div class="dropdown"><button class="btn p-0" type="button" id="cardGmp" data-bs-toggle="dropdown"><i class="icon-base bx bx-dots-vertical-rounded text-body-secondary"></i></button><div class="dropdown-menu dropdown-menu-end"><a class="dropdown-item" href="javascript:void(0);">View More</a></div></div></div>
-        <p class="mb-1">GM%</p>
-        <h4 class="card-title mb-2">@Model.GrossMargin.Value</h4>
-        <small class="text-success fw-medium"><i class="icon-base bx bx-trending-up"></i> Gross Margin</small>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- Charts Row 1: Pipeline Funnel + Forecast -->
-<div class="row">
-  <div class="col-lg-6 mb-6">
-    <div class="card h-100">
-      <div class="card-header d-flex align-items-center justify-content-between">
-        <h5 class="card-title m-0 me-2">Pipeline Funnel</h5>
-        <div class="dropdown"><button class="btn p-0" type="button" id="pipeOpts" data-bs-toggle="dropdown"><i class="icon-base bx bx-dots-vertical-rounded icon-lg text-body-secondary"></i></button><div class="dropdown-menu dropdown-menu-end"><a class="dropdown-item" href="javascript:void(0);">Refresh</a></div></div>
-      </div>
-      <div class="card-body">
-        <div id="pipelineFunnelChart" style="min-height: 280px;"></div>
-      </div>
-    </div>
-  </div>
-  <div class="col-lg-6 mb-6">
-    <div class="card h-100">
-      <div class="card-header d-flex align-items-center justify-content-between">
-        <h5 class="card-title m-0 me-2">Sales Forecast</h5>
-        <div class="dropdown"><button class="btn p-0" type="button" id="fcOpts" data-bs-toggle="dropdown"><i class="icon-base bx bx-dots-vertical-rounded icon-lg text-body-secondary"></i></button><div class="dropdown-menu dropdown-menu-end"><a class="dropdown-item" href="javascript:void(0);">Refresh</a></div></div>
-      </div>
-      <div class="card-body">
-        <div id="forecastChart" style="min-height: 280px;"></div>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- Charts Row 2: Salesperson Bar + Order Margin Scatter -->
-<div class="row">
-  <div class="col-lg-6 mb-6">
-    <div class="card h-100">
-      <div class="card-header d-flex align-items-center justify-content-between">
-        <h5 class="card-title m-0 me-2">Revenue by Salesperson</h5>
-        <div class="dropdown"><button class="btn p-0" type="button" id="spOpts" data-bs-toggle="dropdown"><i class="icon-base bx bx-dots-vertical-rounded icon-lg text-body-secondary"></i></button><div class="dropdown-menu dropdown-menu-end"><a class="dropdown-item" href="javascript:void(0);">Refresh</a></div></div>
-      </div>
-      <div class="card-body">
-        <div id="salespersonBarChart" style="min-height: 280px;"></div>
-      </div>
-    </div>
-  </div>
-  <div class="col-lg-6 mb-6">
-    <div class="card h-100">
-      <div class="card-header d-flex align-items-center justify-content-between">
-        <h5 class="card-title m-0 me-2">Order Value vs Margin</h5>
-        <div class="dropdown"><button class="btn p-0" type="button" id="scatterOpts" data-bs-toggle="dropdown"><i class="icon-base bx bx-dots-vertical-rounded icon-lg text-body-secondary"></i></button><div class="dropdown-menu dropdown-menu-end"><a class="dropdown-item" href="javascript:void(0);">Refresh</a></div></div>
-      </div>
-      <div class="card-body">
-        <div id="orderMarginScatterChart" style="min-height: 280px;"></div>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- Charts Row 3: Pareto + Sales Cycle Box Plot -->
-<div class="row">
-  <div class="col-lg-6 mb-6">
-    <div class="card h-100">
-      <div class="card-header d-flex align-items-center justify-content-between">
-        <h5 class="card-title m-0 me-2">Pareto - Revenue by Customer (80/20)</h5>
-        <div class="dropdown"><button class="btn p-0" type="button" id="paretoOpts" data-bs-toggle="dropdown"><i class="icon-base bx bx-dots-vertical-rounded icon-lg text-body-secondary"></i></button><div class="dropdown-menu dropdown-menu-end"><a class="dropdown-item" href="javascript:void(0);">Refresh</a></div></div>
-      </div>
-      <div class="card-body">
-        <div id="paretoChart" style="min-height: 280px;"></div>
-      </div>
-    </div>
-  </div>
-  <div class="col-lg-6 mb-6">
-    <div class="card h-100">
-      <div class="card-header d-flex align-items-center justify-content-between">
-        <h5 class="card-title m-0 me-2">Revenue by Channel</h5>
-        <div class="dropdown"><button class="btn p-0" type="button" id="chOpts" data-bs-toggle="dropdown"><i class="icon-base bx bx-dots-vertical-rounded icon-lg text-body-secondary"></i></button><div class="dropdown-menu dropdown-menu-end"><a class="dropdown-item" href="javascript:void(0);">Refresh</a></div></div>
-      </div>
-      <div class="card-body">
-        <div id="revenueByChannelBarChart" style="min-height: 280px;"></div>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- Chart Row 4: Salesperson x Product Heatmap -->
-<div class="row">
-  <div class="col-lg-12 mb-6">
-    <div class="card h-100">
-      <div class="card-header d-flex align-items-center justify-content-between">
-        <h5 class="card-title m-0 me-2">Salesperson x Product Heatmap</h5>
-        <div class="dropdown"><button class="btn p-0" type="button" id="spmOpts" data-bs-toggle="dropdown"><i class="icon-base bx bx-dots-vertical-rounded icon-lg text-body-secondary"></i></button><div class="dropdown-menu dropdown-menu-end"><a class="dropdown-item" href="javascript:void(0);">Refresh</a></div></div>
-      </div>
-      <div class="card-body">
-        <div id="salespersonProductHeatmap" style="min-height: 300px;"></div>
-      </div>
-    </div>
-  </div>
-</div>
-
-<div class="row">
-  <div class="col-md-6 col-lg-4 order-0 mb-6">
-    <div class="card h-100">
-      <div class="card-header d-flex justify-content-between">
-        <div class="card-title mb-0">
-          <h5 class="mb-1 me-2">Top Products</h5>
-          <p class="card-subtitle">Best Selling Items</p>
+    <div class="grid-stack-item"
+         data-widget-id="sales-kpi-newcustomers"
+         data-gs-x="8" data-gs-y="6" data-gs-width="4" data-gs-height="4">
+      <div class="grid-stack-item-content card h-100">
+        <div class="card-body">
+          <div class="card-title d-flex align-items-start justify-content-between mb-4">
+            <div class="avatar flex-shrink-0">
+              <img src="~/img/icons/unicons/paypal.png" alt="Revenue" class="rounded" />
+            </div>
+          </div>
+          <p class="mb-1">@Model.NewCustomers.Title</p>
+          <h4 class="card-title mb-3">@Model.NewCustomers.Value</h4>
+          <small class="text-success fw-medium"><i class="icon-base bx bx-up-arrow-alt"></i> @Model.NewCustomers.TrendLabel</small>
         </div>
       </div>
-      <div class="card-body">
-        <ul class="p-0 m-0">
-          @if (Model.TopProducts.Any())
-          {
-            @foreach (var product in Model.TopProducts.Take(5))
+    </div>
+
+    <div class="grid-stack-item"
+         data-widget-id="sales-kpi-pendingdeals"
+         data-gs-x="8" data-gs-y="10" data-gs-width="4" data-gs-height="4">
+      <div class="grid-stack-item-content card h-100">
+        <div class="card-body">
+          <div class="card-title d-flex align-items-start justify-content-between mb-4">
+            <div class="avatar flex-shrink-0">
+              <img src="~/img/icons/unicons/cc-primary.png" alt="Deals" class="rounded" />
+            </div>
+          </div>
+          <p class="mb-1">@Model.PendingDeals.Title</p>
+          <h4 class="card-title mb-3">@Model.PendingDeals.Value</h4>
+          <small class="text-warning fw-medium"><i class="icon-base bx bx-time"></i> @Model.PendingDeals.TrendLabel</small>
+        </div>
+      </div>
+    </div>
+
+    @* ---- Row 14: Win Rate + AOV + Gross Margin + Sales Target (4 KPI cards, 3 each) ---- *@
+    <div class="grid-stack-item"
+         data-widget-id="sales-kpi-winrate"
+         data-gs-x="0" data-gs-y="14" data-gs-width="3" data-gs-height="6">
+      <div class="grid-stack-item-content card h-100">
+        <div class="card-body">
+          <div class="card-title d-flex align-items-start justify-content-between mb-3">
+            <div class="avatar flex-shrink-0">
+              <img src="~/img/icons/unicons/chart-success.png" alt="Win Rate" class="rounded" />
+            </div>
+          </div>
+          <p class="mb-1">@Model.WinRate.Title</p>
+          <h4 class="card-title mb-2">@Model.WinRate.Value</h4>
+          <small class="text-success fw-medium"><i class="icon-base bx bx-trophy"></i> @Model.WinRate.TrendLabel</small>
+        </div>
+      </div>
+    </div>
+
+    <div class="grid-stack-item"
+         data-widget-id="sales-kpi-aov"
+         data-gs-x="3" data-gs-y="14" data-gs-width="3" data-gs-height="6">
+      <div class="grid-stack-item-content card h-100">
+        <div class="card-body">
+          <div class="card-title d-flex align-items-start justify-content-between mb-3">
+            <div class="avatar flex-shrink-0">
+              <img src="~/img/icons/unicons/wallet-info.png" alt="AOV" class="rounded" />
+            </div>
+          </div>
+          <p class="mb-1">@Model.AverageOrderValue.Title</p>
+          <h4 class="card-title mb-2">@Model.AverageOrderValue.Value</h4>
+          <small class="text-primary fw-medium"><i class="icon-base bx bx-receipt"></i> Avg Order</small>
+        </div>
+      </div>
+    </div>
+
+    <div class="grid-stack-item"
+         data-widget-id="sales-kpi-grossmargin"
+         data-gs-x="6" data-gs-y="14" data-gs-width="3" data-gs-height="6">
+      <div class="grid-stack-item-content card h-100">
+        <div class="card-body">
+          <div class="card-title d-flex align-items-start justify-content-between mb-3">
+            <div class="avatar flex-shrink-0">
+              <img src="~/img/icons/unicons/paypal.png" alt="GM" class="rounded" />
+            </div>
+          </div>
+          <p class="mb-1">@Model.GrossMargin.Title</p>
+          <h4 class="card-title mb-2">@Model.GrossMargin.Value</h4>
+          <small class="text-success fw-medium"><i class="icon-base bx bx-chart"></i> @Model.GrossMargin.TrendLabel</small>
+        </div>
+      </div>
+    </div>
+
+    <div class="grid-stack-item"
+         data-widget-id="sales-kpi-target"
+         data-gs-x="9" data-gs-y="14" data-gs-width="3" data-gs-height="6">
+      <div class="grid-stack-item-content card h-100">
+        <div class="card-body">
+          <div class="card-title d-flex align-items-start justify-content-between mb-3">
+            <div class="avatar flex-shrink-0">
+              <img src="~/img/icons/unicons/chart-success.png" alt="Target" class="rounded" />
+            </div>
+          </div>
+          <p class="mb-1">@Model.SalesTargetAchievement.Title</p>
+          <h4 class="card-title mb-2">@Model.SalesTargetAchievement.Value</h4>
+          <small class="text-warning fw-medium"><i class="icon-base bx bx-target-lock"></i> @Model.SalesTargetAchievement.TrendLabel</small>
+        </div>
+      </div>
+    </div>
+
+    @* ---- Row 20: Pipeline Funnel (6) + Forecast (6) ---- *@
+    <div class="grid-stack-item"
+         data-widget-id="sales-chart-funnel"
+         data-gs-x="0" data-gs-y="20" data-gs-width="6" data-gs-height="8">
+      <div class="grid-stack-item-content card h-100">
+        <div class="card-header d-flex align-items-center justify-content-between">
+          <h5 class="card-title m-0 me-2">Pipeline Funnel</h5>
+          <div class="dropdown">
+            <button class="btn p-0" type="button" id="pipeOpts" data-bs-toggle="dropdown">
+              <i class="icon-base bx bx-dots-vertical-rounded icon-lg text-body-secondary"></i>
+            </button>
+            <div class="dropdown-menu dropdown-menu-end">
+              <a class="dropdown-item" href="javascript:void(0);">Refresh</a>
+            </div>
+          </div>
+        </div>
+        <div class="card-body">
+          <div id="pipelineFunnelChart" style="min-height: 280px;"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="grid-stack-item"
+         data-widget-id="sales-chart-forecast"
+         data-gs-x="6" data-gs-y="20" data-gs-width="6" data-gs-height="8">
+      <div class="grid-stack-item-content card h-100">
+        <div class="card-header d-flex align-items-center justify-content-between">
+          <h5 class="card-title m-0 me-2">Sales Forecast</h5>
+          <div class="dropdown">
+            <button class="btn p-0" type="button" id="fcOpts" data-bs-toggle="dropdown">
+              <i class="icon-base bx bx-dots-vertical-rounded icon-lg text-body-secondary"></i>
+            </button>
+            <div class="dropdown-menu dropdown-menu-end">
+              <a class="dropdown-item" href="javascript:void(0);">Refresh</a>
+            </div>
+          </div>
+        </div>
+        <div class="card-body">
+          <div id="forecastChart" style="min-height: 280px;"></div>
+        </div>
+      </div>
+    </div>
+
+    @* ---- Row 28: Salesperson Bar (6) + Order Margin Scatter (6) ---- *@
+    <div class="grid-stack-item"
+         data-widget-id="sales-chart-salesperson"
+         data-gs-x="0" data-gs-y="28" data-gs-width="6" data-gs-height="8">
+      <div class="grid-stack-item-content card h-100">
+        <div class="card-header d-flex align-items-center justify-content-between">
+          <h5 class="card-title m-0 me-2">Revenue by Salesperson</h5>
+          <div class="dropdown">
+            <button class="btn p-0" type="button" id="spOpts" data-bs-toggle="dropdown">
+              <i class="icon-base bx bx-dots-vertical-rounded icon-lg text-body-secondary"></i>
+            </button>
+            <div class="dropdown-menu dropdown-menu-end">
+              <a class="dropdown-item" href="javascript:void(0);">Refresh</a>
+            </div>
+          </div>
+        </div>
+        <div class="card-body">
+          <div id="salespersonBarChart" style="min-height: 280px;"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="grid-stack-item"
+         data-widget-id="sales-chart-ordermargin"
+         data-gs-x="6" data-gs-y="28" data-gs-width="6" data-gs-height="8">
+      <div class="grid-stack-item-content card h-100">
+        <div class="card-header d-flex align-items-center justify-content-between">
+          <h5 class="card-title m-0 me-2">Order Value vs Margin</h5>
+          <div class="dropdown">
+            <button class="btn p-0" type="button" id="scatterOpts" data-bs-toggle="dropdown">
+              <i class="icon-base bx bx-dots-vertical-rounded icon-lg text-body-secondary"></i>
+            </button>
+            <div class="dropdown-menu dropdown-menu-end">
+              <a class="dropdown-item" href="javascript:void(0);">Refresh</a>
+            </div>
+          </div>
+        </div>
+        <div class="card-body">
+          <div id="orderMarginScatterChart" style="min-height: 280px;"></div>
+        </div>
+      </div>
+    </div>
+
+    @* ---- Row 36: Pareto (6) + Revenue by Channel (6) ---- *@
+    <div class="grid-stack-item"
+         data-widget-id="sales-chart-pareto"
+         data-gs-x="0" data-gs-y="36" data-gs-width="6" data-gs-height="8">
+      <div class="grid-stack-item-content card h-100">
+        <div class="card-header d-flex align-items-center justify-content-between">
+          <h5 class="card-title m-0 me-2">Pareto - Revenue by Customer (80/20)</h5>
+          <div class="dropdown">
+            <button class="btn p-0" type="button" id="paretoOpts" data-bs-toggle="dropdown">
+              <i class="icon-base bx bx-dots-vertical-rounded icon-lg text-body-secondary"></i>
+            </button>
+            <div class="dropdown-menu dropdown-menu-end">
+              <a class="dropdown-item" href="javascript:void(0);">Refresh</a>
+            </div>
+          </div>
+        </div>
+        <div class="card-body">
+          <div id="paretoChart" style="min-height: 280px;"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="grid-stack-item"
+         data-widget-id="sales-chart-channel"
+         data-gs-x="6" data-gs-y="36" data-gs-width="6" data-gs-height="8">
+      <div class="grid-stack-item-content card h-100">
+        <div class="card-header d-flex align-items-center justify-content-between">
+          <h5 class="card-title m-0 me-2">Revenue by Channel</h5>
+          <div class="dropdown">
+            <button class="btn p-0" type="button" id="chOpts" data-bs-toggle="dropdown">
+              <i class="icon-base bx bx-dots-vertical-rounded icon-lg text-body-secondary"></i>
+            </button>
+            <div class="dropdown-menu dropdown-menu-end">
+              <a class="dropdown-item" href="javascript:void(0);">Refresh</a>
+            </div>
+          </div>
+        </div>
+        <div class="card-body">
+          <div id="revenueByChannelBarChart" style="min-height: 280px;"></div>
+        </div>
+      </div>
+    </div>
+
+    @* ---- Row 44: Heatmap (full width 12) ---- *@
+    <div class="grid-stack-item"
+         data-widget-id="sales-chart-heatmap"
+         data-gs-x="0" data-gs-y="44" data-gs-width="12" data-gs-height="8">
+      <div class="grid-stack-item-content card h-100">
+        <div class="card-header d-flex align-items-center justify-content-between">
+          <h5 class="card-title m-0 me-2">Salesperson x Product Heatmap</h5>
+          <div class="dropdown">
+            <button class="btn p-0" type="button" id="spmOpts" data-bs-toggle="dropdown">
+              <i class="icon-base bx bx-dots-vertical-rounded icon-lg text-body-secondary"></i>
+            </button>
+            <div class="dropdown-menu dropdown-menu-end">
+              <a class="dropdown-item" href="javascript:void(0);">Refresh</a>
+            </div>
+          </div>
+        </div>
+        <div class="card-body">
+          <div id="salespersonProductHeatmap" style="min-height: 300px;"></div>
+        </div>
+      </div>
+    </div>
+
+    @* ---- Row 52: Top Products (4) + Recent Orders (4) + Sales Team (4) ---- *@
+    <div class="grid-stack-item"
+         data-widget-id="sales-top-products"
+         data-gs-x="0" data-gs-y="52" data-gs-width="4" data-gs-height="10">
+      <div class="grid-stack-item-content card h-100">
+        <div class="card-header d-flex justify-content-between">
+          <div class="card-title mb-0">
+            <h5 class="mb-1 me-2">Top Products</h5>
+            <p class="card-subtitle">Best Selling Items</p>
+          </div>
+        </div>
+        <div class="card-body">
+          <ul class="p-0 m-0">
+            @if (Model.TopProducts.Any())
+            {
+              @foreach (var product in Model.TopProducts.Take(5))
+              {
+                <li class="d-flex align-items-center mb-5">
+                  <div class="avatar flex-shrink-0 me-3">
+                    <span class="avatar-initial rounded @product.IconBgClass"><i class="@product.IconClass"></i></span>
+                  </div>
+                  <div class="d-flex w-100 flex-wrap align-items-center justify-content-between gap-2">
+                    <div class="me-2">
+                      <h6 class="mb-0">@product.Name</h6>
+                      <small>@product.Subtitle</small>
+                    </div>
+                    <div class="user-progress">
+                      <h6 class="mb-0">@product.FormattedValue</h6>
+                    </div>
+                  </div>
+                </li>
+              }
+            }
+            else
             {
               <li class="d-flex align-items-center mb-5">
                 <div class="avatar flex-shrink-0 me-3">
-                  <span class="avatar-initial rounded @product.IconBgClass"><i class="@product.IconClass"></i></span>
+                  <span class="avatar-initial rounded bg-label-primary"><i class="icon-base bx bx-mobile-alt"></i></span>
                 </div>
                 <div class="d-flex w-100 flex-wrap align-items-center justify-content-between gap-2">
                   <div class="me-2">
-                    <h6 class="mb-0">@product.Name</h6>
-                    <small>@product.Subtitle</small>
+                    <h6 class="mb-0">Electronics</h6>
+                    <small>1,245 units</small>
                   </div>
-                  <div class="user-progress">
-                    <h6 class="mb-0">@product.FormattedValue</h6>
-                  </div>
+                  <div class="user-progress"><h6 class="mb-0">$89,500</h6></div>
                 </div>
               </li>
             }
-          }
-          else
-          {
-            <li class="d-flex align-items-center mb-5">
-              <div class="avatar flex-shrink-0 me-3">
-                <span class="avatar-initial rounded bg-label-primary"><i class="icon-base bx bx-mobile-alt"></i></span>
-              </div>
-              <div class="d-flex w-100 flex-wrap align-items-center justify-content-between gap-2">
-                <div class="me-2">
-                  <h6 class="mb-0">Electronics</h6>
-                  <small>1,245 units</small>
-                </div>
-                <div class="user-progress"><h6 class="mb-0">$89,500</h6></div>
-              </div>
-            </li>
-          }
-        </ul>
-      </div>
-    </div>
-  </div>
-
-  <div class="col-md-6 col-lg-4 order-1 mb-6">
-    <div class="card h-100">
-      <div class="card-header d-flex justify-content-between">
-        <div class="card-title mb-0">
-          <h5 class="mb-1 me-2">Recent Orders</h5>
-          <p class="card-subtitle">Latest Transactions</p>
+          </ul>
         </div>
       </div>
-      <div class="card-body pt-4">
-        <ul class="p-0 m-0">
-          @if (Model.RecentOrders.Any())
-          {
-            @foreach (var order in Model.RecentOrders.Take(5))
+    </div>
+
+    <div class="grid-stack-item"
+         data-widget-id="sales-recent-orders"
+         data-gs-x="4" data-gs-y="52" data-gs-width="4" data-gs-height="10">
+      <div class="grid-stack-item-content card h-100">
+        <div class="card-header d-flex justify-content-between">
+          <div class="card-title mb-0">
+            <h5 class="mb-1 me-2">Recent Orders</h5>
+            <p class="card-subtitle">Latest Transactions</p>
+          </div>
+        </div>
+        <div class="card-body pt-4">
+          <ul class="p-0 m-0">
+            @if (Model.RecentOrders.Any())
+            {
+              @foreach (var order in Model.RecentOrders.Take(5))
+              {
+                <li class="d-flex align-items-center mb-6">
+                  <div class="avatar flex-shrink-0 me-3">
+                    <img src="~/img/icons/unicons/wallet.png" alt="Order" class="rounded" />
+                  </div>
+                  <div class="d-flex w-100 flex-wrap align-items-center justify-content-between gap-2">
+                    <div class="me-2">
+                      <small class="d-block">@order.Column1</small>
+                      <h6 class="fw-normal mb-0">@order.Column3</h6>
+                    </div>
+                    <div class="user-progress d-flex align-items-center gap-2">
+                      <h6 class="fw-normal mb-0">@order.Column4</h6>
+                    </div>
+                  </div>
+                </li>
+              }
+            }
+            else
             {
               <li class="d-flex align-items-center mb-6">
                 <div class="avatar flex-shrink-0 me-3">
@@ -447,90 +521,105 @@ Object.assign(window.dashboardCharts, {
                 </div>
                 <div class="d-flex w-100 flex-wrap align-items-center justify-content-between gap-2">
                   <div class="me-2">
-                    <small class="d-block">@order.Column1</small>
-                    <h6 class="fw-normal mb-0">@order.Column3</h6>
+                    <small class="d-block">Order #10245</small>
+                    <h6 class="fw-normal mb-0">Electronics</h6>
                   </div>
                   <div class="user-progress d-flex align-items-center gap-2">
-                    <h6 class="fw-normal mb-0">@order.Column4</h6>
+                    <h6 class="fw-normal mb-0">+$2,450</h6>
                   </div>
                 </div>
               </li>
             }
-          }
-          else
-          {
-            <li class="d-flex align-items-center mb-6">
-              <div class="avatar flex-shrink-0 me-3">
-                <img src="~/img/icons/unicons/wallet.png" alt="Order" class="rounded" />
-              </div>
-              <div class="d-flex w-100 flex-wrap align-items-center justify-content-between gap-2">
-                <div class="me-2">
-                  <small class="d-block">Order #10245</small>
-                  <h6 class="fw-normal mb-0">Electronics</h6>
-                </div>
-                <div class="user-progress d-flex align-items-center gap-2">
-                  <h6 class="fw-normal mb-0">+$2,450</h6>
-                </div>
-              </div>
-            </li>
-          }
-        </ul>
-      </div>
-    </div>
-  </div>
-
-  <div class="col-md-6 col-lg-4 order-2 mb-6">
-    <div class="card h-100">
-      <div class="card-header d-flex justify-content-between">
-        <div class="card-title mb-0">
-          <h5 class="mb-1 me-2">Sales Team</h5>
-          <p class="card-subtitle">Top Performers</p>
+          </ul>
         </div>
       </div>
-      <div class="card-body">
-        <ul class="p-0 m-0">
-          @if (Model.TopSalespersons.Any())
-          {
-            @foreach (var person in Model.TopSalespersons.Take(5))
+    </div>
+
+    <div class="grid-stack-item"
+         data-widget-id="sales-team"
+         data-gs-x="8" data-gs-y="52" data-gs-width="4" data-gs-height="10">
+      <div class="grid-stack-item-content card h-100">
+        <div class="card-header d-flex justify-content-between">
+          <div class="card-title mb-0">
+            <h5 class="mb-1 me-2">Sales Team</h5>
+            <p class="card-subtitle">Top Performers</p>
+          </div>
+        </div>
+        <div class="card-body">
+          <ul class="p-0 m-0">
+            @if (Model.TopSalespersons.Any())
+            {
+              @foreach (var person in Model.TopSalespersons.Take(5))
+              {
+                <li class="d-flex align-items-center mb-5">
+                  <div class="avatar flex-shrink-0 me-3">
+                    <span class="avatar-initial rounded bg-label-primary">@string.Join("", person.Name.Split(' ').Take(2).Select(s => s[0]))</span>
+                  </div>
+                  <div class="d-flex w-100 flex-wrap align-items-center justify-content-between gap-2">
+                    <div class="me-2">
+                      <h6 class="mb-0">@person.Name</h6>
+                      <small>@person.Subtitle</small>
+                    </div>
+                    <div class="user-progress">
+                      <h6 class="mb-0">@person.FormattedValue</h6>
+                    </div>
+                  </div>
+                </li>
+              }
+            }
+            else
             {
               <li class="d-flex align-items-center mb-5">
                 <div class="avatar flex-shrink-0 me-3">
-                  <span class="avatar-initial rounded bg-label-primary">@string.Join("", person.Name.Split(' ').Take(2).Select(s => s[0]))</span>
+                  <span class="avatar-initial rounded bg-label-primary">JD</span>
                 </div>
                 <div class="d-flex w-100 flex-wrap align-items-center justify-content-between gap-2">
                   <div class="me-2">
-                    <h6 class="mb-0">@person.Name</h6>
-                    <small>@person.Subtitle</small>
+                    <h6 class="mb-0">John Doe</h6>
+                    <small>Sales Manager</small>
                   </div>
-                  <div class="user-progress">
-                    <h6 class="mb-0">@person.FormattedValue</h6>
-                  </div>
+                  <div class="user-progress"><h6 class="mb-0">125%</h6></div>
                 </div>
               </li>
             }
-          }
-          else
-          {
-            <li class="d-flex align-items-center mb-5">
-              <div class="avatar flex-shrink-0 me-3">
-                <span class="avatar-initial rounded bg-label-primary">JD</span>
-              </div>
-              <div class="d-flex w-100 flex-wrap align-items-center justify-content-between gap-2">
-                <div class="me-2">
-                  <h6 class="mb-0">John Doe</h6>
-                  <small>Sales Manager</small>
-                </div>
-                <div class="user-progress"><h6 class="mb-0">125%</h6></div>
-              </div>
-            </li>
-          }
-        </ul>
+          </ul>
+        </div>
       </div>
     </div>
-  </div>
-</div>
 
-@* Theme colors are local inside wwwroot/js/dashboards-analytics.js — inline scripts must define their own fallbacks or charts throw ReferenceError and stay blank. *@
+  </div>@* end grid-stack *@
+</div>@* end grid container *@
+
+@* ======== Chart inline scripts (preserved from original) ======== *@
+<script>
+function setRange(type) {
+    var today = new Date();
+    var toInput = document.querySelector('form[method="get"] input[name="to"]');
+    var fromInput = document.querySelector('form[method="get"] input[name="from"]');
+    if (!fromInput || !toInput) return;
+    var to = new Date(today);
+    var from = new Date(today);
+    if (type === 'today') {
+        from = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+        to = from;
+    } else if (type === 'week') {
+        var day = today.getDay();
+        var diff = today.getDate() - day + (day === 0 ? -6 : 1);
+        from = new Date(today.getFullYear(), today.getMonth(), diff);
+        to = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+    } else if (type === 'month') {
+        from = new Date(today.getFullYear(), today.getMonth(), 1);
+        to = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+    } else if (type === 'ytd') {
+        from = new Date(today.getFullYear(), 0, 1);
+        to = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+    }
+    fromInput.value = from.toISOString().split('T')[0];
+    toInput.value = to.toISOString().split('T')[0];
+    fromInput.closest('form').submit();
+}
+</script>
+
 <script>
   document.addEventListener('DOMContentLoaded', function () {
       var cfg = window.config || {};
@@ -542,7 +631,6 @@ Object.assign(window.dashboardCharts, {
       var borderColor = cols.borderColor || '#eceef1';
       var fontFamily = cfg.fontFamily || 'Plus Jakarta Sans';
 
-      // Pipeline Funnel Chart
       var funnelData = @Html.Raw(Json.Serialize(Model.PipelineFunnelChart));
       var funnelEl = document.querySelector('#pipelineFunnelChart');
       if (funnelEl && typeof ApexCharts !== 'undefined') {
@@ -560,7 +648,6 @@ Object.assign(window.dashboardCharts, {
         }).render();
       }
 
-      // Forecast Area Chart
       var fcData = @Html.Raw(Json.Serialize(Model.ForecastChart));
       var fcEl = document.querySelector('#forecastChart');
       if (fcEl && typeof ApexCharts !== 'undefined') {
@@ -579,7 +666,6 @@ Object.assign(window.dashboardCharts, {
         }).render();
       }
 
-      // Salesperson Bar Chart
       var spData = @Html.Raw(Json.Serialize(Model.SalespersonBarChart));
       var spEl = document.querySelector('#salespersonBarChart');
       if (spEl && typeof ApexCharts !== 'undefined') {
@@ -597,7 +683,6 @@ Object.assign(window.dashboardCharts, {
         }).render();
       }
 
-      // Order Margin Scatter
       var scatterData = @Html.Raw(Json.Serialize(Model.OrderMarginScatterChart));
       var scatterEl = document.querySelector('#orderMarginScatterChart');
       if (scatterEl && typeof ApexCharts !== 'undefined') {
@@ -618,14 +703,13 @@ Object.assign(window.dashboardCharts, {
           dataLabels: { enabled: false },
           legend: { show: false },
           grid: { strokeDashArray: 7, borderColor: borderColor, padding: { top: -10, bottom: -10, left: 10, right: 10 } },
-          xaxis: { labels: { style: { fontSize: '12px', fontFamily: fontFamily, colors: labelColor }, title: { text: 'Order Value ($)', style: { fontSize: '12px', color: labelColor } } },},
-          yaxis: { labels: { style: { fontSize: '12px', fontFamily: fontFamily, colors: labelColor }, title: { text: 'Margin %', style: { fontSize: '12px', color: labelColor } } },},
+          xaxis: { labels: { style: { fontSize: '12px', fontFamily: fontFamily, colors: labelColor }, title: { text: 'Order Value ($)', style: { fontSize: '12px', color: labelColor } } } },
+          yaxis: { labels: { style: { fontSize: '12px', fontFamily: fontFamily, colors: labelColor }, title: { text: 'Margin %', style: { fontSize: '12px', color: labelColor } } } },
           tooltip: { theme: 'dark' },
           series: [{ name: 'Products', data: scatterPoints || [[5000, 25, 1], [8000, 30, 1], [12000, 35, 1], [3000, 18, 1], [15000, 40, 1], [20000, 28, 1], [7000, 22, 1], [10000, 38, 1]] }]
         }).render();
       }
 
-      // Pareto Chart
       var paretoData = @Html.Raw(Json.Serialize(Model.ParetoChart));
       var paretoEl = document.querySelector('#paretoChart');
       if (paretoEl && typeof ApexCharts !== 'undefined') {
@@ -643,7 +727,6 @@ Object.assign(window.dashboardCharts, {
         }).render();
       }
 
-      // Revenue by Channel Bar Chart
       var chData = @Html.Raw(Json.Serialize(Model.RevenueByChannelBarChart));
       var chEl = document.querySelector('#revenueByChannelBarChart');
       if (chEl && typeof ApexCharts !== 'undefined') {
@@ -661,7 +744,6 @@ Object.assign(window.dashboardCharts, {
         }).render();
       }
 
-      // Salesperson x Product Heatmap
       var heatmapData = @Html.Raw(Json.Serialize(Model.SalespersonProductHeatmap));
       var heatmapEl = document.querySelector('#salespersonProductHeatmap');
       if (heatmapEl && typeof ApexCharts !== 'undefined') {
@@ -697,7 +779,7 @@ Object.assign(window.dashboardCharts, {
       var chartData = @Html.Raw(Json.Serialize(Model.SalesOverviewChart));
       var chartEl = document.querySelector('#totalRevenueChart');
       if (chartEl && typeof ApexCharts !== 'undefined') {
-        var options = {
+        new ApexCharts(chartEl, {
           chart: { height: 300, stacked: true, type: 'bar', toolbar: { show: false } },
           plotOptions: { bar: { horizontal: false, columnWidth: '30%', borderRadius: 8, borderRadiusApplication: 'around' } },
           colors: ['#6965fd', '#03c3ec'],
@@ -710,8 +792,7 @@ Object.assign(window.dashboardCharts, {
           yaxis: { labels: { style: { fontSize: '13px', fontFamily: fontFamily, colors: labelColor } } },
           states: { hover: { filter: { type: 'none' } }, active: { filter: { type: 'none' } } },
           series: chartData.series || []
-        };
-        new ApexCharts(chartEl, options).render();
+        }).render();
       }
   });
 </script>
@@ -730,7 +811,7 @@ Object.assign(window.dashboardCharts, {
 
       var growthEl = document.querySelector('#growthChart');
       if (growthEl && typeof ApexCharts !== 'undefined') {
-        var options = {
+        new ApexCharts(growthEl, {
           series: [achievementPct],
           labels: ['Achievement'],
           chart: { height: 200, type: 'radialBar' },
@@ -740,41 +821,39 @@ Object.assign(window.dashboardCharts, {
           stroke: { dashArray: 5 },
           grid: { padding: { top: -35, bottom: -10 } },
           states: { hover: { filter: { type: 'none' } }, active: { filter: { type: 'none' } } }
-        };
-        new ApexCharts(growthEl, options).render();
+        }).render();
       }
     });
   </script>
 }
 
-<script>
-function setRange(type) {
-    var today = new Date();
-    var toInput = document.querySelector('form[method="get"] input[name="to"]');
-    var fromInput = document.querySelector('form[method="get"] input[name="from"]');
-    if (!fromInput || !toInput) return;
-
-    var to = new Date(today);
-    var from = new Date(today);
-
-    if (type === 'today') {
-        from = new Date(today.getFullYear(), today.getMonth(), today.getDate());
-        to = from;
-    } else if (type === 'week') {
-        var day = today.getDay();
-        var diff = today.getDate() - day + (day === 0 ? -6 : 1);
-        from = new Date(today.getFullYear(), today.getMonth(), diff);
-        to = new Date(today.getFullYear(), today.getMonth(), today.getDate());
-    } else if (type === 'month') {
-        from = new Date(today.getFullYear(), today.getMonth(), 1);
-        to = new Date(today.getFullYear(), today.getMonth(), today.getDate());
-    } else if (type === 'ytd') {
-        from = new Date(today.getFullYear(), 0, 1);
-        to = new Date(today.getFullYear(), today.getMonth(), today.getDate());
-    }
-
-    fromInput.value = from.toISOString().split('T')[0];
-    toInput.value = to.toISOString().split('T')[0];
-    fromInput.closest('form').submit();
+@{
+    var aiSalesModel = new Dashboard.Models.ViewModels.AIChatWidgetModel { Department = "Sales" };
 }
+<partial name="~/Views/Shared/Partials/_AIChatWidget.cshtml" model="aiSalesModel" />
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  var el = document.getElementById('sales-dashboard-grid');
+  if (el && typeof DashboardLayoutManager !== 'undefined') {
+    window.dashboardLayoutManager = new DashboardLayoutManager('sales-dashboard-grid', {
+      storageKey: 'sales-dashboard-layout-v1',
+      editMode: false,
+      gap: 20,
+      cellHeight: 60
+    });
+
+    var origToggle = window.dashboardLayoutManager.toggleEditMode.bind(window.dashboardLayoutManager);
+    window.dashboardLayoutManager.toggleEditMode = function () {
+      var editing = origToggle();
+      document.getElementById('btn-layout-edit').classList.toggle('editing', editing);
+    };
+
+    var origSave = window.dashboardLayoutManager.saveLayout.bind(window.dashboardLayoutManager);
+    window.dashboardLayoutManager.saveLayout = function () {
+      origSave();
+      if (typeof toastr !== 'undefined') toastr.success('Dashboard layout saved.');
+    };
+  }
+});
 </script>

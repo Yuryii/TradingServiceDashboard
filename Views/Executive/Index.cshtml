@@ -6,14 +6,18 @@
   var defaultTo = now.ToString("yyyy-MM-dd");
   var currentFrom = Context.Request.Query["from"].FirstOrDefault() ?? defaultFrom;
   var currentTo = Context.Request.Query["to"].FirstOrDefault() ?? defaultTo;
+  var hasMonthlyRevenueChart = Model.RevenueByChannelChart?.Series?.Any() == true;
+  var execGridRowAfterCharts = hasMonthlyRevenueChart ? 52 : 46;
+  var execGridRowBottom = Model.Alerts.Any() ? execGridRowAfterCharts + 6 : execGridRowAfterCharts;
 }
 @section VendorStyles {
 <link rel="stylesheet" href="~/vendor/libs/apex-charts/apex-charts.css" />
+<link rel="stylesheet" href="~/vendor/libs/gridstack/gridstack.min.css" />
 }
 @section VendorScripts {
 <script src="~/vendor/libs/apex-charts/apexcharts.js"></script>
 }
-@* Always render chart data - individual guards protect each chart render *@
+@* Inject all dashboardCharts so dashboards-analytics.js doesn't throw ReferenceError on missing keys *@
 <script>
 window.dashboardCharts = window.dashboardCharts || {};
 window.dashboardCharts.orderChart = @Html.Raw(Json.Serialize(Model.CompanyPerformanceChart));
@@ -28,85 +32,15 @@ window.dashboardCharts.salesFunnel = @Html.Raw(Json.Serialize(Model.SalesFunnelC
 window.dashboardCharts.channelRegionHeatmap = @Html.Raw(Json.Serialize(Model.ChannelRegionHeatmap));
 window.dashboardCharts.monthlyTargetVsActual = @Html.Raw(Json.Serialize(Model.MonthlyTargetVsActualChart));
 window.dashboardCharts.revenueByBranch = @Html.Raw(Json.Serialize(Model.RevenueByBranchChart));
+window.dashboardCharts.executiveMonthlyRevenue = @Html.Raw(Json.Serialize(Model.RevenueByChannelChart));
 </script>
 @section PageScripts {
 <script src="~/js/dashboards-analytics.js"></script>
+<script src="~/js/dashboard-layout-manager.js"></script>
 }
 
-<div class="row">
-  <div class="col-xxl-8 mb-6 order-0">
-    <div class="card">
-      <div class="d-flex align-items-start row">
-        <div class="col-sm-7">
-          <div class="card-body">
-            <h5 class="card-title text-primary mb-3">Executive Overview 🎉</h5>
-            <p class="mb-6">Welcome to the Executive Dashboard. Here's your company-wide snapshot.</p>
-            <a href="javascript:;" class="btn btn-sm btn-outline-primary">View Reports</a>
-          </div>
-        </div>
-        <div class="col-sm-5 text-center text-sm-left">
-          <div class="card-body pb-0 px-0 px-md-6">
-            <img src="~/img/illustrations/man-with-laptop.png" height="175" alt="Executive Dashboard" />
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-  <div class="col-xxl-4 col-lg-12 col-md-4 order-1">
-    <div class="row">
-      <div class="col-lg-6 col-md-12 col-6 mb-6">
-        <div class="card h-100">
-          <div class="card-body">
-            <div class="card-title d-flex align-items-start justify-content-between mb-4">
-              <div class="avatar flex-shrink-0">
-                <img src="~/img/icons/unicons/chart-success.png" alt="Revenue" class="rounded" />
-              </div>
-              <div class="dropdown">
-                <button class="btn p-0" type="button" id="cardOpt1" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                  <i class="icon-base bx bx-dots-vertical-rounded text-body-secondary"></i>
-                </button>
-                <div class="dropdown-menu dropdown-menu-end" aria-labelledby="cardOpt1">
-                  <a class="dropdown-item" href="javascript:void(0);">View More</a>
-                  <a class="dropdown-item" href="javascript:void(0);">Delete</a>
-                </div>
-              </div>
-            </div>
-            <p class="mb-1">@Model.TotalRevenue.Title</p>
-            <h4 class="card-title mb-3">@Model.TotalRevenue.Value</h4>
-            <small class="text-@(Model.TotalRevenue.Trend == "up" ? "success" : "danger") fw-medium">
-              <i class="icon-base bx @(Model.TotalRevenue.Trend == "up" ? "bx-up-arrow-alt" : "bx-down-arrow-alt")"></i> @Model.TotalRevenue.TrendLabel
-            </small>
-          </div>
-        </div>
-      </div>
-      <div class="col-lg-6 col-md-12 col-6 mb-6">
-        <div class="card h-100">
-          <div class="card-body">
-            <div class="card-title d-flex align-items-start justify-content-between mb-4">
-              <div class="avatar flex-shrink-0">
-                <img src="~/img/icons/unicons/wallet-info.png" alt="Expenses" class="rounded" />
-              </div>
-              <div class="dropdown">
-                <button class="btn p-0" type="button" id="cardOpt2" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                  <i class="icon-base bx bx-dots-vertical-rounded text-body-secondary"></i>
-                </button>
-                <div class="dropdown-menu dropdown-menu-end" aria-labelledby="cardOpt2">
-                  <a class="dropdown-item" href="javascript:void(0);">View More</a>
-                  <a class="dropdown-item" href="javascript:void(0);">Delete</a>
-                </div>
-              </div>
-            </div>
-            <p class="mb-1">@Model.TotalExpenses.Title</p>
-            <h4 class="card-title mb-3">@Model.TotalExpenses.Value</h4>
-            <small class="text-success fw-medium"><i class="icon-base bx bx-up-arrow-alt"></i> @Model.TotalExpenses.TrendLabel</small>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-</div>
-
-<div class="card mb-4">
+@* Date range filter — fixed layout, not part of resizable grid *@
+<div id="executive-date-filter" class="card mb-4 executive-date-filter-card">
   <div class="card-body">
     <form method="get" class="row g-3 align-items-end">
       <div class="col-auto">
@@ -135,49 +69,153 @@ window.dashboardCharts.revenueByBranch = @Html.Raw(Json.Serialize(Model.RevenueB
   </div>
 </div>
 
-<div class="row">
-  <div class="col-12 col-xxl-8 order-2 order-md-3 order-xxl-2 mb-6">
-    <div class="card">
-      <div class="row row-bordered g-0">
-        <div class="col-lg-8">
-          <div class="card-header d-flex align-items-center justify-content-between">
-            <div class="card-title mb-0">
-              <h5 class="m-0 me-2">Company Performance</h5>
+@* ============================================================
+   PART 2: GridStack Dashboard Widgets
+   ============================================================ *@
+
+@* Layout Toolbar *@
+<div class="d-flex align-items-center justify-content-between mb-4">
+  <h5 class="mb-0"><i class="icon-base bx bx-layout text-primary"></i> Dashboard Widgets</h5>
+  <div class="d-flex gap-2">
+    <button type="button" class="btn btn-sm btn-outline-primary" id="btn-layout-edit" onclick="window.dashboardLayoutManager && window.dashboardLayoutManager.toggleEditMode()">
+      <i class="icon-base bx bx-edit-alt"></i> Customize Layout
+    </button>
+    <button type="button" class="btn btn-sm btn-outline-secondary" id="btn-layout-reset" onclick="window.dashboardLayoutManager && window.dashboardLayoutManager.resetLayout()" style="display:none;">
+      <i class="icon-base bx bx-reset"></i> Reset
+    </button>
+    <button type="button" class="btn btn-sm btn-success" id="btn-layout-save" onclick="window.dashboardLayoutManager && window.dashboardLayoutManager.saveLayout()" style="display:none;">
+      <i class="icon-base bx bx-save"></i> Save
+    </button>
+  </div>
+</div>
+
+@* Grid Container *@
+<div id="dashboard-grid-container" class="mb-6" style="position: relative;">
+
+  <div id="dashboard-grid" class="grid-stack">
+
+    @* Top row: Welcome + Revenue / Expenses KPIs (resizable like other widgets) *@
+    <div class="grid-stack-item" data-gs-x="0" data-gs-y="0" data-gs-width="8" data-gs-height="6" data-widget-id="executive-welcome">
+      <div class="grid-stack-item-content">
+        <div class="card h-100">
+          <div class="d-flex align-items-start row g-0 h-100">
+            <div class="col-sm-7">
+              <div class="card-body">
+                <h5 class="card-title text-primary mb-3">Executive Overview</h5>
+                <p class="mb-6">Welcome to the Executive Dashboard. Here's your company-wide snapshot.</p>
+                <a href="javascript:;" class="btn btn-sm btn-outline-primary">View Reports</a>
+              </div>
             </div>
-            <div class="dropdown">
-              <button class="btn p-0" type="button" id="performanceChart" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                <i class="icon-base bx bx-dots-vertical-rounded icon-lg text-body-secondary"></i>
-              </button>
-              <div class="dropdown-menu dropdown-menu-end" aria-labelledby="performanceChart">
-                <a class="dropdown-item" href="javascript:void(0);">Select All</a>
-                <a class="dropdown-item" href="javascript:void(0);">Refresh</a>
+            <div class="col-sm-5 text-center text-sm-start">
+              <div class="card-body pb-0 px-0 px-md-6">
+                <img src="~/img/illustrations/man-with-laptop.png" height="175" alt="Executive Dashboard" />
               </div>
             </div>
           </div>
-          <div id="totalRevenueChart" class="px-3"></div>
         </div>
-        <div class="col-lg-4">
-          <div class="card-body px-xl-9 py-12 d-flex align-items-center flex-column">
-            <div class="text-center mb-6">
-              <h6 class="mb-0">@Model.CompanyGrowthPercent% Company Growth</h6>
-            </div>
-            <div class="d-flex gap-11 justify-content-between">
-              <div class="d-flex">
-                <div class="avatar me-2">
-                  <span class="avatar-initial rounded-2 bg-label-primary"><i class="icon-base bx bx-dollar icon-lg text-primary"></i></span>
+      </div>
+    </div>
+    <div class="grid-stack-item" data-gs-x="8" data-gs-y="0" data-gs-width="4" data-gs-height="6" data-widget-id="executive-kpi-header">
+      <div class="grid-stack-item-content">
+        <div class="row g-2 h-100 m-0">
+          <div class="col-6 p-1">
+            <div class="card h-100 mb-0">
+              <div class="card-body">
+                <div class="card-title d-flex align-items-start justify-content-between mb-4">
+                  <div class="avatar flex-shrink-0">
+                    <img src="~/img/icons/unicons/chart-success.png" alt="Revenue" class="rounded" />
+                  </div>
+                  <div class="dropdown">
+                    <button class="btn p-0" type="button" id="cardOpt1" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                      <i class="icon-base bx bx-dots-vertical-rounded text-body-secondary"></i>
+                    </button>
+                    <div class="dropdown-menu dropdown-menu-end" aria-labelledby="cardOpt1">
+                      <a class="dropdown-item" href="javascript:void(0);">View More</a>
+                    </div>
+                  </div>
                 </div>
-                <div class="d-flex flex-column">
-                  <small>@(DateTime.Now.Year - 1)</small>
-                  <h6 class="mb-0">@Model.LastYearRevenue.Value</h6>
+                <p class="mb-1">@Model.TotalRevenue.Title</p>
+                <h4 class="card-title mb-3">@Model.TotalRevenue.Value</h4>
+                <small class="text-@(Model.TotalRevenue.Trend == "up" ? "success" : "danger") fw-medium">
+                  <i class="icon-base bx @(Model.TotalRevenue.Trend == "up" ? "bx-up-arrow-alt" : "bx-down-arrow-alt")"></i> @Model.TotalRevenue.TrendLabel
+                </small>
+              </div>
+            </div>
+          </div>
+          <div class="col-6 p-1">
+            <div class="card h-100 mb-0">
+              <div class="card-body">
+                <div class="card-title d-flex align-items-start justify-content-between mb-4">
+                  <div class="avatar flex-shrink-0">
+                    <img src="~/img/icons/unicons/wallet-info.png" alt="Expenses" class="rounded" />
+                  </div>
+                  <div class="dropdown">
+                    <button class="btn p-0" type="button" id="cardOpt2" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                      <i class="icon-base bx bx-dots-vertical-rounded text-body-secondary"></i>
+                    </button>
+                    <div class="dropdown-menu dropdown-menu-end" aria-labelledby="cardOpt2">
+                      <a class="dropdown-item" href="javascript:void(0);">View More</a>
+                    </div>
+                  </div>
+                </div>
+                <p class="mb-1">@Model.TotalExpenses.Title</p>
+                <h4 class="card-title mb-3">@Model.TotalExpenses.Value</h4>
+                <small class="text-success fw-medium"><i class="icon-base bx bx-up-arrow-alt"></i> @Model.TotalExpenses.TrendLabel</small>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    @* Row 1: Company Performance (left 2/3) + KPI Sidebar (right 1/3) *@
+    @if (Model.CompanyPerformanceChart?.Series?.Any() == true)
+    {
+    <div class="grid-stack-item" data-gs-x="0" data-gs-y="6" data-gs-width="8" data-gs-height="8" data-widget-id="company-performance">
+      <div class="grid-stack-item-content">
+        <div class="card mb-6">
+          <div class="row row-bordered g-0">
+            <div class="col-lg-8">
+              <div class="card-header d-flex align-items-center justify-content-between">
+                <div class="card-title mb-0">
+                  <h5 class="m-0 me-2">Company Performance</h5>
+                </div>
+                <div class="dropdown">
+                  <button class="btn p-0" type="button" id="performanceChart" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                    <i class="icon-base bx bx-dots-vertical-rounded icon-lg text-body-secondary"></i>
+                  </button>
+                  <div class="dropdown-menu dropdown-menu-end" aria-labelledby="performanceChart">
+                    <a class="dropdown-item" href="javascript:void(0);">Select All</a>
+                    <a class="dropdown-item" href="javascript:void(0);">Refresh</a>
+                  </div>
                 </div>
               </div>
-              <div class="d-flex">
-                <div class="avatar me-2">
-                  <span class="avatar-initial rounded-2 bg-label-info"><i class="icon-base bx bx-wallet icon-lg text-info"></i></span>
+              <div id="totalRevenueChart" class="px-3" style="min-height:200px;"></div>
+            </div>
+            <div class="col-lg-4">
+              <div class="card-body px-xl-9 py-12 d-flex align-items-center flex-column">
+                <div class="text-center mb-6">
+                  <h6 class="mb-0">@Model.CompanyGrowthPercent% Company Growth</h6>
                 </div>
-                <div class="d-flex flex-column">
-                  <small>@(DateTime.Now.Year)</small>
-                  <h6 class="mb-0">@Model.CurrentYearRevenue.Value</h6>
+                <div class="d-flex gap-11 justify-content-between">
+                  <div class="d-flex">
+                    <div class="avatar me-2">
+                      <span class="avatar-initial rounded-2 bg-label-primary"><i class="icon-base bx bx-dollar icon-lg text-primary"></i></span>
+                    </div>
+                    <div class="d-flex flex-column">
+                      <small>@(DateTime.Now.Year - 1)</small>
+                      <h6 class="mb-0">@Model.LastYearRevenue.Value</h6>
+                    </div>
+                  </div>
+                  <div class="d-flex">
+                    <div class="avatar me-2">
+                      <span class="avatar-initial rounded-2 bg-label-info"><i class="icon-base bx bx-wallet icon-lg text-info"></i></span>
+                    </div>
+                    <div class="d-flex flex-column">
+                      <small>@(DateTime.Now.Year)</small>
+                      <h6 class="mb-0">@Model.CurrentYearRevenue.Value</h6>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
@@ -185,10 +223,34 @@ window.dashboardCharts.revenueByBranch = @Html.Raw(Json.Serialize(Model.RevenueB
         </div>
       </div>
     </div>
-  </div>
-  <div class="col-12 col-md-8 col-lg-12 col-xxl-4 order-3 order-md-2 mb-6">
-    <div class="row">
-      <div class="col-6 mb-6">
+    }
+
+    @* KPI Sidebar (right column) *@
+    <div class="grid-stack-item" data-gs-x="8" data-gs-y="6" data-gs-width="4" data-gs-height="8" data-widget-id="kpi-sidebar">
+      <div class="grid-stack-item-content">
+        <div class="card h-100">
+          <div class="card-body">
+            <div class="d-flex justify-content-between align-items-center flex-sm-row flex-column gap-10 flex-wrap">
+              <div class="d-flex flex-sm-column flex-row align-items-start justify-content-between">
+                <div class="card-title mb-6">
+                  <h5 class="text-nowrap mb-1">Yearly Summary</h5>
+                  <span class="badge bg-label-warning">YEAR @DateTime.Now.Year</span>
+                </div>
+                <div class="mt-sm-auto">
+                  <span class="text-success text-nowrap fw-medium"><i class="icon-base bx bx-up-arrow-alt"></i> @Model.CompanyGrowthPercent%</span>
+                  <h4 class="mb-0">@Model.NetProfit.Value</h4>
+                </div>
+              </div>
+              <div id="profileReportChart"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    @* KPI Row 1: Net Profit + Employees *@
+    <div class="grid-stack-item" data-gs-x="8" data-gs-y="14" data-gs-width="2" data-gs-height="4" data-widget-id="kpi-net-profit">
+      <div class="grid-stack-item-content">
         <div class="card h-100">
           <div class="card-body">
             <div class="card-title d-flex align-items-start justify-content-between mb-4">
@@ -210,7 +272,10 @@ window.dashboardCharts.revenueByBranch = @Html.Raw(Json.Serialize(Model.RevenueB
           </div>
         </div>
       </div>
-      <div class="col-6 mb-6">
+    </div>
+
+    <div class="grid-stack-item" data-gs-x="10" data-gs-y="14" data-gs-width="2" data-gs-height="4" data-widget-id="kpi-employees">
+      <div class="grid-stack-item-content">
         <div class="card h-100">
           <div class="card-body">
             <div class="card-title d-flex align-items-start justify-content-between mb-4">
@@ -232,7 +297,11 @@ window.dashboardCharts.revenueByBranch = @Html.Raw(Json.Serialize(Model.RevenueB
           </div>
         </div>
       </div>
-      <div class="col-6 mb-6">
+    </div>
+
+    @* KPI Row 2: EBITDA + DSO *@
+    <div class="grid-stack-item" data-gs-x="8" data-gs-y="18" data-gs-width="2" data-gs-height="4" data-widget-id="kpi-ebitda">
+      <div class="grid-stack-item-content">
         <div class="card h-100">
           <div class="card-body">
             <div class="card-title d-flex align-items-start justify-content-between mb-4">
@@ -254,7 +323,10 @@ window.dashboardCharts.revenueByBranch = @Html.Raw(Json.Serialize(Model.RevenueB
           </div>
         </div>
       </div>
-      <div class="col-6 mb-6">
+    </div>
+
+    <div class="grid-stack-item" data-gs-x="10" data-gs-y="18" data-gs-width="2" data-gs-height="4" data-widget-id="kpi-dso">
+      <div class="grid-stack-item-content">
         <div class="card h-100">
           <div class="card-body">
             <div class="card-title d-flex align-items-start justify-content-between mb-4">
@@ -276,484 +348,597 @@ window.dashboardCharts.revenueByBranch = @Html.Raw(Json.Serialize(Model.RevenueB
           </div>
         </div>
       </div>
-      <div class="col-12 mb-6">
+    </div>
+
+    @* KPI Cards Row 2 (Full width bottom KPIs) *@
+    <div class="grid-stack-item" data-gs-x="0" data-gs-y="14" data-gs-width="3" data-gs-height="4" data-widget-id="kpi-gross-margin">
+      <div class="grid-stack-item-content">
         <div class="card h-100">
           <div class="card-body">
-            <div class="d-flex justify-content-between align-items-center flex-sm-row flex-column gap-10 flex-wrap">
-              <div class="d-flex flex-sm-column flex-row align-items-start justify-content-between">
-                <div class="card-title mb-6">
-                  <h5 class="text-nowrap mb-1">Yearly Summary</h5>
-                  <span class="badge bg-label-warning">YEAR @DateTime.Now.Year</span>
-                </div>
-                <div class="mt-sm-auto">
-                  <span class="text-success text-nowrap fw-medium"><i class="icon-base bx bx-up-arrow-alt"></i> @Model.CompanyGrowthPercent%</span>
-                  <h4 class="mb-0">@Model.NetProfit.Value</h4>
-                </div>
+            <div class="card-title d-flex align-items-start justify-content-between mb-3">
+              <div class="avatar flex-shrink-0"><img src="~/img/icons/unicons/chart-success.png" alt="Gross Margin" class="rounded" /></div>
+              <div class="dropdown">
+                <button class="btn p-0" type="button" id="cardGm" data-bs-toggle="dropdown"><i class="icon-base bx bx-dots-vertical-rounded text-body-secondary"></i></button>
+                <div class="dropdown-menu dropdown-menu-end"><a class="dropdown-item" href="javascript:void(0);">View More</a></div>
               </div>
-              <div id="profileReportChart"></div>
+            </div>
+            <p class="mb-1">@Model.GrossMargin.Title</p>
+            <h4 class="card-title mb-2">@Model.GrossMargin.Value</h4>
+            <small class="text-success fw-medium"><i class="icon-base bx bx-up-arrow-alt"></i> @Model.GrossMargin.TrendLabel</small>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="grid-stack-item" data-gs-x="3" data-gs-y="14" data-gs-width="3" data-gs-height="4" data-widget-id="kpi-cash-flow">
+      <div class="grid-stack-item-content">
+        <div class="card h-100">
+          <div class="card-body">
+            <div class="card-title d-flex align-items-start justify-content-between mb-3">
+              <div class="avatar flex-shrink-0"><img src="~/img/icons/unicons/wallet-info.png" alt="Cash Flow" class="rounded" /></div>
+              <div class="dropdown">
+                <button class="btn p-0" type="button" id="cardCf" data-bs-toggle="dropdown"><i class="icon-base bx bx-dots-vertical-rounded text-body-secondary"></i></button>
+                <div class="dropdown-menu dropdown-menu-end"><a class="dropdown-item" href="javascript:void(0);">View More</a></div>
+              </div>
+            </div>
+            <p class="mb-1">@Model.CashFlow.Title</p>
+            <h4 class="card-title mb-2">@Model.CashFlow.Value</h4>
+            <small class="text-@(Model.CashFlow.Trend == "up" ? "success" : "danger") fw-medium"><i class="icon-base bx @(Model.CashFlow.Trend == "up" ? "bx-up-arrow-alt" : "bx-down-arrow-alt")"></i> @Model.CashFlow.TrendLabel</small>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="grid-stack-item" data-gs-x="6" data-gs-y="14" data-gs-width="2" data-gs-height="4" data-widget-id="kpi-dio">
+      <div class="grid-stack-item-content">
+        <div class="card h-100">
+          <div class="card-body">
+            <div class="card-title d-flex align-items-start justify-content-between mb-3">
+              <div class="avatar flex-shrink-0"><img src="~/img/icons/unicons/paypal.png" alt="DIO" class="rounded" /></div>
+              <div class="dropdown">
+                <button class="btn p-0" type="button" id="cardDio" data-bs-toggle="dropdown"><i class="icon-base bx bx-dots-vertical-rounded text-body-secondary"></i></button>
+                <div class="dropdown-menu dropdown-menu-end"><a class="dropdown-item" href="javascript:void(0);">View More</a></div>
+              </div>
+            </div>
+            <p class="mb-1">@Model.Dio.Title</p>
+            <h4 class="card-title mb-2">@Model.Dio.Value</h4>
+            <small class="text-primary fw-medium"><i class="icon-base bx bx-calendar"></i> @Model.Dio.TrendLabel</small>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="grid-stack-item" data-gs-x="0" data-gs-y="18" data-gs-width="4" data-gs-height="4" data-widget-id="kpi-nps">
+      <div class="grid-stack-item-content">
+        <div class="card h-100">
+          <div class="card-body">
+            <div class="card-title d-flex align-items-start justify-content-between mb-3">
+              <div class="avatar flex-shrink-0"><img src="~/img/icons/unicons/cc-primary.png" alt="NPS" class="rounded" /></div>
+              <div class="dropdown">
+                <button class="btn p-0" type="button" id="cardNps" data-bs-toggle="dropdown"><i class="icon-base bx bx-dots-vertical-rounded text-body-secondary"></i></button>
+                <div class="dropdown-menu dropdown-menu-end"><a class="dropdown-item" href="javascript:void(0);">View More</a></div>
+              </div>
+            </div>
+            <p class="mb-1">@Model.NpsScore.Title</p>
+            <h4 class="card-title mb-2">@Model.NpsScore.Value</h4>
+            <small class="text-success fw-medium"><i class="icon-base bx bx-star"></i> @Model.NpsScore.TrendLabel</small>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    @* Chart Row 1: Revenue & Profit Area + Target vs Actual (y=16) *@
+    <div class="grid-stack-item" data-gs-x="0" data-gs-y="22" data-gs-width="6" data-gs-height="6" data-widget-id="revenue-profit-trend">
+      <div class="grid-stack-item-content">
+        <div class="card h-100">
+          <div class="card-header d-flex align-items-center justify-content-between">
+            <h5 class="card-title m-0 me-2">Revenue & Profit Trend</h5>
+            <div class="dropdown">
+              <button class="btn p-0" type="button" id="revProfitOpts" data-bs-toggle="dropdown"><i class="icon-base bx bx-dots-vertical-rounded icon-lg text-body-secondary"></i></button>
+              <div class="dropdown-menu dropdown-menu-end"><a class="dropdown-item" href="javascript:void(0);">Refresh</a></div>
+            </div>
+          </div>
+          <div class="card-body">
+            <div id="revenueProfitAreaChart" style="min-height:200px;"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="grid-stack-item" data-gs-x="6" data-gs-y="22" data-gs-width="6" data-gs-height="6" data-widget-id="target-vs-actual">
+      <div class="grid-stack-item-content">
+        <div class="card h-100">
+          <div class="card-header d-flex align-items-center justify-content-between">
+            <h5 class="card-title m-0 me-2">Target vs Actual</h5>
+            <div class="dropdown">
+              <button class="btn p-0" type="button" id="targetOpts" data-bs-toggle="dropdown"><i class="icon-base bx bx-dots-vertical-rounded icon-lg text-body-secondary"></i></button>
+              <div class="dropdown-menu dropdown-menu-end"><a class="dropdown-item" href="javascript:void(0);">Refresh</a></div>
+            </div>
+          </div>
+          <div class="card-body">
+            <div id="monthlyTargetVsActualChart" style="min-height:200px;"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    @* Chart Row 2: Top Products + Top Customers (y=22) *@
+    <div class="grid-stack-item" data-gs-x="0" data-gs-y="28" data-gs-width="6" data-gs-height="6" data-widget-id="top-products">
+      <div class="grid-stack-item-content">
+        <div class="card h-100">
+          <div class="card-header d-flex align-items-center justify-content-between">
+            <h5 class="card-title m-0 me-2">Top 10 Products by Revenue</h5>
+            <div class="dropdown">
+              <button class="btn p-0" type="button" id="topProdOpts" data-bs-toggle="dropdown"><i class="icon-base bx bx-dots-vertical-rounded icon-lg text-body-secondary"></i></button>
+              <div class="dropdown-menu dropdown-menu-end"><a class="dropdown-item" href="javascript:void(0);">View All</a></div>
+            </div>
+          </div>
+          <div class="card-body">
+            <div id="topProductsBar" style="min-height:200px;"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="grid-stack-item" data-gs-x="6" data-gs-y="28" data-gs-width="6" data-gs-height="6" data-widget-id="top-customers">
+      <div class="grid-stack-item-content">
+        <div class="card h-100">
+          <div class="card-header d-flex align-items-center justify-content-between">
+            <h5 class="card-title m-0 me-2">Top 10 Customers by Revenue</h5>
+            <div class="dropdown">
+              <button class="btn p-0" type="button" id="topCustOpts" data-bs-toggle="dropdown"><i class="icon-base bx bx-dots-vertical-rounded icon-lg text-body-secondary"></i></button>
+              <div class="dropdown-menu dropdown-menu-end"><a class="dropdown-item" href="javascript:void(0);">View All</a></div>
+            </div>
+          </div>
+          <div class="card-body">
+            <div id="topCustomersBar" style="min-height:200px;"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    @* Chart Row 3: Profit Bridge + Revenue by Branch (y=28) *@
+    <div class="grid-stack-item" data-gs-x="0" data-gs-y="34" data-gs-width="6" data-gs-height="6" data-widget-id="profit-bridge">
+      <div class="grid-stack-item-content">
+        <div class="card h-100">
+          <div class="card-header d-flex align-items-center justify-content-between">
+            <h5 class="card-title m-0 me-2">Profit Bridge</h5>
+            <div class="dropdown">
+              <button class="btn p-0" type="button" id="bridgeOpts" data-bs-toggle="dropdown"><i class="icon-base bx bx-dots-vertical-rounded icon-lg text-body-secondary"></i></button>
+              <div class="dropdown-menu dropdown-menu-end"><a class="dropdown-item" href="javascript:void(0);">Refresh</a></div>
+            </div>
+          </div>
+          <div class="card-body">
+            <div id="profitBridgeChart" style="min-height:200px;"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="grid-stack-item" data-gs-x="6" data-gs-y="34" data-gs-width="6" data-gs-height="6" data-widget-id="revenue-by-branch">
+      <div class="grid-stack-item-content">
+        <div class="card h-100">
+          <div class="card-header d-flex align-items-center justify-content-between">
+            <h5 class="card-title m-0 me-2">Revenue by Branch</h5>
+            <div class="dropdown">
+              <button class="btn p-0" type="button" id="branchOpts" data-bs-toggle="dropdown"><i class="icon-base bx bx-dots-vertical-rounded icon-lg text-body-secondary"></i></button>
+              <div class="dropdown-menu dropdown-menu-end"><a class="dropdown-item" href="javascript:void(0);">View All</a></div>
+            </div>
+          </div>
+          <div class="card-body">
+            <div id="revenueByBranchChart" style="min-height:200px;"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    @* Chart Row 4: Sales Funnel + Heatmap (y=34) *@
+    <div class="grid-stack-item" data-gs-x="0" data-gs-y="40" data-gs-width="6" data-gs-height="6" data-widget-id="sales-funnel">
+      <div class="grid-stack-item-content">
+        <div class="card h-100">
+          <div class="card-header d-flex align-items-center justify-content-between">
+            <h5 class="card-title m-0 me-2">Sales Funnel</h5>
+            <div class="dropdown">
+              <button class="btn p-0" type="button" id="funnelOpts" data-bs-toggle="dropdown"><i class="icon-base bx bx-dots-vertical-rounded icon-lg text-body-secondary"></i></button>
+              <div class="dropdown-menu dropdown-menu-end"><a class="dropdown-item" href="javascript:void(0);">Refresh</a></div>
+            </div>
+          </div>
+          <div class="card-body">
+            <div id="salesFunnelChart" style="min-height:200px;"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="grid-stack-item" data-gs-x="6" data-gs-y="40" data-gs-width="6" data-gs-height="6" data-widget-id="channel-region-heatmap">
+      <div class="grid-stack-item-content">
+        <div class="card h-100">
+          <div class="card-header d-flex align-items-center justify-content-between">
+            <h5 class="card-title m-0 me-2">Channel x Region Heatmap</h5>
+            <div class="dropdown">
+              <button class="btn p-0" type="button" id="heatmapOpts" data-bs-toggle="dropdown"><i class="icon-base bx bx-dots-vertical-rounded icon-lg text-body-secondary"></i></button>
+              <div class="dropdown-menu dropdown-menu-end"><a class="dropdown-item" href="javascript:void(0);">Refresh</a></div>
+            </div>
+          </div>
+          <div class="card-body">
+            <div id="channelRegionHeatmap" style="min-height:200px;"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    @* Chart Row 5: Monthly Revenue (full width, y=40) *@
+    @if (Model.RevenueByChannelChart?.Series?.Any() == true)
+    {
+    <div class="grid-stack-item" data-gs-x="0" data-gs-y="46" data-gs-width="12" data-gs-height="6" data-widget-id="monthly-revenue">
+      <div class="grid-stack-item-content">
+        <div class="card h-100">
+          <div class="card-header d-flex align-items-center justify-content-between">
+            <div class="card-title mb-0">
+              <h5 class="m-0 me-2">Monthly Revenue</h5>
+              <p class="card-subtitle mb-0 text-body-secondary small">Revenue by month in selected range</p>
+            </div>
+            <div class="dropdown">
+              <button class="btn p-0" type="button" id="execMonthlyRevOpts" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                <i class="icon-base bx bx-dots-vertical-rounded icon-lg text-body-secondary"></i>
+              </button>
+              <div class="dropdown-menu dropdown-menu-end" aria-labelledby="execMonthlyRevOpts">
+                <a class="dropdown-item" href="javascript:void(0);">Refresh</a>
+              </div>
+            </div>
+          </div>
+          <div class="card-body pt-2">
+            <div id="executiveMonthlyRevenueChart" style="min-height:200px;"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    }
+
+    @if (Model.Alerts.Any())
+    {
+    <div class="grid-stack-item" data-gs-x="0" data-gs-y="@execGridRowAfterCharts" data-gs-width="12" data-gs-height="6" data-widget-id="executive-alerts">
+      <div class="grid-stack-item-content">
+        <div class="card h-100">
+          <div class="card-header d-flex align-items-center justify-content-between">
+            <h5 class="card-title m-0 me-2">Alerts & Warnings</h5>
+            <span class="badge bg-label-danger">@Model.Alerts.Count active</span>
+          </div>
+          <div class="card-body">
+            <div class="row g-3">
+              @foreach (var alert in Model.Alerts)
+              {
+                <div class="col-md-6">
+                  <div class="alert alert-@alert.Type d-flex align-items-center mb-0" role="alert">
+                    <i class="icon-base bx @(alert.Severity == "red" ? "bx-error-circle text-danger" : alert.Severity == "yellow" ? "bx-warning text-warning" : "bx-info-circle text-info") me-2"></i>
+                    <div>
+                      <strong>@alert.Message</strong>
+                      <small class="d-block text-body-secondary">@alert.Source &middot; @alert.Timestamp.ToString("MMM dd, HH:mm")</small>
+                    </div>
+                  </div>
+                </div>
+              }
             </div>
           </div>
         </div>
       </div>
     </div>
-  </div>
-</div>
+    }
 
-<!-- KPI Cards Row -->
-<div class="row">
-  <div class="col-lg-3 col-md-6 col-sm-6 mb-6">
-    <div class="card h-100">
-      <div class="card-body">
-        <div class="card-title d-flex align-items-start justify-content-between mb-3">
-          <div class="avatar flex-shrink-0"><img src="~/img/icons/unicons/chart-success.png" alt="Gross Margin" class="rounded" /></div>
-          <div class="dropdown">
-            <button class="btn p-0" type="button" id="cardGm" data-bs-toggle="dropdown"><i class="icon-base bx bx-dots-vertical-rounded text-body-secondary"></i></button>
-            <div class="dropdown-menu dropdown-menu-end"><a class="dropdown-item" href="javascript:void(0);">View More</a></div>
+    <div class="grid-stack-item" data-gs-x="0" data-gs-y="@execGridRowBottom" data-gs-width="4" data-gs-height="8" data-widget-id="exec-dept-performance">
+      <div class="grid-stack-item-content">
+        <div class="card h-100">
+          <div class="card-header d-flex justify-content-between">
+            <div class="card-title mb-0">
+              <h5 class="mb-1 me-2">Department Performance</h5>
+              <p class="card-subtitle">All Departments Overview</p>
+            </div>
+            <div class="dropdown">
+              <button class="btn text-body-secondary p-0" type="button" id="deptStats" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                <i class="icon-base bx bx-dots-vertical-rounded icon-lg"></i>
+              </button>
+              <div class="dropdown-menu dropdown-menu-end" aria-labelledby="deptStats">
+                <a class="dropdown-item" href="javascript:void(0);">Select All</a>
+                <a class="dropdown-item" href="javascript:void(0);">Refresh</a>
+              </div>
+            </div>
+          </div>
+          <div class="card-body overflow-auto">
+            <ul class="p-0 m-0">
+              @foreach (var dept in Model.DepartmentPerformance)
+              {
+                <li class="d-flex align-items-center mb-5">
+                  <div class="avatar flex-shrink-0 me-3">
+                    <span class="avatar-initial rounded @dept.IconBgClass"><i class="@dept.IconClass"></i></span>
+                  </div>
+                  <div class="d-flex w-100 flex-wrap align-items-center justify-content-between gap-2">
+                    <div class="me-2">
+                      <h6 class="mb-0">@dept.DepartmentName</h6>
+                      <small>@dept.Description</small>
+                    </div>
+                    <div class="user-progress">
+                      <h6 class="mb-0">@dept.PerformancePercent%</h6>
+                    </div>
+                  </div>
+                </li>
+              }
+              @if (!Model.DepartmentPerformance.Any())
+              {
+                <li class="d-flex align-items-center mb-5">
+                  <div class="avatar flex-shrink-0 me-3">
+                    <span class="avatar-initial rounded bg-label-primary"><i class="icon-base bx bx-line-chart"></i></span>
+                  </div>
+                  <div class="d-flex w-100 flex-wrap align-items-center justify-content-between gap-2">
+                    <div class="me-2">
+                      <h6 class="mb-0">Sales</h6>
+                      <small>Revenue Generation</small>
+                    </div>
+                    <div class="user-progress"><h6 class="mb-0">82.5%</h6></div>
+                  </div>
+                </li>
+              }
+            </ul>
           </div>
         </div>
-        <p class="mb-1">@Model.GrossMargin.Title</p>
-        <h4 class="card-title mb-2">@Model.GrossMargin.Value</h4>
-        <small class="text-success fw-medium"><i class="icon-base bx bx-up-arrow-alt"></i> @Model.GrossMargin.TrendLabel</small>
       </div>
     </div>
-  </div>
-  <div class="col-lg-3 col-md-6 col-sm-6 mb-6">
-    <div class="card h-100">
-      <div class="card-body">
-        <div class="card-title d-flex align-items-start justify-content-between mb-3">
-          <div class="avatar flex-shrink-0"><img src="~/img/icons/unicons/wallet-info.png" alt="Cash Flow" class="rounded" /></div>
-          <div class="dropdown">
-            <button class="btn p-0" type="button" id="cardCf" data-bs-toggle="dropdown"><i class="icon-base bx bx-dots-vertical-rounded text-body-secondary"></i></button>
-            <div class="dropdown-menu dropdown-menu-end"><a class="dropdown-item" href="javascript:void(0);">View More</a></div>
+
+    <div class="grid-stack-item" data-gs-x="4" data-gs-y="@execGridRowBottom" data-gs-width="4" data-gs-height="8" data-widget-id="exec-quick-actions">
+      <div class="grid-stack-item-content">
+        <div class="card h-100">
+          <div class="card-header d-flex align-items-center justify-content-between">
+            <h5 class="card-title m-0 me-2">Quick Actions</h5>
+            <div class="dropdown">
+              <button class="btn text-body-secondary p-0" type="button" id="quickActions" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                <i class="icon-base bx bx-dots-vertical-rounded icon-lg"></i>
+              </button>
+              <div class="dropdown-menu dropdown-menu-end" aria-labelledby="quickActions">
+                <a class="dropdown-item" href="javascript:void(0);">Last 30 Days</a>
+                <a class="dropdown-item" href="javascript:void(0);">Last Month</a>
+              </div>
+            </div>
+          </div>
+          <div class="card-body pt-4">
+            <div class="d-grid gap-3">
+              <a href="/Sales" class="btn btn-outline-primary">View Sales</a>
+              <a href="/Marketing" class="btn btn-outline-success">View Marketing</a>
+              <a href="/Finance" class="btn btn-outline-warning">View Finance</a>
+              <a href="/Inventory" class="btn btn-outline-info">View Inventory</a>
+              <a href="/HumanResources" class="btn btn-outline-secondary">View HR</a>
+            </div>
           </div>
         </div>
-        <p class="mb-1">@Model.CashFlow.Title</p>
-        <h4 class="card-title mb-2">@Model.CashFlow.Value</h4>
-        <small class="text-@(Model.CashFlow.Trend == "up" ? "success" : "danger") fw-medium"><i class="icon-base bx @(Model.CashFlow.Trend == "up" ? "bx-up-arrow-alt" : "bx-down-arrow-alt")"></i> @Model.CashFlow.TrendLabel</small>
       </div>
     </div>
-  </div>
-  <div class="col-lg-3 col-md-6 col-sm-6 mb-6">
-    <div class="card h-100">
-      <div class="card-body">
-        <div class="card-title d-flex align-items-start justify-content-between mb-3">
-          <div class="avatar flex-shrink-0"><img src="~/img/icons/unicons/paypal.png" alt="DIO" class="rounded" /></div>
-          <div class="dropdown">
-            <button class="btn p-0" type="button" id="cardDio" data-bs-toggle="dropdown"><i class="icon-base bx bx-dots-vertical-rounded text-body-secondary"></i></button>
-            <div class="dropdown-menu dropdown-menu-end"><a class="dropdown-item" href="javascript:void(0);">View More</a></div>
+
+    <div class="grid-stack-item" data-gs-x="8" data-gs-y="@execGridRowBottom" data-gs-width="4" data-gs-height="8" data-widget-id="exec-recent-activity">
+      <div class="grid-stack-item-content">
+        <div class="card h-100">
+          <div class="card-header d-flex align-items-center justify-content-between">
+            <h5 class="card-title m-0 me-2">Recent Activity</h5>
+            <div class="dropdown">
+              <button class="btn text-body-secondary p-0" type="button" id="activity" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                <i class="icon-base bx bx-dots-vertical-rounded icon-lg"></i>
+              </button>
+              <div class="dropdown-menu dropdown-menu-end" aria-labelledby="activity">
+                <a class="dropdown-item" href="javascript:void(0);">View All</a>
+              </div>
+            </div>
+          </div>
+          <div class="card-body pt-4 overflow-auto">
+            <ul class="p-0 m-0">
+              @foreach (var activity in Model.RecentActivities)
+              {
+                <li class="d-flex align-items-center mb-6">
+                  <div class="avatar flex-shrink-0 me-3">
+                    <span class="avatar-initial rounded @activity.IconBgClass"><i class="@activity.IconClass"></i></span>
+                  </div>
+                  <div class="d-flex w-100 flex-wrap align-items-center justify-content-between gap-2">
+                    <div class="me-2">
+                      <small class="d-block">@activity.Category</small>
+                      <h6 class="fw-normal mb-0">@activity.Description</h6>
+                    </div>
+                    <div class="user-progress d-flex align-items-center gap-2">
+                      <small class="text-body-secondary">@activity.TimeAgo</small>
+                    </div>
+                  </div>
+                </li>
+              }
+              @if (!Model.RecentActivities.Any())
+              {
+                <li class="d-flex align-items-center mb-6">
+                  <div class="avatar flex-shrink-0 me-3">
+                    <img src="~/img/icons/unicons/wallet.png" alt="User" class="rounded" />
+                  </div>
+                  <div class="d-flex w-100 flex-wrap align-items-center justify-content-between gap-2">
+                    <div class="me-2">
+                      <small class="d-block">System</small>
+                      <h6 class="fw-normal mb-0">No recent activity</h6>
+                    </div>
+                  </div>
+                </li>
+              }
+            </ul>
           </div>
         </div>
-        <p class="mb-1">@Model.Dio.Title</p>
-        <h4 class="card-title mb-2">@Model.Dio.Value</h4>
-        <small class="text-primary fw-medium"><i class="icon-base bx bx-calendar"></i> @Model.Dio.TrendLabel</small>
       </div>
     </div>
-  </div>
-  <div class="col-lg-3 col-md-6 col-sm-6 mb-6">
-    <div class="card h-100">
-      <div class="card-body">
-        <div class="card-title d-flex align-items-start justify-content-between mb-3">
-          <div class="avatar flex-shrink-0"><img src="~/img/icons/unicons/cc-primary.png" alt="NPS" class="rounded" /></div>
-          <div class="dropdown">
-            <button class="btn p-0" type="button" id="cardNps" data-bs-toggle="dropdown"><i class="icon-base bx bx-dots-vertical-rounded text-body-secondary"></i></button>
-            <div class="dropdown-menu dropdown-menu-end"><a class="dropdown-item" href="javascript:void(0);">View More</a></div>
-          </div>
-        </div>
-        <p class="mb-1">@Model.NpsScore.Title</p>
-        <h4 class="card-title mb-2">@Model.NpsScore.Value</h4>
-        <small class="text-success fw-medium"><i class="icon-base bx bx-star"></i> @Model.NpsScore.TrendLabel</small>
-      </div>
-    </div>
-  </div>
-</div>
 
-<!-- Charts Row 1: Revenue & Profit Area + Target vs Actual -->
-<div class="row">
-  <div class="col-lg-6 mb-6">
-    <div class="card h-100">
-      <div class="card-header d-flex align-items-center justify-content-between">
-        <h5 class="card-title m-0 me-2">Revenue & Profit Trend</h5>
-        <div class="dropdown">
-          <button class="btn p-0" type="button" id="revProfitOpts" data-bs-toggle="dropdown"><i class="icon-base bx bx-dots-vertical-rounded icon-lg text-body-secondary"></i></button>
-          <div class="dropdown-menu dropdown-menu-end"><a class="dropdown-item" href="javascript:void(0);">Refresh</a></div>
-        </div>
-      </div>
-      <div class="card-body">
-        <div id="revenueProfitAreaChart" style="min-height: 280px;"></div>
-      </div>
-    </div>
-  </div>
-  <div class="col-lg-6 mb-6">
-    <div class="card h-100">
-      <div class="card-header d-flex align-items-center justify-content-between">
-        <h5 class="card-title m-0 me-2">Target vs Actual</h5>
-        <div class="dropdown">
-          <button class="btn p-0" type="button" id="targetOpts" data-bs-toggle="dropdown"><i class="icon-base bx bx-dots-vertical-rounded icon-lg text-body-secondary"></i></button>
-          <div class="dropdown-menu dropdown-menu-end"><a class="dropdown-item" href="javascript:void(0);">Refresh</a></div>
-        </div>
-      </div>
-      <div class="card-body">
-        <div id="monthlyTargetVsActualChart" style="min-height: 280px;"></div>
-      </div>
-    </div>
-  </div>
-</div>
+  </div>@* end grid-stack *@
+</div>@* end dashboard-grid-container *@
 
-<!-- Charts Row 2: Top Products Bar + Top Customers Bar -->
-<div class="row">
-  <div class="col-lg-6 mb-6">
-    <div class="card h-100">
-      <div class="card-header d-flex align-items-center justify-content-between">
-        <h5 class="card-title m-0 me-2">Top 10 Products by Revenue</h5>
-        <div class="dropdown">
-          <button class="btn p-0" type="button" id="topProdOpts" data-bs-toggle="dropdown"><i class="icon-base bx bx-dots-vertical-rounded icon-lg text-body-secondary"></i></button>
-          <div class="dropdown-menu dropdown-menu-end"><a class="dropdown-item" href="javascript:void(0);">View All</a></div>
-        </div>
-      </div>
-      <div class="card-body">
-        <div id="topProductsBar" style="min-height: 280px;"></div>
-      </div>
-    </div>
-  </div>
-  <div class="col-lg-6 mb-6">
-    <div class="card h-100">
-      <div class="card-header d-flex align-items-center justify-content-between">
-        <h5 class="card-title m-0 me-2">Top 10 Customers by Revenue</h5>
-        <div class="dropdown">
-          <button class="btn p-0" type="button" id="topCustOpts" data-bs-toggle="dropdown"><i class="icon-base bx bx-dots-vertical-rounded icon-lg text-body-secondary"></i></button>
-          <div class="dropdown-menu dropdown-menu-end"><a class="dropdown-item" href="javascript:void(0);">View All</a></div>
-        </div>
-      </div>
-      <div class="card-body">
-        <div id="topCustomersBar" style="min-height: 280px;"></div>
-      </div>
-    </div>
-  </div>
-</div>
+@* ============================================================
+   PART 3: Chart Initialization Scripts
+   ============================================================ *@
 
-<!-- Charts Row 3: Profit Bridge + Revenue by Branch -->
-<div class="row">
-  <div class="col-lg-6 mb-6">
-    <div class="card h-100">
-      <div class="card-header d-flex align-items-center justify-content-between">
-        <h5 class="card-title m-0 me-2">Profit Bridge</h5>
-        <div class="dropdown">
-          <button class="btn p-0" type="button" id="bridgeOpts" data-bs-toggle="dropdown"><i class="icon-base bx bx-dots-vertical-rounded icon-lg text-body-secondary"></i></button>
-          <div class="dropdown-menu dropdown-menu-end"><a class="dropdown-item" href="javascript:void(0);">Refresh</a></div>
-        </div>
-      </div>
-      <div class="card-body">
-        <div id="profitBridgeChart" style="min-height: 280px;"></div>
-      </div>
-    </div>
-  </div>
-  <div class="col-lg-6 mb-6">
-    <div class="card h-100">
-      <div class="card-header d-flex align-items-center justify-content-between">
-        <h5 class="card-title m-0 me-2">Revenue by Branch</h5>
-        <div class="dropdown">
-          <button class="btn p-0" type="button" id="branchOpts" data-bs-toggle="dropdown"><i class="icon-base bx bx-dots-vertical-rounded icon-lg text-body-secondary"></i></button>
-          <div class="dropdown-menu dropdown-menu-end"><a class="dropdown-item" href="javascript:void(0);">View All</a></div>
-        </div>
-      </div>
-      <div class="card-body">
-        <div id="revenueByBranchChart" style="min-height: 280px;"></div>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- Charts Row 4: Sales Funnel + Channel x Region Heatmap -->
-<div class="row">
-  <div class="col-lg-6 mb-6">
-    <div class="card h-100">
-      <div class="card-header d-flex align-items-center justify-content-between">
-        <h5 class="card-title m-0 me-2">Sales Funnel</h5>
-        <div class="dropdown">
-          <button class="btn p-0" type="button" id="funnelOpts" data-bs-toggle="dropdown"><i class="icon-base bx bx-dots-vertical-rounded icon-lg text-body-secondary"></i></button>
-          <div class="dropdown-menu dropdown-menu-end"><a class="dropdown-item" href="javascript:void(0);">Refresh</a></div>
-        </div>
-      </div>
-      <div class="card-body">
-        <div id="salesFunnelChart" style="min-height: 280px;"></div>
-      </div>
-    </div>
-  </div>
-  <div class="col-lg-6 mb-6">
-    <div class="card h-100">
-      <div class="card-header d-flex align-items-center justify-content-between">
-        <h5 class="card-title m-0 me-2">Channel x Region Heatmap</h5>
-        <div class="dropdown">
-          <button class="btn p-0" type="button" id="heatmapOpts" data-bs-toggle="dropdown"><i class="icon-base bx bx-dots-vertical-rounded icon-lg text-body-secondary"></i></button>
-          <div class="dropdown-menu dropdown-menu-end"><a class="dropdown-item" href="javascript:void(0);">Refresh</a></div>
-        </div>
-      </div>
-      <div class="card-body">
-        <div id="channelRegionHeatmap" style="min-height: 280px;"></div>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- Alerts Panel -->
-@if (Model.Alerts.Any())
+@if (Model.CompanyPerformanceChart?.Series?.Any() == true)
 {
-<div class="row">
-  <div class="col-12 mb-6">
-    <div class="card h-100">
-      <div class="card-header d-flex align-items-center justify-content-between">
-        <h5 class="card-title m-0 me-2">Alerts & Warnings</h5>
-        <span class="badge bg-label-danger">@Model.Alerts.Count active</span>
-      </div>
-      <div class="card-body">
-        <div class="row g-3">
-          @foreach (var alert in Model.Alerts)
-          {
-            <div class="col-md-6">
-              <div class="alert alert-@alert.Type d-flex align-items-center" role="alert">
-                <i class="icon-base bx @(alert.Severity == "red" ? "bx-error-circle text-danger" : alert.Severity == "yellow" ? "bx-warning text-warning" : "bx-info-circle text-info") me-2"></i>
-                <div>
-                  <strong>@alert.Message</strong>
-                  <small class="d-block text-body-secondary">@alert.Source &middot; @alert.Timestamp.ToString("MMM dd, HH:mm")</small>
-                </div>
-              </div>
-            </div>
-          }
-        </div>
-      </div>
-    </div>
-  </div>
-</div>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  var chartData = @Html.Raw(Json.Serialize(Model.CompanyPerformanceChart));
+  var chartEl = document.querySelector('#totalRevenueChart');
+  if (chartEl && typeof ApexCharts !== 'undefined') {
+    var options = {
+      chart: { height: 200, stacked: true, type: 'bar', toolbar: { show: false } },
+      plotOptions: { bar: { horizontal: false, columnWidth: '30%', borderRadius: 8, borderRadiusApplication: 'around' } },
+      colors: ['#6965fd', '#03c3ec'],
+      dataLabels: { enabled: false },
+      stroke: { curve: 'smooth', width: 6, lineCap: 'round', colors: ['#ffffff'] },
+      legend: { show: true, horizontalAlign: 'left', position: 'top', markers: { size: 4, radius: 12, shape: 'circle', strokeWidth: 0 }, fontSize: '13px', fontFamily: 'Plus Jakarta Sans', fontWeight: 400, labels: { colors: '#697a8d', useSeriesColors: false }, itemMargin: { horizontal: 10 } },
+      grid: { strokeDashArray: 7, borderColor: '#eceef1', padding: { top: 0, bottom: -8, left: 20, right: 20 } },
+      fill: { opacity: [1, 1] },
+      xaxis: { categories: chartData.categories || [], labels: { style: { fontSize: '13px', fontFamily: 'Plus Jakarta Sans', colors: '#a1acb8' } }, axisTicks: { show: false }, axisBorder: { show: false } },
+      yaxis: { labels: { style: { fontSize: '13px', fontFamily: 'Plus Jakarta Sans', colors: '#a1acb8' } } },
+      states: { hover: { filter: { type: 'none' } }, active: { filter: { type: 'none' } } },
+      series: chartData.series || []
+    };
+    var chart = new ApexCharts(chartEl, options);
+    chart.render().then(function() {
+      var widgetId = chartEl.closest('.grid-stack-item')?.getAttribute('data-widget-id');
+      if (widgetId) {
+        window.dashboardChartInstances = window.dashboardChartInstances || {};
+        window.dashboardChartInstances[widgetId] = chart;
+      }
+    });
+  }
+});
+</script>
 }
-
-<div class="row">
-  <div class="col-md-6 col-lg-4 order-0 mb-6">
-    <div class="card h-100">
-      <div class="card-header d-flex justify-content-between">
-        <div class="card-title mb-0">
-          <h5 class="mb-1 me-2">Department Performance</h5>
-          <p class="card-subtitle">All Departments Overview</p>
-        </div>
-        <div class="dropdown">
-          <button class="btn text-body-secondary p-0" type="button" id="deptStats" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-            <i class="icon-base bx bx-dots-vertical-rounded icon-lg"></i>
-          </button>
-          <div class="dropdown-menu dropdown-menu-end" aria-labelledby="deptStats">
-            <a class="dropdown-item" href="javascript:void(0);">Select All</a>
-            <a class="dropdown-item" href="javascript:void(0);">Refresh</a>
-          </div>
-        </div>
-      </div>
-      <div class="card-body">
-        <ul class="p-0 m-0">
-          @foreach (var dept in Model.DepartmentPerformance)
-          {
-            <li class="d-flex align-items-center mb-5">
-              <div class="avatar flex-shrink-0 me-3">
-                <span class="avatar-initial rounded @dept.IconBgClass"><i class="@dept.IconClass"></i></span>
-              </div>
-              <div class="d-flex w-100 flex-wrap align-items-center justify-content-between gap-2">
-                <div class="me-2">
-                  <h6 class="mb-0">@dept.DepartmentName</h6>
-                  <small>@dept.Description</small>
-                </div>
-                <div class="user-progress">
-                  <h6 class="mb-0">@dept.PerformancePercent%</h6>
-                </div>
-              </div>
-            </li>
-          }
-          @if (!Model.DepartmentPerformance.Any())
-          {
-            <li class="d-flex align-items-center mb-5">
-              <div class="avatar flex-shrink-0 me-3">
-                <span class="avatar-initial rounded bg-label-primary"><i class="icon-base bx bx-line-chart"></i></span>
-              </div>
-              <div class="d-flex w-100 flex-wrap align-items-center justify-content-between gap-2">
-                <div class="me-2">
-                  <h6 class="mb-0">Sales</h6>
-                  <small>Revenue Generation</small>
-                </div>
-                <div class="user-progress"><h6 class="mb-0">82.5%</h6></div>
-              </div>
-            </li>
-          }
-        </ul>
-      </div>
-    </div>
-  </div>
-
-  <div class="col-md-6 col-lg-4 order-1 mb-6">
-    <div class="card h-100">
-      <div class="card-header d-flex align-items-center justify-content-between">
-        <h5 class="card-title m-0 me-2">Quick Actions</h5>
-        <div class="dropdown">
-          <button class="btn text-body-secondary p-0" type="button" id="quickActions" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-            <i class="icon-base bx bx-dots-vertical-rounded icon-lg"></i>
-          </button>
-          <div class="dropdown-menu dropdown-menu-end" aria-labelledby="quickActions">
-            <a class="dropdown-item" href="javascript:void(0);">Last 30 Days</a>
-            <a class="dropdown-item" href="javascript:void(0);">Last Month</a>
-          </div>
-        </div>
-      </div>
-      <div class="card-body pt-4">
-        <div class="d-grid gap-3">
-          <a href="/Sales" class="btn btn-outline-primary">View Sales</a>
-          <a href="/Marketing" class="btn btn-outline-success">View Marketing</a>
-          <a href="/Finance" class="btn btn-outline-warning">View Finance</a>
-          <a href="/Inventory" class="btn btn-outline-info">View Inventory</a>
-          <a href="/HumanResources" class="btn btn-outline-secondary">View HR</a>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <div class="col-md-6 col-lg-4 order-2 mb-6">
-    <div class="card h-100">
-      <div class="card-header d-flex align-items-center justify-content-between">
-        <h5 class="card-title m-0 me-2">Recent Activity</h5>
-        <div class="dropdown">
-          <button class="btn text-body-secondary p-0" type="button" id="activity" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-            <i class="icon-base bx bx-dots-vertical-rounded icon-lg"></i>
-          </button>
-          <div class="dropdown-menu dropdown-menu-end" aria-labelledby="activity">
-            <a class="dropdown-item" href="javascript:void(0);">View All</a>
-          </div>
-        </div>
-      </div>
-      <div class="card-body pt-4">
-        <ul class="p-0 m-0">
-          @foreach (var activity in Model.RecentActivities)
-          {
-            <li class="d-flex align-items-center mb-6">
-              <div class="avatar flex-shrink-0 me-3">
-                <span class="avatar-initial rounded @activity.IconBgClass"><i class="@activity.IconClass"></i></span>
-              </div>
-              <div class="d-flex w-100 flex-wrap align-items-center justify-content-between gap-2">
-                <div class="me-2">
-                  <small class="d-block">@activity.Category</small>
-                  <h6 class="fw-normal mb-0">@activity.Description</h6>
-                </div>
-                <div class="user-progress d-flex align-items-center gap-2">
-                  <small class="text-body-secondary">@activity.TimeAgo</small>
-                </div>
-              </div>
-            </li>
-          }
-          @if (!Model.RecentActivities.Any())
-          {
-            <li class="d-flex align-items-center mb-6">
-              <div class="avatar flex-shrink-0 me-3">
-                <img src="~/img/icons/unicons/wallet.png" alt="User" class="rounded" />
-              </div>
-              <div class="d-flex w-100 flex-wrap align-items-center justify-content-between gap-2">
-                <div class="me-2">
-                  <small class="d-block">System</small>
-                  <h6 class="fw-normal mb-0">No recent activity</h6>
-                </div>
-              </div>
-            </li>
-          }
-        </ul>
-      </div>
-    </div>
-  </div>
-</div>
 
 @if (Model.RevenueProfitAreaChart?.Series?.Any() == true)
 {
 <script>
 document.addEventListener('DOMContentLoaded', function () {
-  // Ensure config defaults are set before any chart uses them
-  if (typeof config === 'undefined') window.config = {};
-  if (!window.config.colors) window.config.colors = {};
-  if (!window.config.fontFamily) window.config.fontFamily = 'Plus Jakarta Sans';
-  var cardColor    = window.config.colors.cardColor    || '#ffffff';
-  var headingColor = window.config.colors.headingColor || '#566a7f';
-  var legendColor  = window.config.colors.bodyColor    || '#697a8d';
-  var labelColor   = window.config.colors.textMuted   || '#a1acb8';
-  var borderColor  = window.config.colors.borderColor  || '#eceef1';
-
-  // Revenue & Profit Area Chart
   var revProfitData = @Html.Raw(Json.Serialize(Model.RevenueProfitAreaChart));
   var revProfitEl = document.querySelector('#revenueProfitAreaChart');
   if (revProfitEl && typeof ApexCharts !== 'undefined') {
-    new ApexCharts(revProfitEl, {
-      chart: { height: 280, type: 'area', toolbar: { show: false }, fontFamily: config.fontFamily, foreColor: labelColor },
+    var chart = new ApexCharts(revProfitEl, {
+      chart: { height: '100%', type: 'area', toolbar: { show: false }, fontFamily: 'Plus Jakarta Sans', foreColor: '#a1acb8' },
       colors: ['#71dd88', '#ff3e1d'],
       dataLabels: { enabled: false },
       stroke: { curve: 'smooth', width: 3 },
-      legend: { show: true, position: 'top', horizontalAlign: 'left', fontSize: '13px', fontFamily: config.fontFamily, labels: { colors: legendColor }, markers: { size: 4, radius: 12, shape: 'circle' } },
-      grid: { strokeDashArray: 7, borderColor: borderColor, padding: { top: -10, bottom: -10, left: 10, right: 10 } },
-      xaxis: { categories: revProfitData.categories || [], labels: { style: { fontSize: '13px', fontFamily: config.fontFamily, colors: labelColor } }, axisTicks: { show: false }, axisBorder: { show: false } },
-      yaxis: { labels: { style: { fontSize: '13px', fontFamily: config.fontFamily, colors: labelColor }, formatter: function(val) { return typeof val === 'number' ? (val >= 1000 ? '$' + (val/1000).toFixed(0) + 'K' : val) : val; } } },
+      legend: { show: true, position: 'top', horizontalAlign: 'left', fontSize: '13px', fontFamily: 'Plus Jakarta Sans', labels: { colors: '#697a8d' }, markers: { size: 4, radius: 12, shape: 'circle' } },
+      grid: { strokeDashArray: 7, borderColor: '#eceef1', padding: { top: -10, bottom: -10, left: 10, right: 10 } },
+      xaxis: { categories: revProfitData.categories || [], labels: { style: { fontSize: '13px', fontFamily: 'Plus Jakarta Sans', colors: '#a1acb8' } }, axisTicks: { show: false }, axisBorder: { show: false } },
+      yaxis: { labels: { style: { fontSize: '13px', fontFamily: 'Plus Jakarta Sans', colors: '#a1acb8' }, formatter: function(val) { return typeof val === 'number' ? (val >= 1000 ? '$' + (val/1000).toFixed(0) + 'K' : val) : val; } } },
       fill: { opacity: [0.85, 0.85], type: 'gradient', gradient: { shade: 'light', type: 'vertical', shadeIntensity: 0.5, gradientToColors: ['#71dd8844', '#ff3e1d44'], opacityFrom: 0.85, opacityTo: 0.55, stops: [0, 100] } },
       tooltip: { theme: 'dark', y: { formatter: function(val) { return typeof val === 'number' ? '$' + val.toLocaleString() : val; } } },
       series: revProfitData.series || []
-    }).render();
+    });
+    chart.render().then(function() {
+      var widgetId = revProfitEl.closest('.grid-stack-item')?.getAttribute('data-widget-id');
+      if (widgetId) {
+        window.dashboardChartInstances = window.dashboardChartInstances || {};
+        window.dashboardChartInstances[widgetId] = chart;
+      }
+    });
   }
+});
+</script>
+}
 
-  // Monthly Target vs Actual Chart
+@if (Model.MonthlyTargetVsActualChart?.Series?.Any() == true)
+{
+<script>
+document.addEventListener('DOMContentLoaded', function () {
   var targetData = @Html.Raw(Json.Serialize(Model.MonthlyTargetVsActualChart));
   var targetEl = document.querySelector('#monthlyTargetVsActualChart');
   if (targetEl && typeof ApexCharts !== 'undefined') {
-    new ApexCharts(targetEl, {
-      chart: { height: 280, type: 'bar', toolbar: { show: false }, fontFamily: config.fontFamily, foreColor: labelColor },
-      colors: ['#6965fd', config.colors.secondary],
+    var chart = new ApexCharts(targetEl, {
+      chart: { height: '100%', type: 'bar', toolbar: { show: false }, fontFamily: 'Plus Jakarta Sans', foreColor: '#a1acb8' },
+      colors: ['#6965fd', '#8592a3'],
       dataLabels: { enabled: false },
       plotOptions: { bar: { horizontal: false, columnWidth: '35%', borderRadius: 6, borderRadiusApplication: 'around' } },
-      legend: { show: true, position: 'top', horizontalAlign: 'left', fontSize: '13px', fontFamily: config.fontFamily, labels: { colors: legendColor }, markers: { size: 4, radius: 12, shape: 'circle' } },
-      grid: { strokeDashArray: 7, borderColor: borderColor, padding: { top: -10, bottom: -10, left: 10, right: 10 } },
-      xaxis: { categories: targetData.categories || [], labels: { style: { fontSize: '13px', fontFamily: config.fontFamily, colors: labelColor } }, axisTicks: { show: false }, axisBorder: { show: false } },
-      yaxis: { labels: { style: { fontSize: '13px', fontFamily: config.fontFamily, colors: labelColor }, formatter: function(val) { return typeof val === 'number' ? (val >= 1000 ? '$' + (val/1000).toFixed(0) + 'K' : val) : val; } } },
+      legend: { show: true, position: 'top', horizontalAlign: 'left', fontSize: '13px', fontFamily: 'Plus Jakarta Sans', labels: { colors: '#697a8d' }, markers: { size: 4, radius: 12, shape: 'circle' } },
+      grid: { strokeDashArray: 7, borderColor: '#eceef1', padding: { top: -10, bottom: -10, left: 10, right: 10 } },
+      xaxis: { categories: targetData.categories || [], labels: { style: { fontSize: '13px', fontFamily: 'Plus Jakarta Sans', colors: '#a1acb8' } }, axisTicks: { show: false }, axisBorder: { show: false } },
+      yaxis: { labels: { style: { fontSize: '13px', fontFamily: 'Plus Jakarta Sans', colors: '#a1acb8' }, formatter: function(val) { return typeof val === 'number' ? (val >= 1000 ? '$' + (val/1000).toFixed(0) + 'K' : val) : val; } } },
       tooltip: { theme: 'dark', y: { formatter: function(val) { return typeof val === 'number' ? '$' + val.toLocaleString() : val; } } },
       series: targetData.series || []
-    }).render();
+    });
+    chart.render().then(function() {
+      var widgetId = targetEl.closest('.grid-stack-item')?.getAttribute('data-widget-id');
+      if (widgetId) {
+        window.dashboardChartInstances = window.dashboardChartInstances || {};
+        window.dashboardChartInstances[widgetId] = chart;
+      }
+    });
   }
+});
+</script>
+}
 
-  // Top Products Bar Chart
+@if (Model.TopProductsBarChart?.Series?.Any() == true)
+{
+<script>
+document.addEventListener('DOMContentLoaded', function () {
   var topProdData = @Html.Raw(Json.Serialize(Model.TopProductsBarChart));
   var topProdEl = document.querySelector('#topProductsBar');
   if (topProdEl && typeof ApexCharts !== 'undefined') {
-    new ApexCharts(topProdEl, {
-      chart: { height: 280, type: 'bar', toolbar: { show: false }, fontFamily: config.fontFamily, foreColor: labelColor },
+    var chart = new ApexCharts(topProdEl, {
+      chart: { height: '100%', type: 'bar', toolbar: { show: false }, fontFamily: 'Plus Jakarta Sans', foreColor: '#a1acb8' },
       colors: ['#6965fd'],
       dataLabels: { enabled: false },
       plotOptions: { bar: { horizontal: true, barHeight: '60%', borderRadius: 6, borderRadiusApplication: 'end' } },
       legend: { show: false },
-      grid: { strokeDashArray: 7, borderColor: borderColor, padding: { top: -10, bottom: -10, left: 10, right: 10 } },
-      xaxis: { categories: topProdData.categories || [], labels: { style: { fontSize: '12px', fontFamily: config.fontFamily, colors: labelColor }, formatter: function(val) { return typeof val === 'number' ? (val >= 1000 ? '$' + (val/1000).toFixed(0) + 'K' : val) : val; } }, axisTicks: { show: false }, axisBorder: { show: false } },
-      yaxis: { labels: { style: { fontSize: '12px', fontFamily: config.fontFamily, colors: labelColor } } },
+      grid: { strokeDashArray: 7, borderColor: '#eceef1', padding: { top: -10, bottom: -10, left: 10, right: 10 } },
+      xaxis: { categories: topProdData.categories || [], labels: { style: { fontSize: '12px', fontFamily: 'Plus Jakarta Sans', colors: '#a1acb8' }, formatter: function(val) { return typeof val === 'number' ? (val >= 1000 ? '$' + (val/1000).toFixed(0) + 'K' : val) : val; } }, axisTicks: { show: false }, axisBorder: { show: false } },
+      yaxis: { labels: { style: { fontSize: '12px', fontFamily: 'Plus Jakarta Sans', colors: '#a1acb8' } } },
       tooltip: { theme: 'dark', y: { formatter: function(val) { return typeof val === 'number' ? '$' + val.toLocaleString() : val; } } },
       series: topProdData.series || []
-    }).render();
+    });
+    chart.render().then(function() {
+      var widgetId = topProdEl.closest('.grid-stack-item')?.getAttribute('data-widget-id');
+      if (widgetId) {
+        window.dashboardChartInstances = window.dashboardChartInstances || {};
+        window.dashboardChartInstances[widgetId] = chart;
+      }
+    });
   }
+});
+</script>
+}
 
-  // Top Customers Bar Chart
+@if (Model.TopCustomersBarChart?.Series?.Any() == true)
+{
+<script>
+document.addEventListener('DOMContentLoaded', function () {
   var topCustData = @Html.Raw(Json.Serialize(Model.TopCustomersBarChart));
   var topCustEl = document.querySelector('#topCustomersBar');
   if (topCustEl && typeof ApexCharts !== 'undefined') {
-    new ApexCharts(topCustEl, {
-      chart: { height: 280, type: 'bar', toolbar: { show: false }, fontFamily: config.fontFamily, foreColor: labelColor },
+    var chart = new ApexCharts(topCustEl, {
+      chart: { height: '100%', type: 'bar', toolbar: { show: false }, fontFamily: 'Plus Jakarta Sans', foreColor: '#a1acb8' },
       colors: ['#03c3ec'],
       dataLabels: { enabled: false },
       plotOptions: { bar: { horizontal: true, barHeight: '60%', borderRadius: 6, borderRadiusApplication: 'end' } },
       legend: { show: false },
-      grid: { strokeDashArray: 7, borderColor: borderColor, padding: { top: -10, bottom: -10, left: 10, right: 10 } },
-      xaxis: { categories: topCustData.categories || [], labels: { style: { fontSize: '12px', fontFamily: config.fontFamily, colors: labelColor }, formatter: function(val) { return typeof val === 'number' ? (val >= 1000 ? '$' + (val/1000).toFixed(0) + 'K' : val) : val; } }, axisTicks: { show: false }, axisBorder: { show: false } },
-      yaxis: { labels: { style: { fontSize: '12px', fontFamily: config.fontFamily, colors: labelColor } } },
+      grid: { strokeDashArray: 7, borderColor: '#eceef1', padding: { top: -10, bottom: -10, left: 10, right: 10 } },
+      xaxis: { categories: topCustData.categories || [], labels: { style: { fontSize: '12px', fontFamily: 'Plus Jakarta Sans', colors: '#a1acb8' }, formatter: function(val) { return typeof val === 'number' ? (val >= 1000 ? '$' + (val/1000).toFixed(0) + 'K' : val) : val; } }, axisTicks: { show: false }, axisBorder: { show: false } },
+      yaxis: { labels: { style: { fontSize: '12px', fontFamily: 'Plus Jakarta Sans', colors: '#a1acb8' } } },
       tooltip: { theme: 'dark', y: { formatter: function(val) { return typeof val === 'number' ? '$' + val.toLocaleString() : val; } } },
       series: topCustData.series || []
-    }).render();
+    });
+    chart.render().then(function() {
+      var widgetId = topCustEl.closest('.grid-stack-item')?.getAttribute('data-widget-id');
+      if (widgetId) {
+        window.dashboardChartInstances = window.dashboardChartInstances || {};
+        window.dashboardChartInstances[widgetId] = chart;
+      }
+    });
   }
+});
+</script>
+}
 
-  // Profit Bridge Chart
+@if (Model.ProfitBridgeChart?.Series?.Any() == true)
+{
+<script>
+document.addEventListener('DOMContentLoaded', function () {
   var bridgeData = @Html.Raw(Json.Serialize(Model.ProfitBridgeChart));
   var bridgeEl = document.querySelector('#profitBridgeChart');
   if (bridgeEl && typeof ApexCharts !== 'undefined') {
-    new ApexCharts(bridgeEl, {
-      chart: { height: 280, type: 'bar', toolbar: { show: false }, fontFamily: config.fontFamily, foreColor: labelColor },
+    var chart = new ApexCharts(bridgeEl, {
+      chart: { height: '100%', type: 'bar', toolbar: { show: false }, fontFamily: 'Plus Jakarta Sans', foreColor: '#a1acb8' },
       colors: function(_val, opts) {
         var idx = opts.dataPointIndex;
         var cats = bridgeData.categories || [];
@@ -762,124 +947,260 @@ document.addEventListener('DOMContentLoaded', function () {
       },
       dataLabels: { enabled: true, formatter: function(val, opts) { return typeof val === 'number' ? (val >= 0 ? '+$' + (val/1000).toFixed(0) + 'K' : '-$' + (Math.abs(val)/1000).toFixed(0) + 'K') : val; } },
       legend: { show: false },
-      grid: { strokeDashArray: 7, borderColor: borderColor, padding: { top: -10, bottom: -10, left: 10, right: 10 } },
-      xaxis: { categories: bridgeData.categories || [], labels: { style: { fontSize: '12px', fontFamily: config.fontFamily, colors: labelColor, rotate: -30 }, rotate: -30 }, axisTicks: { show: false }, axisBorder: { show: false } },
-      yaxis: { labels: { style: { fontSize: '13px', fontFamily: config.fontFamily, colors: labelColor }, formatter: function(val) { return typeof val === 'number' ? (val >= 0 ? '+$' + (val/1000).toFixed(0) + 'K' : '-$' + (Math.abs(val)/1000).toFixed(0) + 'K') : val; } } },
+      grid: { strokeDashArray: 7, borderColor: '#eceef1', padding: { top: -10, bottom: -10, left: 10, right: 10 } },
+      xaxis: { categories: bridgeData.categories || [], labels: { style: { fontSize: '12px', fontFamily: 'Plus Jakarta Sans', colors: '#a1acb8', rotate: -30 }, rotate: -30 }, axisTicks: { show: false }, axisBorder: { show: false } },
+      yaxis: { labels: { style: { fontSize: '13px', fontFamily: 'Plus Jakarta Sans', colors: '#a1acb8' }, formatter: function(val) { return typeof val === 'number' ? (val >= 0 ? '+$' + (val/1000).toFixed(0) + 'K' : '-$' + (Math.abs(val)/1000).toFixed(0) + 'K') : val; } } },
       tooltip: { theme: 'dark', y: { formatter: function(val) { return typeof val === 'number' ? '$' + val.toLocaleString() : val; } } },
       series: bridgeData.series || []
-    }).render();
-  }
-
-  // Revenue by Branch Chart
-  var branchData = @Html.Raw(Json.Serialize(Model.RevenueByBranchChart));
-  var branchEl = document.querySelector('#revenueByBranchChart');
-  if (branchEl && typeof ApexCharts !== 'undefined') {
-    new ApexCharts(branchEl, {
-      chart: { height: 280, type: 'bar', toolbar: { show: false }, fontFamily: config.fontFamily, foreColor: labelColor },
-      colors: [config.colors.warning],
-      dataLabels: { enabled: false },
-      plotOptions: { bar: { horizontal: false, columnWidth: '40%', borderRadius: 6, borderRadiusApplication: 'around' } },
-      legend: { show: false },
-      grid: { strokeDashArray: 7, borderColor: borderColor, padding: { top: -10, bottom: -10, left: 10, right: 10 } },
-      xaxis: { categories: branchData.categories || [], labels: { style: { fontSize: '13px', fontFamily: config.fontFamily, colors: labelColor } }, axisTicks: { show: false }, axisBorder: { show: false } },
-      yaxis: { labels: { style: { fontSize: '13px', fontFamily: config.fontFamily, colors: labelColor }, formatter: function(val) { return typeof val === 'number' ? (val >= 1000 ? '$' + (val/1000).toFixed(0) + 'K' : val) : val; } } },
-      tooltip: { theme: 'dark', y: { formatter: function(val) { return typeof val === 'number' ? '$' + val.toLocaleString() : val; } } },
-      series: branchData.series || []
-    }).render();
-  }
-
-  // Sales Funnel Chart
-  var funnelData = @Html.Raw(Json.Serialize(Model.SalesFunnelChart));
-  var funnelEl = document.querySelector('#salesFunnelChart');
-  if (funnelEl && typeof ApexCharts !== 'undefined') {
-    new ApexCharts(funnelEl, {
-      chart: { height: 280, type: 'bar', toolbar: { show: false }, fontFamily: config.fontFamily, foreColor: labelColor },
-      colors: ['#6965fd', '#03c3ec', '#71dd88', config.colors.warning, config.colors.secondary, '#ff3e1d'],
-      dataLabels: { enabled: true, formatter: function(val, opts) { return typeof val === 'number' ? (val >= 1000 ? (val/1000).toFixed(0) + 'K' : val) : val; } },
-      plotOptions: { bar: { horizontal: false, columnWidth: '60%', borderRadius: 6, borderRadiusApplication: 'end' } },
-      legend: { show: true, position: 'top', horizontalAlign: 'left', fontSize: '12px', fontFamily: config.fontFamily, labels: { colors: legendColor } },
-      grid: { strokeDashArray: 7, borderColor: borderColor, padding: { top: -10, bottom: -10, left: 10, right: 10 } },
-      xaxis: { categories: funnelData.categories || [], labels: { style: { fontSize: '12px', fontFamily: config.fontFamily, colors: labelColor } }, axisTicks: { show: false }, axisBorder: { show: false } },
-      yaxis: { labels: { style: { fontSize: '13px', fontFamily: config.fontFamily, colors: labelColor } } },
-      tooltip: { theme: 'dark' },
-      series: funnelData.series || []
-    }).render();
-  }
-
-  // Channel x Region Heatmap
-  var heatmapData = @Html.Raw(Json.Serialize(Model.ChannelRegionHeatmap));
-  var heatmapEl = document.querySelector('#channelRegionHeatmap');
-  if (heatmapEl && typeof ApexCharts !== 'undefined') {
-    var yCats = heatmapData.yCategories || [];
-    new ApexCharts(heatmapEl, {
-      chart: { height: 280, type: 'heatmap', toolbar: { show: false }, fontFamily: config.fontFamily, foreColor: labelColor },
-      colors: ['#6965fd'],
-      dataLabels: { enabled: false },
-      stroke: { width: 1, colors: [cardColor] },
-      legend: { show: true, position: 'top', horizontalAlign: 'left', fontSize: '12px', fontFamily: config.fontFamily, labels: { colors: legendColor } },
-      grid: { padding: { top: -10, bottom: -10, left: 10, right: 10 } },
-      xaxis: { labels: { style: { fontSize: '11px', fontFamily: config.fontFamily, colors: labelColor } }, axisTicks: { show: false }, axisBorder: { show: false }, categories: heatmapData.xCategories || [] },
-      yaxis: { labels: { style: { fontSize: '11px', fontFamily: config.fontFamily, colors: labelColor } } },
-      plotOptions: { heatmap: { radius: 3, colorScale: { ranges: [{ from: 0, to: 0, name: 'None', color: '#f3f4f6' }, { from: 1, to: 50000, name: 'Low', color: '#dce6ff' }, { from: 50001, to: 200000, name: 'Medium', color: '#0984e3' }, { from: 200001, to: 1000000, name: 'High', color: '#012874' }] } } },
-      series: yCats.map(function(yCat, i) { return { name: yCat, data: (heatmapData.data || []).filter(function(d) { return d.y === yCat; }).map(function(d) { return d.value || 0; }) }; }),
-      tooltip: { theme: 'dark', y: { formatter: function(val) { return typeof val === 'number' ? '$' + val.toLocaleString() : val; } } }
-    }).render();
+    });
+    chart.render().then(function() {
+      var widgetId = bridgeEl.closest('.grid-stack-item')?.getAttribute('data-widget-id');
+      if (widgetId) {
+        window.dashboardChartInstances = window.dashboardChartInstances || {};
+        window.dashboardChartInstances[widgetId] = chart;
+      }
+    });
   }
 });
 </script>
 }
 
-@if (Model.CompanyPerformanceChart?.Series?.Any() == true)
+@if (Model.RevenueByBranchChart?.Series?.Any() == true)
 {
-  <script>
-    document.addEventListener('DOMContentLoaded', function () {
-      var chartData = @Html.Raw(Json.Serialize(Model.CompanyPerformanceChart));
-      var chartEl = document.querySelector('#totalRevenueChart');
-      if (chartEl && typeof ApexCharts !== 'undefined') {
-        var options = {
-          chart: { height: 300, stacked: true, type: 'bar', toolbar: { show: false } },
-          plotOptions: { bar: { horizontal: false, columnWidth: '30%', borderRadius: 8, borderRadiusApplication: 'around' } },
-          colors: ['#6965fd', '#03c3ec'],
-          dataLabels: { enabled: false },
-          stroke: { curve: 'smooth', width: 6, lineCap: 'round', colors: [cardColor] },
-          legend: { show: true, horizontalAlign: 'left', position: 'top', markers: { size: 4, radius: 12, shape: 'circle', strokeWidth: 0 }, fontSize: '13px', fontFamily: config.fontFamily, fontWeight: 400, labels: { colors: legendColor, useSeriesColors: false }, itemMargin: { horizontal: 10 } },
-          grid: { strokeDashArray: 7, borderColor: borderColor, padding: { top: 0, bottom: -8, left: 20, right: 20 } },
-          fill: { opacity: [1, 1] },
-          xaxis: { categories: chartData.categories || [], labels: { style: { fontSize: '13px', fontFamily: config.fontFamily, colors: labelColor } }, axisTicks: { show: false }, axisBorder: { show: false } },
-          yaxis: { labels: { style: { fontSize: '13px', fontFamily: config.fontFamily, colors: labelColor } } },
-          states: { hover: { filter: { type: 'none' } }, active: { filter: { type: 'none' } } },
-          series: chartData.series || []
-        };
-        new ApexCharts(chartEl, options).render();
-      }
-    });
-  </script>
-}
-
-@if (Model.ProfileReportChart.Series.Any())
-{
-  <script>
-    document.addEventListener('DOMContentLoaded', function () {
-      var profileData = @Html.Raw(Json.Serialize(Model.ProfileReportChart));
-      var profileEl = document.querySelector('#profileReportChart');
-      if (profileEl && typeof ApexCharts !== 'undefined') {
-        var options = {
-          chart: { height: 75, width: 240, type: 'line', toolbar: { show: false }, dropShadow: { enabled: true, top: 10, left: 5, blur: 3, color: config.colors.warning, opacity: 0.15 }, sparkline: { enabled: true } },
-          grid: { show: false, padding: { right: 8 } },
-          colors: [config.colors.warning],
-          dataLabels: { enabled: false },
-          stroke: { width: 5, curve: 'smooth' },
-          series: profileData.series || [],
-          xaxis: { show: false, lines: { show: false }, labels: { show: false }, axisBorder: { show: false } },
-          yaxis: { show: false }
-        };
-        new ApexCharts(profileEl, options).render();
-      }
-    });
-  </script>
-}
-
 <script>
+document.addEventListener('DOMContentLoaded', function () {
+  var branchData = @Html.Raw(Json.Serialize(Model.RevenueByBranchChart));
+  var branchEl = document.querySelector('#revenueByBranchChart');
+  if (branchEl && typeof ApexCharts !== 'undefined') {
+    var chart = new ApexCharts(branchEl, {
+      chart: { height: '100%', type: 'bar', toolbar: { show: false }, fontFamily: 'Plus Jakarta Sans', foreColor: '#a1acb8' },
+      colors: ['#ffab00'],
+      dataLabels: { enabled: false },
+      plotOptions: { bar: { horizontal: false, columnWidth: '40%', borderRadius: 6, borderRadiusApplication: 'around' } },
+      legend: { show: false },
+      grid: { strokeDashArray: 7, borderColor: '#eceef1', padding: { top: -10, bottom: -10, left: 10, right: 10 } },
+      xaxis: { categories: branchData.categories || [], labels: { style: { fontSize: '13px', fontFamily: 'Plus Jakarta Sans', colors: '#a1acb8' } }, axisTicks: { show: false }, axisBorder: { show: false } },
+      yaxis: { labels: { style: { fontSize: '13px', fontFamily: 'Plus Jakarta Sans', colors: '#a1acb8' }, formatter: function(val) { return typeof val === 'number' ? (val >= 1000 ? '$' + (val/1000).toFixed(0) + 'K' : val) : val; } } },
+      tooltip: { theme: 'dark', y: { formatter: function(val) { return typeof val === 'number' ? '$' + val.toLocaleString() : val; } } },
+      series: branchData.series || []
+    });
+    chart.render().then(function() {
+      var widgetId = branchEl.closest('.grid-stack-item')?.getAttribute('data-widget-id');
+      if (widgetId) {
+        window.dashboardChartInstances = window.dashboardChartInstances || {};
+        window.dashboardChartInstances[widgetId] = chart;
+      }
+    });
+  }
+});
+</script>
+}
+
+@if (Model.SalesFunnelChart?.Series?.Any() == true)
+{
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  var funnelData = @Html.Raw(Json.Serialize(Model.SalesFunnelChart));
+  var funnelEl = document.querySelector('#salesFunnelChart');
+  if (funnelEl && typeof ApexCharts !== 'undefined') {
+    var chart = new ApexCharts(funnelEl, {
+      chart: { height: '100%', type: 'bar', toolbar: { show: false }, fontFamily: 'Plus Jakarta Sans', foreColor: '#a1acb8' },
+      colors: ['#6965fd', '#03c3ec', '#71dd88', '#ffab00', '#8592a3', '#ff3e1d'],
+      dataLabels: { enabled: true, formatter: function(val, opts) { return typeof val === 'number' ? (val >= 1000 ? (val/1000).toFixed(0) + 'K' : val) : val; } },
+      plotOptions: { bar: { horizontal: false, columnWidth: '60%', borderRadius: 6, borderRadiusApplication: 'end' } },
+      legend: { show: true, position: 'top', horizontalAlign: 'left', fontSize: '12px', fontFamily: 'Plus Jakarta Sans', labels: { colors: '#697a8d' } },
+      grid: { strokeDashArray: 7, borderColor: '#eceef1', padding: { top: -10, bottom: -10, left: 10, right: 10 } },
+      xaxis: { categories: funnelData.categories || [], labels: { style: { fontSize: '12px', fontFamily: 'Plus Jakarta Sans', colors: '#a1acb8' } }, axisTicks: { show: false }, axisBorder: { show: false } },
+      yaxis: { labels: { style: { fontSize: '13px', fontFamily: 'Plus Jakarta Sans', colors: '#a1acb8' } } },
+      tooltip: { theme: 'dark' },
+      series: funnelData.series || []
+    });
+    chart.render().then(function() {
+      var widgetId = funnelEl.closest('.grid-stack-item')?.getAttribute('data-widget-id');
+      if (widgetId) {
+        window.dashboardChartInstances = window.dashboardChartInstances || {};
+        window.dashboardChartInstances[widgetId] = chart;
+      }
+    });
+  }
+});
+</script>
+}
+
+@if (Model.ChannelRegionHeatmap?.Data?.Any() == true)
+{
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  var heatmapData = @Html.Raw(Json.Serialize(Model.ChannelRegionHeatmap));
+  var heatmapEl = document.querySelector('#channelRegionHeatmap');
+  if (heatmapEl && typeof ApexCharts !== 'undefined') {
+    var yCats = heatmapData.yCategories || [];
+    var chart = new ApexCharts(heatmapEl, {
+      chart: { height: '100%', type: 'heatmap', toolbar: { show: false }, fontFamily: 'Plus Jakarta Sans', foreColor: '#a1acb8' },
+      colors: ['#6965fd'],
+      dataLabels: { enabled: false },
+      stroke: { width: 1, colors: ['#ffffff'] },
+      legend: { show: true, position: 'top', horizontalAlign: 'left', fontSize: '12px', fontFamily: 'Plus Jakarta Sans', labels: { colors: '#697a8d' } },
+      grid: { padding: { top: -10, bottom: -10, left: 10, right: 10 } },
+      xaxis: { labels: { style: { fontSize: '11px', fontFamily: 'Plus Jakarta Sans', colors: '#a1acb8' } }, axisTicks: { show: false }, axisBorder: { show: false }, categories: heatmapData.xCategories || [] },
+      yaxis: { labels: { style: { fontSize: '11px', fontFamily: 'Plus Jakarta Sans', colors: '#a1acb8' } } },
+      plotOptions: { heatmap: { radius: 3, colorScale: { ranges: [{ from: 0, to: 0, name: 'None', color: '#f3f4f6' }, { from: 1, to: 50000, name: 'Low', color: '#dce6ff' }, { from: 50001, to: 200000, name: 'Medium', color: '#0984e3' }, { from: 200001, to: 1000000, name: 'High', color: '#012874' }] } } },
+      series: yCats.map(function(yCat, i) { return { name: yCat, data: (heatmapData.data || []).filter(function(d) { return d.y === yCat; }).map(function(d) { return d.value || 0; }) }; }),
+      tooltip: { theme: 'dark', y: { formatter: function(val) { return typeof val === 'number' ? '$' + val.toLocaleString() : val; } } }
+    });
+    chart.render().then(function() {
+      var widgetId = heatmapEl.closest('.grid-stack-item')?.getAttribute('data-widget-id');
+      if (widgetId) {
+        window.dashboardChartInstances = window.dashboardChartInstances || {};
+        window.dashboardChartInstances[widgetId] = chart;
+      }
+    });
+  }
+});
+</script>
+}
+
+@if (Model.RevenueByChannelChart?.Series?.Any() == true)
+{
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  var chartData = window.dashboardCharts && window.dashboardCharts.executiveMonthlyRevenue
+    ? window.dashboardCharts.executiveMonthlyRevenue
+    : @Html.Raw(Json.Serialize(Model.RevenueByChannelChart));
+  var chartEl = document.querySelector('#executiveMonthlyRevenueChart');
+  if (chartEl && typeof ApexCharts !== 'undefined' && chartData && chartData.series && chartData.series.length) {
+    var chart = new ApexCharts(chartEl, {
+      chart: { height: '100%', type: 'area', toolbar: { show: false }, fontFamily: 'Plus Jakarta Sans', foreColor: '#a1acb8' },
+      colors: ['#03c3ec'],
+      dataLabels: { enabled: false },
+      stroke: { curve: 'smooth', width: 3 },
+      fill: {
+        type: 'gradient',
+        gradient: { shade: 'light', type: 'vertical', shadeIntensity: 0.4, gradientToColors: ['#03c3ec22'], opacityFrom: 0.7, opacityTo: 0.15, stops: [0, 100] }
+      },
+      legend: { show: true, position: 'top', horizontalAlign: 'left', fontSize: '13px', fontFamily: 'Plus Jakarta Sans', labels: { colors: '#697a8d' }, markers: { size: 4, radius: 12, shape: 'circle' } },
+      grid: { strokeDashArray: 7, borderColor: '#eceef1', padding: { top: -10, bottom: -8, left: 10, right: 10 } },
+      xaxis: {
+        categories: chartData.categories || [],
+        labels: { style: { fontSize: '13px', fontFamily: 'Plus Jakarta Sans', colors: '#a1acb8' } },
+        axisTicks: { show: false },
+        axisBorder: { show: false }
+      },
+      yaxis: {
+        labels: {
+          style: { fontSize: '13px', fontFamily: 'Plus Jakarta Sans', colors: '#a1acb8' },
+          formatter: function (val) {
+            return typeof val === 'number' ? (val >= 1000 ? '$' + (val / 1000).toFixed(0) + 'K' : '$' + val.toFixed(0)) : val;
+          }
+        }
+      },
+      tooltip: { theme: 'dark', y: { formatter: function (val) { return typeof val === 'number' ? '$' + val.toLocaleString() : val; } } },
+      series: chartData.series || []
+    });
+    chart.render().then(function() {
+      var widgetId = chartEl.closest('.grid-stack-item')?.getAttribute('data-widget-id');
+      if (widgetId) {
+        window.dashboardChartInstances = window.dashboardChartInstances || {};
+        window.dashboardChartInstances[widgetId] = chart;
+      }
+    });
+  }
+});
+</script>
+}
+
+@if (Model.ProfileReportChart.Series?.Any() == true)
+{
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  var profileData = @Html.Raw(Json.Serialize(Model.ProfileReportChart));
+  var profileEl = document.querySelector('#profileReportChart');
+  if (profileEl && typeof ApexCharts !== 'undefined') {
+    var chart = new ApexCharts(profileEl, {
+      chart: { height: 75, width: 240, type: 'line', toolbar: { show: false }, dropShadow: { enabled: true, top: 10, left: 5, blur: 3, color: '#ffab00', opacity: 0.15 }, sparkline: { enabled: true } },
+      grid: { show: false, padding: { right: 8 } },
+      colors: ['#ffab00'],
+      dataLabels: { enabled: false },
+      stroke: { width: 5, curve: 'smooth' },
+      series: profileData.series || [],
+      xaxis: { show: false, lines: { show: false }, labels: { show: false }, axisBorder: { show: false } },
+      yaxis: { show: false }
+    });
+    chart.render().then(function() {
+      var widgetId = profileEl.closest('.grid-stack-item')?.getAttribute('data-widget-id');
+      if (widgetId) {
+        window.dashboardChartInstances = window.dashboardChartInstances || {};
+        window.dashboardChartInstances[widgetId] = chart;
+      }
+    });
+  }
+});
+</script>
+}
+
+@* ============================================================
+   PART 4: GridStack Layout Manager Init
+   ============================================================ *@
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  // Initialize the Dashboard Layout Manager
+  window.dashboardLayoutManager = new DashboardLayoutManager('dashboard-grid', {
+    storageKey: 'executive-dashboard-layout-v3',
+    editMode: false,
+    animate: true,
+    gap: 20,
+    onLayoutChange: function(layout) {
+      console.log('Layout changed:', layout);
+    }
+  });
+
+  // Override toggle to also update UI buttons
+  var originalToggle = window.dashboardLayoutManager.toggleEditMode.bind(window.dashboardLayoutManager);
+  window.dashboardLayoutManager.toggleEditMode = function() {
+    var isEditing = originalToggle();
+    var editBtn = document.getElementById('btn-layout-edit');
+    var resetBtn = document.getElementById('btn-layout-reset');
+    var saveBtn = document.getElementById('btn-layout-save');
+    var container = document.getElementById('dashboard-grid-container');
+
+    if (isEditing) {
+      if (editBtn) {
+        editBtn.classList.add('editing');
+        editBtn.innerHTML = '<i class="icon-base bx bx-check"></i> Done Editing';
+      }
+      if (resetBtn) resetBtn.style.display = '';
+      if (saveBtn) saveBtn.style.display = '';
+      if (container) container.classList.add('grid-edit-mode');
+    } else {
+      if (editBtn) {
+        editBtn.classList.remove('editing');
+        editBtn.innerHTML = '<i class="icon-base bx bx-edit-alt"></i> Customize Layout';
+      }
+      if (resetBtn) resetBtn.style.display = 'none';
+      if (saveBtn) saveBtn.style.display = 'none';
+      if (container) container.classList.remove('grid-edit-mode');
+    }
+  };
+
+  // Override save to show notification
+  var originalSave = window.dashboardLayoutManager.saveToStorage.bind(window.dashboardLayoutManager);
+  window.dashboardLayoutManager.saveLayout = function() {
+    originalSave();
+    // Show toast notification if toastr is available
+    if (typeof toastr !== 'undefined') {
+      toastr.success('Layout saved successfully!', '', { timeOut: 2000 });
+    } else {
+      var editBtn = document.getElementById('btn-layout-edit');
+      if (editBtn) {
+        editBtn.innerHTML = '<i class="icon-base bx bx-check-circle"></i> Saved!';
+        setTimeout(function() {
+          editBtn.innerHTML = '<i class="icon-base bx bx-edit-alt"></i> Customize Layout';
+        }, 2000);
+      }
+    }
+  };
+});
+
 function setRange(type) {
     var today = new Date();
     var toInput = document.querySelector('form[method="get"] input[name="to"]');
@@ -910,3 +1231,8 @@ function setRange(type) {
     fromInput.closest('form').submit();
 }
 </script>
+
+@{
+    var aiExecModel = new Dashboard.Models.ViewModels.AIChatWidgetModel { Department = "Executive" };
+}
+<partial name="~/Views/Shared/Partials/_AIChatWidget.cshtml" model="aiExecModel" />

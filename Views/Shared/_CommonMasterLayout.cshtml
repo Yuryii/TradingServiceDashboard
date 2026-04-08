@@ -70,6 +70,10 @@
 
   <!-- Main JS-->
   <script src='~/js/main.js'></script>
+  @if (User.Identity?.IsAuthenticated == true)
+  {
+    <script src="~/js/global-search.js"></script>
+  }
 
   <!-- Page Scripts-->
   @RenderSection("PageScripts", required: false)
@@ -78,6 +82,8 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/8.0.0/signalr.min.js"></script>
   <!-- Notification Client -->
   <script src="~/js/notification-client.js"></script>
+  <!-- AI Chat Client -->
+  <script src="~/js/ai-chat-client.js"></script>
 </body>
 
 </html>

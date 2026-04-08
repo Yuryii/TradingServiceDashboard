@@ -48,6 +48,9 @@ public class InventoryCrudController : Controller
     #endregion
 
     #region Products
+    public async Task<IActionResult> Create() => await ProductsCreate();
+    public async Task<IActionResult> ProductsIndex() => await Products();
+    public async Task<IActionResult> Products_Create() => await Products_Create_Original();
     public async Task<IActionResult> Products()
     {
         var items = await _context.Products.Include(p => p.Category).AsNoTracking().OrderByDescending(p => p.CreatedAt)
@@ -55,7 +58,8 @@ public class InventoryCrudController : Controller
             .ToListAsync();
         return View("Products/Index", items);
     }
-    public async Task<IActionResult> Products_Create() { ViewBag.Categories = await _context.ProductCategories.Where(c => c.IsActive).OrderBy(c => c.CategoryName).ToListAsync(); return View("Products/Create", new ProductCreateVM()); }
+    public async Task<IActionResult> Products_Create_Original() { ViewBag.Categories = await _context.ProductCategories.Where(c => c.IsActive).OrderBy(c => c.CategoryName).ToListAsync(); return View("Products/Create", new ProductCreateVM()); }
+    public async Task<IActionResult> ProductsCreate() => await Products_Create_Original();
     [HttpPost][ValidateAntiForgeryToken] public async Task<IActionResult> Products_Create(ProductCreateVM model) {
         if (!ModelState.IsValid) { ViewBag.Categories = await _context.ProductCategories.Where(c => c.IsActive).ToListAsync(); return View("Products/Create", model); }
         _context.Products.Add(new Product { ProductCode = model.ProductCode, ProductName = model.ProductName, CategoryID = model.CategoryID, ProductType = model.ProductType, UnitOfMeasure = model.UnitOfMeasure, Brand = model.Brand, SalePrice = model.SalePrice, CostPrice = model.CostPrice, ReorderLevel = model.ReorderLevel, MaxStockLevel = model.MaxStockLevel, IsStockItem = model.IsStockItem, IsActive = model.IsActive, CreatedAt = DateTime.UtcNow });
@@ -79,13 +83,15 @@ public class InventoryCrudController : Controller
     #endregion
 
     #region ProductCategories
+    public async Task<IActionResult> ProductCategoriesIndex() => await ProductCategories();
     public async Task<IActionResult> ProductCategories() {
         var items = await _context.ProductCategories.Include(c => c.ParentCategory).AsNoTracking().OrderBy(c => c.CategoryName)
             .Select(c => new ProductCategoryListVM { CategoryID = c.CategoryID, CategoryCode = c.CategoryCode, CategoryName = c.CategoryName, ParentCategoryName = c.ParentCategory != null ? c.ParentCategory.CategoryName : null, Description = c.Description, IsActive = c.IsActive })
             .ToListAsync();
         return View("ProductCategories/Index", items);
     }
-    public async Task<IActionResult> ProductCategories_Create() { ViewBag.ParentCategories = await _context.ProductCategories.Where(c => c.IsActive).OrderBy(c => c.CategoryName).ToListAsync(); return View("ProductCategories/Create", new ProductCategoryCreateVM()); }
+    public async Task<IActionResult> ProductCategories_Create_Original() { ViewBag.ParentCategories = await _context.ProductCategories.Where(c => c.IsActive).OrderBy(c => c.CategoryName).ToListAsync(); return View("ProductCategories/Create", new ProductCategoryCreateVM()); }
+    public async Task<IActionResult> ProductCategoriesCreate() => await ProductCategories_Create_Original();
     [HttpPost][ValidateAntiForgeryToken] public async Task<IActionResult> ProductCategories_Create(ProductCategoryCreateVM model) {
         if (!ModelState.IsValid) { ViewBag.ParentCategories = await _context.ProductCategories.Where(c => c.IsActive).ToListAsync(); return View("ProductCategories/Create", model); }
         _context.ProductCategories.Add(new ProductCategory { CategoryCode = model.CategoryCode, CategoryName = model.CategoryName, ParentCategoryID = model.ParentCategoryID, Description = model.Description, IsActive = model.IsActive });
@@ -109,13 +115,15 @@ public class InventoryCrudController : Controller
     #endregion
 
     #region Warehouses
+    public async Task<IActionResult> WarehousesIndex() => await Warehouses();
     public async Task<IActionResult> Warehouses() {
         var items = await _context.Warehouses.Include(w => w.Branch).AsNoTracking().OrderBy(w => w.WarehouseName)
             .Select(w => new WarehouseListVM { WarehouseID = w.WarehouseID, WarehouseCode = w.WarehouseCode, WarehouseName = w.WarehouseName, BranchName = w.Branch != null ? w.Branch.BranchName : null, City = w.City, Province = w.Province, IsActive = w.IsActive })
             .ToListAsync();
         return View("Warehouses/Index", items);
     }
-    public async Task<IActionResult> Warehouses_Create() { ViewBag.Branches = await _context.Branches.Where(b => b.IsActive).OrderBy(b => b.BranchName).ToListAsync(); return View("Warehouses/Create", new WarehouseCreateVM()); }
+    public async Task<IActionResult> Warehouses_Create_Original() { ViewBag.Branches = await _context.Branches.Where(b => b.IsActive).OrderBy(b => b.BranchName).ToListAsync(); return View("Warehouses/Create", new WarehouseCreateVM()); }
+    public async Task<IActionResult> WarehousesCreate() => await Warehouses_Create_Original();
     [HttpPost][ValidateAntiForgeryToken] public async Task<IActionResult> Warehouses_Create(WarehouseCreateVM model) {
         if (!ModelState.IsValid) { ViewBag.Branches = await _context.Branches.Where(b => b.IsActive).ToListAsync(); return View("Warehouses/Create", model); }
         _context.Warehouses.Add(new Warehouse { WarehouseCode = model.WarehouseCode, WarehouseName = model.WarehouseName, BranchID = model.BranchID, AddressLine = model.AddressLine, City = model.City, Province = model.Province, IsActive = model.IsActive, CreatedAt = DateTime.UtcNow });
@@ -139,13 +147,15 @@ public class InventoryCrudController : Controller
     #endregion
 
     #region Suppliers
+    public async Task<IActionResult> SuppliersIndex() => await Suppliers();
     public async Task<IActionResult> Suppliers() {
         var items = await _context.Suppliers.Include(s => s.Region).AsNoTracking().OrderBy(s => s.SupplierName)
             .Select(s => new SupplierListVM { SupplierID = s.SupplierID, SupplierCode = s.SupplierCode, SupplierName = s.SupplierName, SupplierType = s.SupplierType, Phone = s.Phone, Email = s.Email, IsActive = s.IsActive })
             .ToListAsync();
         return View("Suppliers/Index", items);
     }
-    public async Task<IActionResult> Suppliers_Create() { ViewBag.Regions = await _context.Regions.Where(r => r.IsActive).OrderBy(r => r.RegionName).ToListAsync(); return View("Suppliers/Create", new SupplierCreateVM()); }
+    public async Task<IActionResult> Suppliers_Create_Original() { ViewBag.Regions = await _context.Regions.Where(r => r.IsActive).OrderBy(r => r.RegionName).ToListAsync(); return View("Suppliers/Create", new SupplierCreateVM()); }
+    public async Task<IActionResult> SuppliersCreate() => await Suppliers_Create_Original();
     [HttpPost][ValidateAntiForgeryToken] public async Task<IActionResult> Suppliers_Create(SupplierCreateVM model) {
         if (!ModelState.IsValid) { ViewBag.Regions = await _context.Regions.Where(r => r.IsActive).ToListAsync(); return View("Suppliers/Create", model); }
         _context.Suppliers.Add(new Supplier { SupplierCode = model.SupplierCode, SupplierName = model.SupplierName, SupplierType = model.SupplierType, RegionID = model.RegionID, TaxCode = model.TaxCode, Phone = model.Phone, Email = model.Email, AddressLine = model.AddressLine, City = model.City, Province = model.Province, Country = model.Country, PaymentTermDays = model.PaymentTermDays, IsActive = model.IsActive, CreatedAt = DateTime.UtcNow });
@@ -169,19 +179,21 @@ public class InventoryCrudController : Controller
     #endregion
 
     #region PurchaseOrders
+    public async Task<IActionResult> PurchaseOrdersIndex() => await PurchaseOrders();
     public async Task<IActionResult> PurchaseOrders() {
         var items = await _context.PurchaseOrders.Include(p => p.Supplier).AsNoTracking().OrderByDescending(p => p.OrderDate)
             .Select(p => new PurchaseOrderListVM { PurchaseOrderID = p.PurchaseOrderID, OrderNumber = p.OrderNumber, SupplierName = p.Supplier != null ? p.Supplier.SupplierName : null, TotalAmount = p.TotalAmount, PaymentStatus = p.PaymentStatus, DeliveryStatus = p.DeliveryStatus, Status = p.Status, OrderDate = p.OrderDate })
             .ToListAsync();
         return View("PurchaseOrders/Index", items);
     }
-    public async Task<IActionResult> PurchaseOrders_Create() {
+    public async Task<IActionResult> PurchaseOrders_Create_Original() {
         ViewBag.Suppliers = await _context.Suppliers.Where(s => s.IsActive).OrderBy(s => s.SupplierName).ToListAsync();
         ViewBag.Warehouses = await _context.Warehouses.Where(w => w.IsActive).OrderBy(w => w.WarehouseName).ToListAsync();
         ViewBag.Branches = await _context.Branches.Where(b => b.IsActive).OrderBy(b => b.BranchName).ToListAsync();
         ViewBag.Employees = await _context.Employees.Where(e => e.IsActive).OrderBy(e => e.FullName).ToListAsync();
         return View("PurchaseOrders/Create", new PurchaseOrderCreateVM());
     }
+    public async Task<IActionResult> PurchaseOrdersCreate() => await PurchaseOrders_Create_Original();
     [HttpPost][ValidateAntiForgeryToken] public async Task<IActionResult> PurchaseOrders_Create(PurchaseOrderCreateVM model) {
         if (!ModelState.IsValid) { ViewBag.Suppliers = await _context.Suppliers.Where(s => s.IsActive).ToListAsync(); ViewBag.Warehouses = await _context.Warehouses.Where(w => w.IsActive).ToListAsync(); ViewBag.Branches = await _context.Branches.Where(b => b.IsActive).ToListAsync(); ViewBag.Employees = await _context.Employees.Where(e => e.IsActive).ToListAsync(); return View("PurchaseOrders/Create", model); }
         _context.PurchaseOrders.Add(new PurchaseOrder { OrderNumber = model.OrderNumber, SupplierID = model.SupplierID, WarehouseID = model.WarehouseID, BranchID = model.BranchID, RequestedByEmployeeID = model.RequestedByEmployeeID, ApprovedByEmployeeID = model.ApprovedByEmployeeID, OrderDate = model.OrderDate, ExpectedDeliveryDate = model.ExpectedDeliveryDate, SubTotal = model.SubTotal, TaxAmount = model.TaxAmount, DiscountAmount = model.DiscountAmount, TotalAmount = model.TotalAmount, PaymentStatus = model.PaymentStatus, DeliveryStatus = model.DeliveryStatus, Notes = model.Notes, Status = model.Status, CreatedAt = DateTime.UtcNow });
@@ -205,13 +217,14 @@ public class InventoryCrudController : Controller
     #endregion
 
     #region PurchaseReceipts
+    public async Task<IActionResult> PurchaseReceiptsIndex() => await PurchaseReceipts();
     public async Task<IActionResult> PurchaseReceipts() {
         var items = await _context.PurchaseReceipts.Include(r => r.Supplier).Include(r => r.PurchaseOrder).AsNoTracking().OrderByDescending(r => r.ReceiptDate)
             .Select(r => new PurchaseReceiptListVM { ReceiptID = r.ReceiptID, ReceiptNumber = r.ReceiptNumber, SupplierName = r.Supplier != null ? r.Supplier.SupplierName : null, PurchaseOrderNumber = r.PurchaseOrder != null ? r.PurchaseOrder.OrderNumber : null, TotalAmount = r.TotalAmount, Status = r.Status, ReceiptDate = r.ReceiptDate })
             .ToListAsync();
         return View("PurchaseReceipts/Index", items);
     }
-    public async Task<IActionResult> PurchaseReceipts_Create() {
+    public async Task<IActionResult> PurchaseReceipts_Create_Original() {
         ViewBag.PurchaseOrders = await _context.PurchaseOrders.Where(p => p.Status != "Cancelled" && p.Status != "Completed").OrderByDescending(p => p.OrderDate).ToListAsync();
         ViewBag.Suppliers = await _context.Suppliers.Where(s => s.IsActive).OrderBy(s => s.SupplierName).ToListAsync();
         ViewBag.Warehouses = await _context.Warehouses.Where(w => w.IsActive).OrderBy(w => w.WarehouseName).ToListAsync();
@@ -219,6 +232,7 @@ public class InventoryCrudController : Controller
         ViewBag.Employees = await _context.Employees.Where(e => e.IsActive).OrderBy(e => e.FullName).ToListAsync();
         return View("PurchaseReceipts/Create", new PurchaseReceiptCreateVM());
     }
+    public async Task<IActionResult> PurchaseReceiptsCreate() => await PurchaseReceipts_Create_Original();
     [HttpPost][ValidateAntiForgeryToken] public async Task<IActionResult> PurchaseReceipts_Create(PurchaseReceiptCreateVM model) {
         if (!ModelState.IsValid) { ViewBag.PurchaseOrders = await _context.PurchaseOrders.Where(p => p.Status != "Cancelled" && p.Status != "Completed").ToListAsync(); ViewBag.Suppliers = await _context.Suppliers.Where(s => s.IsActive).ToListAsync(); ViewBag.Warehouses = await _context.Warehouses.Where(w => w.IsActive).ToListAsync(); ViewBag.Branches = await _context.Branches.Where(b => b.IsActive).ToListAsync(); ViewBag.Employees = await _context.Employees.Where(e => e.IsActive).ToListAsync(); return View("PurchaseReceipts/Create", model); }
         _context.PurchaseReceipts.Add(new PurchaseReceipt { ReceiptNumber = model.ReceiptNumber, PurchaseOrderID = model.PurchaseOrderID, SupplierID = model.SupplierID, WarehouseID = model.WarehouseID, BranchID = model.BranchID, ReceivedByEmployeeID = model.ReceivedByEmployeeID, ReceiptDate = model.ReceiptDate, TotalAmount = model.TotalAmount, Status = model.Status, Notes = model.Notes, CreatedAt = DateTime.UtcNow });
@@ -242,19 +256,21 @@ public class InventoryCrudController : Controller
     #endregion
 
     #region PurchaseInvoices
+    public async Task<IActionResult> PurchaseInvoicesIndex() => await PurchaseInvoices();
     public async Task<IActionResult> PurchaseInvoices() {
         var items = await _context.PurchaseInvoices.Include(p => p.Supplier).AsNoTracking().OrderByDescending(p => p.InvoiceDate)
             .Select(p => new PurchaseInvoiceListVM { InvoiceID = p.InvoiceID, InvoiceNumber = p.InvoiceNumber, SupplierName = p.Supplier != null ? p.Supplier.SupplierName : null, TotalAmount = p.TotalAmount, PaymentStatus = p.PaymentStatus, Status = p.Status, InvoiceDate = p.InvoiceDate })
             .ToListAsync();
         return View("PurchaseInvoices/Index", items);
     }
-    public async Task<IActionResult> PurchaseInvoices_Create() {
+    public async Task<IActionResult> PurchaseInvoices_Create_Original() {
         ViewBag.PurchaseOrders = await _context.PurchaseOrders.Where(p => p.Status != "Cancelled" && p.Status != "Completed").OrderByDescending(p => p.OrderDate).ToListAsync();
         ViewBag.Suppliers = await _context.Suppliers.Where(s => s.IsActive).OrderBy(s => s.SupplierName).ToListAsync();
         ViewBag.Warehouses = await _context.Warehouses.Where(w => w.IsActive).OrderBy(w => w.WarehouseName).ToListAsync();
         ViewBag.Branches = await _context.Branches.Where(b => b.IsActive).OrderBy(b => b.BranchName).ToListAsync();
         return View("PurchaseInvoices/Create", new PurchaseInvoiceCreateVM());
     }
+    public async Task<IActionResult> PurchaseInvoicesCreate() => await PurchaseInvoices_Create_Original();
     [HttpPost][ValidateAntiForgeryToken] public async Task<IActionResult> PurchaseInvoices_Create(PurchaseInvoiceCreateVM model) {
         if (!ModelState.IsValid) { ViewBag.PurchaseOrders = await _context.PurchaseOrders.Where(p => p.Status != "Cancelled" && p.Status != "Completed").ToListAsync(); ViewBag.Suppliers = await _context.Suppliers.Where(s => s.IsActive).ToListAsync(); ViewBag.Warehouses = await _context.Warehouses.Where(w => w.IsActive).ToListAsync(); ViewBag.Branches = await _context.Branches.Where(b => b.IsActive).ToListAsync(); return View("PurchaseInvoices/Create", model); }
         _context.PurchaseInvoices.Add(new PurchaseInvoice { InvoiceNumber = model.InvoiceNumber, PurchaseOrderID = model.PurchaseOrderID, SupplierID = model.SupplierID, WarehouseID = model.WarehouseID, BranchID = model.BranchID, InvoiceDate = model.InvoiceDate, DueDate = model.DueDate, SubTotal = model.SubTotal, TaxAmount = model.TaxAmount, DiscountAmount = model.DiscountAmount, TotalAmount = model.TotalAmount, AmountPaid = model.AmountPaid, AmountDue = model.AmountDue, PaymentStatus = model.PaymentStatus, Status = model.Status, Notes = model.Notes, CreatedAt = DateTime.UtcNow });
@@ -278,19 +294,21 @@ public class InventoryCrudController : Controller
     #endregion
 
     #region SupplierPayments
+    public async Task<IActionResult> SupplierPaymentsIndex() => await SupplierPayments();
     public async Task<IActionResult> SupplierPayments() {
         var items = await _context.SupplierPayments.Include(s => s.Supplier).AsNoTracking().OrderByDescending(s => s.PaymentDate)
             .Select(s => new SupplierPaymentListVM { PaymentID = s.PaymentID, PaymentNumber = s.PaymentNumber, SupplierName = s.Supplier != null ? s.Supplier.SupplierName : null, Amount = s.Amount, PaymentMethod = s.PaymentMethod, PaymentDate = s.PaymentDate })
             .ToListAsync();
         return View("SupplierPayments/Index", items);
     }
-    public async Task<IActionResult> SupplierPayments_Create() {
+    public async Task<IActionResult> SupplierPayments_Create_Original() {
         ViewBag.PurchaseOrders = await _context.PurchaseOrders.Where(p => p.Status != "Cancelled" && p.Status != "Completed").OrderByDescending(p => p.OrderDate).ToListAsync();
         ViewBag.Suppliers = await _context.Suppliers.Where(s => s.IsActive).OrderBy(s => s.SupplierName).ToListAsync();
         ViewBag.Branches = await _context.Branches.Where(b => b.IsActive).OrderBy(b => b.BranchName).ToListAsync();
         ViewBag.Employees = await _context.Employees.Where(e => e.IsActive).OrderBy(e => e.FullName).ToListAsync();
         return View("SupplierPayments/Create", new SupplierPaymentCreateVM());
     }
+    public async Task<IActionResult> SupplierPaymentsCreate() => await SupplierPayments_Create_Original();
     [HttpPost][ValidateAntiForgeryToken] public async Task<IActionResult> SupplierPayments_Create(SupplierPaymentCreateVM model) {
         if (!ModelState.IsValid) { ViewBag.PurchaseOrders = await _context.PurchaseOrders.Where(p => p.Status != "Cancelled" && p.Status != "Completed").ToListAsync(); ViewBag.Suppliers = await _context.Suppliers.Where(s => s.IsActive).ToListAsync(); ViewBag.Branches = await _context.Branches.Where(b => b.IsActive).ToListAsync(); ViewBag.Employees = await _context.Employees.Where(e => e.IsActive).ToListAsync(); return View("SupplierPayments/Create", model); }
         _context.SupplierPayments.Add(new SupplierPayment { PaymentNumber = model.PaymentNumber, PurchaseOrderID = model.PurchaseOrderID, ReceiptID = model.ReceiptID, SupplierID = model.SupplierID, BranchID = model.BranchID, ProcessedByEmployeeID = model.ProcessedByEmployeeID, PaymentDate = model.PaymentDate, Amount = model.Amount, PaymentMethod = model.PaymentMethod, ReferenceNumber = model.ReferenceNumber, Notes = model.Notes, CreatedAt = DateTime.UtcNow });

@@ -26,23 +26,18 @@
 
   @* ! Full version menu-items *@
   <ul class="menu-inner py-1">
-    <!-- Dashboards -->
-    <li class='menu-item@(currentPage.EndsWith("/") || currentPage.StartsWith("/Dashboards/") ? " active open" : "")'>
-      <a href="javascript:void(0);" class="menu-link menu-toggle">
-        <i class="menu-icon icon-base bx bx-home-smile"></i>
-        <div class="text-truncate" data-i18n="Dashboards">Dashboards</div>
+    <!-- AI Assistant (own section; separate from Business Dashboards & Data Management) -->
+    <li class="menu-header small text-uppercase"><span class="menu-header-text">AI Assistant</span></li>
+    <li class='menu-item@(currentPage.StartsWith("/AIAssistant") ? " active" : "")'>
+      <a asp-controller="AIAssistant" asp-action="Index" class="menu-link">
+        <i class="menu-icon icon-base bx bx-bot"></i>
+        <div class="text-truncate">AI Assistant</div>
+        <div class="badge rounded-pill bg-label-warning text-uppercase fs-tiny ms-auto">Beta</div>
       </a>
-      <ul class="menu-sub">
-        <li class='menu-item@(currentPage == "/" ? " active" : "")'>
-          <a asp-controller="Dashboards" asp-action="Index" class="menu-link">
-            <div class="text-truncate">Analytics</div>
-          </a>
-        </li>
-      </ul>
     </li>
 
     <!-- Business Dashboards -->
-    <li class="menu-header small text-uppercase"><span class="menu-header-text">Business Dashboards</span></li>
+    <li class="menu-header small text-uppercase mt-3"><span class="menu-header-text">Business Dashboards</span></li>
 
     <!-- Executive -->
     @if (User.IsInRole(SD.Role_Executive))
@@ -51,7 +46,6 @@
       <a asp-controller="Executive" asp-action="Index" class="menu-link">
         <i class="menu-icon icon-base bx bx-building-house"></i>
         <div class="text-truncate">Executive</div>
-        <div class="badge rounded-pill bg-label-primary text-uppercase fs-tiny ms-auto">BGD</div>
       </a>
     </li>
     }
@@ -63,7 +57,6 @@
       <a asp-controller="UserManagement" asp-action="Index" class="menu-link">
         <i class="menu-icon icon-base bx bx-user-circle"></i>
         <div class="text-truncate">User Management</div>
-        <div class="badge rounded-pill bg-label-danger text-uppercase fs-tiny ms-auto">ADM</div>
       </a>
     </li>
     }
@@ -75,7 +68,6 @@
       <a asp-controller="Sales" asp-action="Index" class="menu-link">
         <i class="menu-icon icon-base bx bx-trending-up"></i>
         <div class="text-truncate">Sales</div>
-        <div class="badge rounded-pill bg-label-success text-uppercase fs-tiny ms-auto">KD</div>
       </a>
     </li>
     }
@@ -98,7 +90,6 @@
       <a asp-controller="Finance" asp-action="Index" class="menu-link">
         <i class="menu-icon icon-base bx bx-dollar"></i>
         <div class="text-truncate">Finance</div>
-        <div class="badge rounded-pill bg-label-warning text-uppercase fs-tiny ms-auto">KT</div>
       </a>
     </li>
     }
@@ -121,7 +112,6 @@
       <a asp-controller="HumanResources" asp-action="Index" class="menu-link">
         <i class="menu-icon icon-base bx bx-user"></i>
         <div class="text-truncate">HR</div>
-        <div class="badge rounded-pill bg-label-info text-uppercase fs-tiny ms-auto">NS</div>
       </a>
     </li>
     }
@@ -138,7 +128,7 @@
     }
 
     <!-- Data Management -->
-    <li class="menu-header small text-uppercase"><span class="menu-header-text">Data Management</span></li>
+    <li class="menu-header small text-uppercase mt-3"><span class="menu-header-text">Data Management</span></li>
 
     <!-- Executive CRUD -->
     @if (User.IsInRole(SD.Role_Executive))
@@ -147,7 +137,6 @@
       <a href="javascript:void(0);" class="menu-link menu-toggle">
         <i class="menu-icon icon-base bx bx-building"></i>
         <div class="text-truncate">System Data</div>
-        <div class="badge rounded-pill bg-label-danger text-uppercase fs-tiny ms-auto">ADM</div>
       </a>
       <ul class="menu-sub">
         <li class='menu-item@(currentPage.StartsWith("/ExecutiveCrud/Regions") ? " active" : "")'>
@@ -170,7 +159,6 @@
       <a href="javascript:void(0);" class="menu-link menu-toggle">
         <i class="menu-icon icon-base bx bx-trending-up"></i>
         <div class="text-truncate">Sales Data</div>
-        <div class="badge rounded-pill bg-label-success text-uppercase fs-tiny ms-auto">KD</div>
       </a>
       <ul class="menu-sub">
         <li class='menu-item@(currentPage.StartsWith("/SalesCrud/Customers") ? " active" : "")'>
@@ -273,7 +261,6 @@
       <a href="javascript:void(0);" class="menu-link menu-toggle">
         <i class="menu-icon icon-base bx bx-dollar"></i>
         <div class="text-truncate">Finance Data</div>
-        <div class="badge rounded-pill bg-label-warning text-uppercase fs-tiny ms-auto">KT</div>
       </a>
       <ul class="menu-sub">
         <li class='menu-item@(currentPage.StartsWith("/FinanceCrud/Expenses_Index") ? " active" : "")'>
@@ -293,7 +280,6 @@
       <a href="javascript:void(0);" class="menu-link menu-toggle">
         <i class="menu-icon icon-base bx bx-user"></i>
         <div class="text-truncate">HR Data</div>
-        <div class="badge rounded-pill bg-label-info text-uppercase fs-tiny ms-auto">NS</div>
       </a>
       <ul class="menu-sub">
         <li class='menu-item@(currentPage.StartsWith("/HumanResourcesCrud/Positions") ? " active" : "")'>

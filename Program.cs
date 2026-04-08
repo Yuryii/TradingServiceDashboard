@@ -107,10 +107,16 @@ CrudServiceRegistry.RegisterAll(builder.Services);
 
 // Register Excel CRUD Service
 builder.Services.AddScoped<ExcelCrudService>();
+builder.Services.AddScoped<GlobalSearchService>();
 
 // Register Notification Services
 builder.Services.AddScoped<INotificationService, NotificationService>();
 builder.Services.AddSingleton<INotificationConfigCache, NotificationConfigCache>();
+
+// Register AI Chat Services
+builder.Services.AddHttpClient("AIChat");
+builder.Services.AddScoped<AIContextAggregator>();
+builder.Services.AddScoped<IAIChatService, AIChatService>();
 
 var app = builder.Build();
 
@@ -155,6 +161,7 @@ app.MapControllerRoute(
 
 // SignalR Hub
 app.MapHub<NotificationHub>("/notificationHub");
+app.MapHub<AIChatHub>("/aiChatHub");
 
 // Hangfire Dashboard
 app.UseHangfireDashboard("/hangfire", new Hangfire.DashboardOptions

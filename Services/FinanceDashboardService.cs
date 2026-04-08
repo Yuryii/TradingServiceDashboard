@@ -177,8 +177,9 @@ public class FinanceDashboardService : IFinanceDashboardService
         };
     }
 
-    private async Task<KpiCardDto> GetArBalanceAsync(DateTime from, DateTime to)
+    public async Task<KpiCardDto> GetArBalanceAsync(DateTime? fromDate = null, DateTime? toDate = null)
     {
+        var (from, to) = GetDateRange(fromDate, toDate);
         var balance = await _context.SalesOrders
             .Where(so => so.PaymentStatus != "Paid" && so.OrderDate >= from && so.OrderDate <= to)
             .SumAsync(so => (decimal?)(so.TotalAmount - so.PaidAmount)) ?? 0;

@@ -6,100 +6,66 @@
   var defaultTo = now.ToString("yyyy-MM-dd");
   var currentFrom = Context.Request.Query["from"].FirstOrDefault() ?? defaultFrom;
   var currentTo = Context.Request.Query["to"].FirstOrDefault() ?? defaultTo;
+
+  bool hasLeadTrend     = Model.LeadTrendChart?.Series?.Any() == true;
+  bool hasFunnel       = Model.MarketingFunnelChart?.Series?.Any() == true;
+  bool hasChannel      = Model.ChannelSpendRevenueChart?.Series?.Any() == true;
+  bool hasCplScatter   = Model.CplVsConversionScatterChart?.Series?.Any() == true;
+  bool hasLanding      = Model.LandingPageChart?.Series?.Any() == true;
+  bool hasCohort       = Model.CohortRetentionChart?.Series?.Any() == true;
+  bool hasTimeSlot     = Model.TimeSlotHeatmap?.Data != null && Model.TimeSlotHeatmap.Data.Any();
+  bool hasCampaignChart = Model.CampaignPerformanceChart?.Series?.Any() == true;
+
+  int chartRow1 = 12;
+  int chartRow2 = chartRow1 + 8;
+  int chartRow3 = chartRow2 + 8;
+  int chartRow4 = hasTimeSlot ? chartRow3 + 8 : chartRow3;
+  int bottomRow = chartRow4 + 8;
 }
 @section VendorStyles {
 <link rel="stylesheet" href="~/vendor/libs/apex-charts/apex-charts.css" />
+<link rel="stylesheet" href="~/vendor/libs/gridstack/gridstack.min.css" />
 }
 @section VendorScripts {
 <script src="~/vendor/libs/apex-charts/apexcharts.js"></script>
 }
-@* Always render chart data - individual guards protect each chart render *@
+@* Inject all charts *@
 <script>
 window.dashboardCharts = window.dashboardCharts || {};
-window.dashboardCharts.orderChart = @Html.Raw(Json.Serialize(Model.CampaignPerformanceChart));
-window.dashboardCharts.revenueChart = @Html.Raw(Json.Serialize(Model.CampaignPerformanceChart));
-window.dashboardCharts.leadTrend = @Html.Raw(Json.Serialize(Model.LeadTrendChart));
-window.dashboardCharts.marketingFunnel = @Html.Raw(Json.Serialize(Model.MarketingFunnelChart));
-window.dashboardCharts.channelSpendRevenue = @Html.Raw(Json.Serialize(Model.ChannelSpendRevenueChart));
-window.dashboardCharts.cplVsConversion = @Html.Raw(Json.Serialize(Model.CplVsConversionScatterChart));
-window.dashboardCharts.landingPage = @Html.Raw(Json.Serialize(Model.LandingPageChart));
-window.dashboardCharts.cohortRetention = @Html.Raw(Json.Serialize(Model.CohortRetentionChart));
-window.dashboardCharts.timeSlotHeatmap = @Html.Raw(Json.Serialize(Model.TimeSlotHeatmap));
+Object.assign(window.dashboardCharts, {
+  orderChart: @Html.Raw(Json.Serialize(Model.CampaignPerformanceChart)),
+  revenueChart: @Html.Raw(Json.Serialize(Model.CampaignPerformanceChart)),
+  leadTrend: @Html.Raw(Json.Serialize(Model.LeadTrendChart)),
+  marketingFunnel: @Html.Raw(Json.Serialize(Model.MarketingFunnelChart)),
+  channelSpendRevenue: @Html.Raw(Json.Serialize(Model.ChannelSpendRevenueChart)),
+  cplVsConversion: @Html.Raw(Json.Serialize(Model.CplVsConversionScatterChart)),
+  landingPage: @Html.Raw(Json.Serialize(Model.LandingPageChart)),
+  cohortRetention: @Html.Raw(Json.Serialize(Model.CohortRetentionChart)),
+  timeSlotHeatmap: @Html.Raw(Json.Serialize(Model.TimeSlotHeatmap))
+});
 </script>
 @section PageScripts {
 <script src="~/js/dashboards-analytics.js"></script>
 }
 
-<div class="row">
-  <div class="col-xxl-8 mb-6 order-0">
-    <div class="card">
-      <div class="d-flex align-items-start row">
-        <div class="col-sm-7">
-          <div class="card-body">
-            <h5 class="card-title text-primary mb-3">Marketing Performance 🎯</h5>
-            <p class="mb-6">Welcome to the Marketing Dashboard. Track campaigns and engagement.</p>
-            <a href="javascript:;" class="btn btn-sm btn-outline-primary">View Campaigns</a>
-          </div>
-        </div>
-        <div class="col-sm-5 text-center text-sm-left">
-          <div class="card-body pb-0 px-0 px-md-6">
-            <img src="~/img/illustrations/man-with-laptop.png" height="175" alt="Marketing Dashboard" />
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-  <div class="col-xxl-4 col-lg-12 col-md-4 order-1">
-    <div class="row">
-      <div class="col-lg-6 col-md-12 col-6 mb-6">
-        <div class="card h-100">
-          <div class="card-body">
-            <div class="card-title d-flex align-items-start justify-content-between mb-4">
-              <div class="avatar flex-shrink-0">
-                <img src="~/img/icons/unicons/chart-success.png" alt="Reach" class="rounded" />
-              </div>
-              <div class="dropdown">
-                <button class="btn p-0" type="button" id="cardOpt1" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                  <i class="icon-base bx bx-dots-vertical-rounded text-body-secondary"></i>
-                </button>
-                <div class="dropdown-menu dropdown-menu-end" aria-labelledby="cardOpt1">
-                  <a class="dropdown-item" href="javascript:void(0);">View More</a>
-                </div>
-              </div>
-            </div>
-            <p class="mb-1">@Model.TotalReach.Title</p>
-            <h4 class="card-title mb-3">@Model.TotalReach.Value</h4>
-            <small class="text-success fw-medium"><i class="icon-base bx bx-up-arrow-alt"></i> @Model.TotalReach.TrendLabel</small>
-          </div>
-        </div>
-      </div>
-      <div class="col-lg-6 col-md-12 col-6 mb-6">
-        <div class="card h-100">
-          <div class="card-body">
-            <div class="card-title d-flex align-items-start justify-content-between mb-4">
-              <div class="avatar flex-shrink-0">
-                <img src="~/img/icons/unicons/wallet-info.png" alt="Engagement" class="rounded" />
-              </div>
-              <div class="dropdown">
-                <button class="btn p-0" type="button" id="cardOpt2" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                  <i class="icon-base bx bx-dots-vertical-rounded text-body-secondary"></i>
-                </button>
-                <div class="dropdown-menu dropdown-menu-end" aria-labelledby="cardOpt2">
-                  <a class="dropdown-item" href="javascript:void(0);">View More</a>
-                </div>
-              </div>
-            </div>
-            <p class="mb-1">@Model.EngagementRate.Title</p>
-            <h4 class="card-title mb-3">@Model.EngagementRate.Value</h4>
-            <small class="text-success fw-medium"><i class="icon-base bx bx-up-arrow-alt"></i> @Model.EngagementRate.TrendLabel</small>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
+@* Layout Toolbar *@
+<div class="d-flex align-items-center gap-2 mb-4">
+  <button type="button" class="btn-layout-action" id="btn-layout-edit"
+    onclick="window.dashboardLayoutManager && window.dashboardLayoutManager.toggleEditMode()">
+    <i class="icon-base bx bx-palette me-1"></i> Customize Layout
+  </button>
+  <button type="button" class="btn-layout-action" id="btn-layout-save"
+    onclick="window.dashboardLayoutManager && window.dashboardLayoutManager.saveLayout()">
+    <i class="icon-base bx bx-check me-1"></i> Save
+  </button>
+  <button type="button" class="btn-layout-action" id="btn-layout-reset"
+    onclick="window.dashboardLayoutManager && window.dashboardLayoutManager.resetLayout()">
+    <i class="icon-base bx bx-refresh me-1"></i> Reset
+  </button>
 </div>
 
-<div class="card mb-4">
+@* ============ DATE FILTER (outside grid — never resizable) ============ *@
+<div id="marketing-date-filter" class="card mb-4 marketing-date-filter-card">
   <div class="card-body">
     <form method="get" class="row g-3 align-items-end">
       <div class="col-auto">
@@ -128,54 +94,111 @@ window.dashboardCharts.timeSlotHeatmap = @Html.Raw(Json.Serialize(Model.TimeSlot
   </div>
 </div>
 
-<div class="row">
-  <div class="col-12 col-xxl-8 order-2 order-md-3 order-xxl-2 mb-6">
-    <div class="card">
-      <div class="row row-bordered g-0">
-        <div class="col-lg-8">
-          <div class="card-header d-flex align-items-center justify-content-between">
-            <div class="card-title mb-0">
-              <h5 class="m-0 me-2">Campaign Performance</h5>
-            </div>
-            <div class="dropdown">
-              <button class="btn p-0" type="button" id="campaignChart" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                <i class="icon-base bx bx-dots-vertical-rounded icon-lg text-body-secondary"></i>
-              </button>
-              <div class="dropdown-menu dropdown-menu-end" aria-labelledby="campaignChart">
-                <a class="dropdown-item" href="javascript:void(0);">This Month</a>
-                <a class="dropdown-item" href="javascript:void(0);">Last Month</a>
-              </div>
+@* ============ GRID ============ *@
+<div id="marketing-dashboard-grid-container" style="position: relative;">
+  <div id="marketing-dashboard-grid" class="grid-stack">
+
+    @* ---- Row 0: Welcome (8) + Total Reach KPI (4) ---- *@
+    <div class="grid-stack-item"
+         data-widget-id="marketing-welcome"
+         data-gs-x="0" data-gs-y="0" data-gs-width="8" data-gs-height="6">
+      <div class="grid-stack-item-content card">
+        <div class="d-flex align-items-start row">
+          <div class="col-sm-7">
+            <div class="card-body">
+              <h5 class="card-title text-primary mb-3">Marketing Performance 🎯</h5>
+              <p class="mb-6">Welcome to the Marketing Dashboard. Track campaigns and engagement.</p>
+              <a href="javascript:;" class="btn btn-sm btn-outline-primary">View Campaigns</a>
             </div>
           </div>
-          <div id="totalRevenueChart" class="px-3"></div>
-        </div>
-        <div class="col-lg-4">
-          <div class="card-body px-xl-9 py-12 d-flex align-items-center flex-column">
-            <div class="text-center mb-6">
-              <h6 class="mb-0">@Model.RoiAchievementPercent% ROI Achievement</h6>
+          <div class="col-sm-5 text-center text-sm-left">
+            <div class="card-body pb-0 px-0 px-md-6">
+              <img src="~/img/illustrations/man-with-laptop.png" height="175" alt="Marketing Dashboard" />
             </div>
-            <div id="growthChart"></div>
           </div>
         </div>
       </div>
     </div>
-  </div>
-  <div class="col-12 col-md-8 col-lg-12 col-xxl-4 order-3 order-md-2 mb-6">
-    <div class="row">
-      <div class="col-6 mb-6">
-        <div class="card h-100">
+
+    <div class="grid-stack-item"
+         data-widget-id="marketing-kpi-reach"
+         data-gs-x="8" data-gs-y="0" data-gs-width="4" data-gs-height="3">
+      <div class="grid-stack-item-content card h-100">
+        <div class="card-body">
+          <div class="card-title d-flex align-items-start justify-content-between mb-4">
+            <div class="avatar flex-shrink-0">
+              <img src="~/img/icons/unicons/chart-success.png" alt="Reach" class="rounded" />
+            </div>
+          </div>
+          <p class="mb-1">@Model.TotalReach.Title</p>
+          <h4 class="card-title mb-3">@Model.TotalReach.Value</h4>
+          <small class="text-success fw-medium"><i class="icon-base bx bx-up-arrow-alt"></i> @Model.TotalReach.TrendLabel</small>
+        </div>
+      </div>
+    </div>
+
+    <div class="grid-stack-item"
+         data-widget-id="marketing-kpi-engagement"
+         data-gs-x="8" data-gs-y="3" data-gs-width="4" data-gs-height="3">
+      <div class="grid-stack-item-content card h-100">
+        <div class="card-body">
+          <div class="card-title d-flex align-items-start justify-content-between mb-4">
+            <div class="avatar flex-shrink-0">
+              <img src="~/img/icons/unicons/wallet-info.png" alt="Engagement" class="rounded" />
+            </div>
+          </div>
+          <p class="mb-1">@Model.EngagementRate.Title</p>
+          <h4 class="card-title mb-3">@Model.EngagementRate.Value</h4>
+          <small class="text-success fw-medium"><i class="icon-base bx bx-up-arrow-alt"></i> @Model.EngagementRate.TrendLabel</small>
+        </div>
+      </div>
+    </div>
+
+    @* ---- Row 6: Campaign Overview (8) + New Leads (4) + Conversions (4) ---- *@
+    @if (hasCampaignChart)
+    {
+      <div class="grid-stack-item"
+           data-widget-id="marketing-chart-campaign"
+           data-gs-x="0" data-gs-y="6" data-gs-width="8" data-gs-height="6">
+        <div class="grid-stack-item-content card h-100">
+          <div class="row row-bordered g-0 h-100">
+            <div class="col-lg-8">
+              <div class="card-header d-flex align-items-center justify-content-between">
+                <div class="card-title mb-0">
+                  <h5 class="m-0 me-2">Campaign Performance</h5>
+                </div>
+                <div class="dropdown">
+                  <button class="btn p-0" type="button" id="campaignChart" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                    <i class="icon-base bx bx-dots-vertical-rounded icon-lg text-body-secondary"></i>
+                  </button>
+                  <div class="dropdown-menu dropdown-menu-end" aria-labelledby="campaignChart">
+                    <a class="dropdown-item" href="javascript:void(0);">This Month</a>
+                    <a class="dropdown-item" href="javascript:void(0);">Last Month</a>
+                  </div>
+                </div>
+              </div>
+              <div id="totalRevenueChart" class="px-3"></div>
+            </div>
+            <div class="col-lg-4">
+              <div class="card-body px-xl-9 py-12 d-flex align-items-center flex-column">
+                <div class="text-center mb-6">
+                  <h6 class="mb-0">@Model.RoiAchievementPercent% ROI Achievement</h6>
+                </div>
+                <div id="growthChart"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="grid-stack-item"
+           data-widget-id="marketing-kpi-leads"
+           data-gs-x="8" data-gs-y="6" data-gs-width="4" data-gs-height="3">
+        <div class="grid-stack-item-content card h-100">
           <div class="card-body">
             <div class="card-title d-flex align-items-start justify-content-between mb-4">
               <div class="avatar flex-shrink-0">
                 <img src="~/img/icons/unicons/paypal.png" alt="Leads" class="rounded" />
-              </div>
-              <div class="dropdown">
-                <button class="btn p-0" type="button" id="cardOpt3" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                  <i class="icon-base bx bx-dots-vertical-rounded text-body-secondary"></i>
-                </button>
-                <div class="dropdown-menu dropdown-menu-end" aria-labelledby="cardOpt3">
-                  <a class="dropdown-item" href="javascript:void(0);">View More</a>
-                </div>
               </div>
             </div>
             <p class="mb-1">@Model.NewLeads.Title</p>
@@ -184,20 +207,15 @@ window.dashboardCharts.timeSlotHeatmap = @Html.Raw(Json.Serialize(Model.TimeSlot
           </div>
         </div>
       </div>
-      <div class="col-6 mb-6">
-        <div class="card h-100">
+
+      <div class="grid-stack-item"
+           data-widget-id="marketing-kpi-conversions"
+           data-gs-x="8" data-gs-y="9" data-gs-width="4" data-gs-height="3">
+        <div class="grid-stack-item-content card h-100">
           <div class="card-body">
             <div class="card-title d-flex align-items-start justify-content-between mb-4">
               <div class="avatar flex-shrink-0">
                 <img src="~/img/icons/unicons/cc-primary.png" alt="Conversions" class="rounded" />
-              </div>
-              <div class="dropdown">
-                <button class="btn p-0" type="button" id="cardOpt4" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                  <i class="icon-base bx bx-dots-vertical-rounded text-body-secondary"></i>
-                </button>
-                <div class="dropdown-menu" aria-labelledby="cardOpt4">
-                  <a class="dropdown-item" href="javascript:void(0);">View More</a>
-                </div>
               </div>
             </div>
             <p class="mb-1">@Model.Conversions.Title</p>
@@ -206,425 +224,419 @@ window.dashboardCharts.timeSlotHeatmap = @Html.Raw(Json.Serialize(Model.TimeSlot
           </div>
         </div>
       </div>
-    </div>
-  </div>
-</div>
+    }
 
-@* New KPI Cards Row - CPL, ROAS, Marketing ROI, CAC *@
-<div class="row">
-  <div class="col-lg-3 col-sm-6 mb-6">
-    <div class="card h-100">
-      <div class="card-body">
-        <div class="card-title d-flex align-items-start justify-content-between mb-4">
-          <div class="avatar flex-shrink-0">
-            <img src="~/img/icons/unicons/credit-card.png" alt="CPL" class="rounded" />
-          </div>
-          <div class="dropdown">
-            <button class="btn p-0" type="button" id="cardOptCpl" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-              <i class="icon-base bx bx-dots-vertical-rounded text-body-secondary"></i>
-            </button>
-            <div class="dropdown-menu dropdown-menu-end" aria-labelledby="cardOptCpl">
-              <a class="dropdown-item" href="javascript:void(0);">View More</a>
+    @* ---- Row 12: 4 KPI cards: CPL + ROAS + Marketing ROI + CAC ---- *@
+    <div class="grid-stack-item"
+         data-widget-id="marketing-kpi-cpl"
+         data-gs-x="0" data-gs-y="@chartRow1" data-gs-width="3" data-gs-height="6">
+      <div class="grid-stack-item-content card h-100">
+        <div class="card-body">
+          <div class="card-title d-flex align-items-start justify-content-between mb-4">
+            <div class="avatar flex-shrink-0">
+              <img src="~/img/icons/unicons/credit-card.png" alt="CPL" class="rounded" />
             </div>
           </div>
+          <p class="mb-1">@Model.Cpl.Title</p>
+          <h4 class="card-title mb-3">@Model.Cpl.Value</h4>
+          <small class="text-success fw-medium"><i class="icon-base bx bx-up-arrow-alt"></i> @Model.Cpl.TrendLabel</small>
         </div>
-        <p class="mb-1">@Model.Cpl.Title</p>
-        <h4 class="card-title mb-3">@Model.Cpl.Value</h4>
-        <small class="text-success fw-medium"><i class="icon-base bx bx-up-arrow-alt"></i> @Model.Cpl.TrendLabel</small>
       </div>
     </div>
-  </div>
-  <div class="col-lg-3 col-sm-6 mb-6">
-    <div class="card h-100">
-      <div class="card-body">
-        <div class="card-title d-flex align-items-start justify-content-between mb-4">
-          <div class="avatar flex-shrink-0">
-            <img src="~/img/icons/unicons/chart-line.png" alt="ROAS" class="rounded" />
-          </div>
-          <div class="dropdown">
-            <button class="btn p-0" type="button" id="cardOptRoas" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-              <i class="icon-base bx bx-dots-vertical-rounded text-body-secondary"></i>
-            </button>
-            <div class="dropdown-menu dropdown-menu-end" aria-labelledby="cardOptRoas">
-              <a class="dropdown-item" href="javascript:void(0);">View More</a>
+
+    <div class="grid-stack-item"
+         data-widget-id="marketing-kpi-roas"
+         data-gs-x="3" data-gs-y="@chartRow1" data-gs-width="3" data-gs-height="6">
+      <div class="grid-stack-item-content card h-100">
+        <div class="card-body">
+          <div class="card-title d-flex align-items-start justify-content-between mb-4">
+            <div class="avatar flex-shrink-0">
+              <img src="~/img/icons/unicons/chart-line.png" alt="ROAS" class="rounded" />
             </div>
           </div>
+          <p class="mb-1">@Model.Roas.Title</p>
+          <h4 class="card-title mb-3">@Model.Roas.Value</h4>
+          <small class="text-success fw-medium"><i class="icon-base bx bx-up-arrow-alt"></i> @Model.Roas.TrendLabel</small>
         </div>
-        <p class="mb-1">@Model.Roas.Title</p>
-        <h4 class="card-title mb-3">@Model.Roas.Value</h4>
-        <small class="text-success fw-medium"><i class="icon-base bx bx-up-arrow-alt"></i> @Model.Roas.TrendLabel</small>
       </div>
     </div>
-  </div>
-  <div class="col-lg-3 col-sm-6 mb-6">
-    <div class="card h-100">
-      <div class="card-body">
-        <div class="card-title d-flex align-items-start justify-content-between mb-4">
-          <div class="avatar flex-shrink-0">
-            <img src="~/img/icons/unicons/chart-success.png" alt="Marketing ROI" class="rounded" />
-          </div>
-          <div class="dropdown">
-            <button class="btn p-0" type="button" id="cardOptRoi" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-              <i class="icon-base bx bx-dots-vertical-rounded text-body-secondary"></i>
-            </button>
-            <div class="dropdown-menu dropdown-menu-end" aria-labelledby="cardOptRoi">
-              <a class="dropdown-item" href="javascript:void(0);">View More</a>
+
+    <div class="grid-stack-item"
+         data-widget-id="marketing-kpi-roi"
+         data-gs-x="6" data-gs-y="@chartRow1" data-gs-width="3" data-gs-height="6">
+      <div class="grid-stack-item-content card h-100">
+        <div class="card-body">
+          <div class="card-title d-flex align-items-start justify-content-between mb-4">
+            <div class="avatar flex-shrink-0">
+              <img src="~/img/icons/unicons/chart-success.png" alt="Marketing ROI" class="rounded" />
             </div>
           </div>
+          <p class="mb-1">@Model.Roi.Title</p>
+          <h4 class="card-title mb-3">@Model.Roi.Value</h4>
+          <small class="text-success fw-medium"><i class="icon-base bx bx-up-arrow-alt"></i> @Model.Roi.TrendLabel</small>
         </div>
-        <p class="mb-1">@Model.Roi.Title</p>
-        <h4 class="card-title mb-3">@Model.Roi.Value</h4>
-        <small class="text-success fw-medium"><i class="icon-base bx bx-up-arrow-alt"></i> @Model.Roi.TrendLabel</small>
       </div>
     </div>
-  </div>
-  <div class="col-lg-3 col-sm-6 mb-6">
-    <div class="card h-100">
-      <div class="card-body">
-        <div class="card-title d-flex align-items-start justify-content-between mb-4">
-          <div class="avatar flex-shrink-0">
-            <img src="~/img/icons/unicons/wallet-info.png" alt="CAC" class="rounded" />
-          </div>
-          <div class="dropdown">
-            <button class="btn p-0" type="button" id="cardOptCac" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-              <i class="icon-base bx bx-dots-vertical-rounded text-body-secondary"></i>
-            </button>
-            <div class="dropdown-menu dropdown-menu-end" aria-labelledby="cardOptCac">
-              <a class="dropdown-item" href="javascript:void(0);">View More</a>
+
+    <div class="grid-stack-item"
+         data-widget-id="marketing-kpi-cac"
+         data-gs-x="9" data-gs-y="@chartRow1" data-gs-width="3" data-gs-height="6">
+      <div class="grid-stack-item-content card h-100">
+        <div class="card-body">
+          <div class="card-title d-flex align-items-start justify-content-between mb-4">
+            <div class="avatar flex-shrink-0">
+              <img src="~/img/icons/unicons/wallet-info.png" alt="CAC" class="rounded" />
             </div>
           </div>
+          <p class="mb-1">@Model.Cac.Title</p>
+          <h4 class="card-title mb-3">@Model.Cac.Value</h4>
+          <small class="text-success fw-medium"><i class="icon-base bx bx-up-arrow-alt"></i> @Model.Cac.TrendLabel</small>
         </div>
-        <p class="mb-1">@Model.Cac.Title</p>
-        <h4 class="card-title mb-3">@Model.Cac.Value</h4>
-        <small class="text-success fw-medium"><i class="icon-base bx bx-up-arrow-alt"></i> @Model.Cac.TrendLabel</small>
       </div>
     </div>
-  </div>
-</div>
 
-@* Chart Section 1: Lead Trend + Marketing Funnel *@
-@if (Model.LeadTrendChart.Series.Any() || Model.MarketingFunnelChart.Series.Any())
-{
-<div class="row">
-  <div class="col-lg-6 mb-6">
-    <div class="card h-100">
-      <div class="card-header d-flex justify-content-between">
-        <div class="card-title mb-0">
-          <h5 class="mb-1 me-2">Lead Trend (Leads & SQL)</h5>
-        </div>
-        <div class="dropdown">
-          <button class="btn p-0" type="button" id="leadTrendOpt" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-            <i class="icon-base bx bx-dots-vertical-rounded icon-lg text-body-secondary"></i>
-          </button>
-          <div class="dropdown-menu dropdown-menu-end" aria-labelledby="leadTrendOpt">
-            <a class="dropdown-item" href="javascript:void(0);">Refresh</a>
+    @* ---- Chart Row 1: Lead Trend + Marketing Funnel ---- *@
+    @if (hasLeadTrend || hasFunnel)
+    {
+      <div class="grid-stack-item"
+           data-widget-id="marketing-chart-leadtrend"
+           data-gs-x="0" data-gs-y="@chartRow2" data-gs-width="6" data-gs-height="8">
+        <div class="grid-stack-item-content card h-100">
+          <div class="card-header d-flex justify-content-between">
+            <div class="card-title mb-0">
+              <h5 class="mb-1 me-2">Lead Trend (Leads & SQL)</h5>
+            </div>
+            <div class="dropdown">
+              <button class="btn p-0" type="button" id="leadTrendOpt" data-bs-toggle="dropdown">
+                <i class="icon-base bx bx-dots-vertical-rounded icon-lg text-body-secondary"></i>
+              </button>
+              <div class="dropdown-menu dropdown-menu-end">
+                <a class="dropdown-item" href="javascript:void(0);">Refresh</a>
+              </div>
+            </div>
+          </div>
+          <div class="card-body">
+            <div id="leadTrendChart"></div>
           </div>
         </div>
       </div>
-      <div class="card-body">
-        <div id="leadTrendChart"></div>
-      </div>
-    </div>
-  </div>
-  <div class="col-lg-6 mb-6">
-    <div class="card h-100">
-      <div class="card-header d-flex justify-content-between">
-        <div class="card-title mb-0">
-          <h5 class="mb-1 me-2">Marketing Funnel</h5>
-        </div>
-        <div class="dropdown">
-          <button class="btn p-0" type="button" id="marketingFunnelOpt" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-            <i class="icon-base bx bx-dots-vertical-rounded icon-lg text-body-secondary"></i>
-          </button>
-          <div class="dropdown-menu dropdown-menu-end" aria-labelledby="marketingFunnelOpt">
-            <a class="dropdown-item" href="javascript:void(0);">Refresh</a>
-          </div>
-        </div>
-      </div>
-      <div class="card-body">
-        <div id="marketingFunnelChart"></div>
-      </div>
-    </div>
-  </div>
-</div>
-}
 
-@* Chart Section 2: Channel Spend vs Revenue + CPL vs Conversion Scatter *@
-@if (Model.ChannelSpendRevenueChart.Series.Any() || Model.CplVsConversionScatterChart.Series.Any())
-{
-<div class="row">
-  <div class="col-lg-6 mb-6">
-    <div class="card h-100">
-      <div class="card-header d-flex justify-content-between">
-        <div class="card-title mb-0">
-          <h5 class="mb-1 me-2">Channel Spend vs Revenue</h5>
-        </div>
-        <div class="dropdown">
-          <button class="btn p-0" type="button" id="channelSpendOpt" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-            <i class="icon-base bx bx-dots-vertical-rounded icon-lg text-body-secondary"></i>
-          </button>
-          <div class="dropdown-menu dropdown-menu-end" aria-labelledby="channelSpendOpt">
-            <a class="dropdown-item" href="javascript:void(0);">Refresh</a>
+      <div class="grid-stack-item"
+           data-widget-id="marketing-chart-funnel"
+           data-gs-x="6" data-gs-y="@chartRow2" data-gs-width="6" data-gs-height="8">
+        <div class="grid-stack-item-content card h-100">
+          <div class="card-header d-flex justify-content-between">
+            <div class="card-title mb-0">
+              <h5 class="mb-1 me-2">Marketing Funnel</h5>
+            </div>
+            <div class="dropdown">
+              <button class="btn p-0" type="button" id="marketingFunnelOpt" data-bs-toggle="dropdown">
+                <i class="icon-base bx bx-dots-vertical-rounded icon-lg text-body-secondary"></i>
+              </button>
+              <div class="dropdown-menu dropdown-menu-end">
+                <a class="dropdown-item" href="javascript:void(0);">Refresh</a>
+              </div>
+            </div>
+          </div>
+          <div class="card-body">
+            <div id="marketingFunnelChart"></div>
           </div>
         </div>
       </div>
-      <div class="card-body">
-        <div id="channelSpendRevenueChart"></div>
-      </div>
-    </div>
-  </div>
-  <div class="col-lg-6 mb-6">
-    <div class="card h-100">
-      <div class="card-header d-flex justify-content-between">
-        <div class="card-title mb-0">
-          <h5 class="mb-1 me-2">CPL vs Lead-to-Sale Rate</h5>
-        </div>
-        <div class="dropdown">
-          <button class="btn p-0" type="button" id="cplConversionOpt" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-            <i class="icon-base bx bx-dots-vertical-rounded icon-lg text-body-secondary"></i>
-          </button>
-          <div class="dropdown-menu dropdown-menu-end" aria-labelledby="cplConversionOpt">
-            <a class="dropdown-item" href="javascript:void(0);">Refresh</a>
-          </div>
-        </div>
-      </div>
-      <div class="card-body">
-        <div id="cplVsConversionScatterChart"></div>
-      </div>
-    </div>
-  </div>
-</div>
-}
+    }
 
-@* Chart Section 3: Landing Page Bar + Cohort Retention Line *@
-@if (Model.LandingPageChart.Series.Any() || Model.CohortRetentionChart.Series.Any())
-{
-<div class="row">
-  <div class="col-lg-6 mb-6">
-    <div class="card h-100">
-      <div class="card-header d-flex justify-content-between">
-        <div class="card-title mb-0">
-          <h5 class="mb-1 me-2">Landing Page Performance</h5>
-        </div>
-        <div class="dropdown">
-          <button class="btn p-0" type="button" id="landingPageOpt" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-            <i class="icon-base bx bx-dots-vertical-rounded icon-lg text-body-secondary"></i>
-          </button>
-          <div class="dropdown-menu dropdown-menu-end" aria-labelledby="landingPageOpt">
-            <a class="dropdown-item" href="javascript:void(0);">Refresh</a>
+    @* ---- Chart Row 2: Channel Spend vs Revenue + CPL Scatter ---- *@
+    @if (hasChannel || hasCplScatter)
+    {
+      <div class="grid-stack-item"
+           data-widget-id="marketing-chart-channel"
+           data-gs-x="0" data-gs-y="@chartRow3" data-gs-width="6" data-gs-height="8">
+        <div class="grid-stack-item-content card h-100">
+          <div class="card-header d-flex justify-content-between">
+            <div class="card-title mb-0">
+              <h5 class="mb-1 me-2">Channel Spend vs Revenue</h5>
+            </div>
+            <div class="dropdown">
+              <button class="btn p-0" type="button" id="channelSpendOpt" data-bs-toggle="dropdown">
+                <i class="icon-base bx bx-dots-vertical-rounded icon-lg text-body-secondary"></i>
+              </button>
+              <div class="dropdown-menu dropdown-menu-end">
+                <a class="dropdown-item" href="javascript:void(0);">Refresh</a>
+              </div>
+            </div>
+          </div>
+          <div class="card-body">
+            <div id="channelSpendRevenueChart"></div>
           </div>
         </div>
       </div>
-      <div class="card-body">
-        <div id="landingPageChart"></div>
-      </div>
-    </div>
-  </div>
-  <div class="col-lg-6 mb-6">
-    <div class="card h-100">
-      <div class="card-header d-flex justify-content-between">
-        <div class="card-title mb-0">
-          <h5 class="mb-1 me-2">Cohort Retention</h5>
-        </div>
-        <div class="dropdown">
-          <button class="btn p-0" type="button" id="cohortRetentionOpt" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-            <i class="icon-base bx bx-dots-vertical-rounded icon-lg text-body-secondary"></i>
-          </button>
-          <div class="dropdown-menu dropdown-menu-end" aria-labelledby="cohortRetentionOpt">
-            <a class="dropdown-item" href="javascript:void(0);">Refresh</a>
-          </div>
-        </div>
-      </div>
-      <div class="card-body">
-        <div id="cohortRetentionChart"></div>
-      </div>
-    </div>
-  </div>
-</div>
-}
 
-@* Chart Section 4: TimeSlot Heatmap (Full Width) *@
-@if (Model.TimeSlotHeatmap.Data != null && Model.TimeSlotHeatmap.Data.Any())
-{
-<div class="row">
-  <div class="col-12 mb-6">
-    <div class="card h-100">
-      <div class="card-header d-flex justify-content-between">
-        <div class="card-title mb-0">
-          <h5 class="mb-1 me-2">Ad Performance by Time Slot</h5>
-        </div>
-        <div class="dropdown">
-          <button class="btn p-0" type="button" id="timeSlotHeatmapOpt" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-            <i class="icon-base bx bx-dots-vertical-rounded icon-lg text-body-secondary"></i>
-          </button>
-          <div class="dropdown-menu dropdown-menu-end" aria-labelledby="timeSlotHeatmapOpt">
-            <a class="dropdown-item" href="javascript:void(0);">Refresh</a>
+      <div class="grid-stack-item"
+           data-widget-id="marketing-chart-cpl-scatter"
+           data-gs-x="6" data-gs-y="@chartRow3" data-gs-width="6" data-gs-height="8">
+        <div class="grid-stack-item-content card h-100">
+          <div class="card-header d-flex justify-content-between">
+            <div class="card-title mb-0">
+              <h5 class="mb-1 me-2">CPL vs Lead-to-Sale Rate</h5>
+            </div>
+            <div class="dropdown">
+              <button class="btn p-0" type="button" id="cplConversionOpt" data-bs-toggle="dropdown">
+                <i class="icon-base bx bx-dots-vertical-rounded icon-lg text-body-secondary"></i>
+              </button>
+              <div class="dropdown-menu dropdown-menu-end">
+                <a class="dropdown-item" href="javascript:void(0);">Refresh</a>
+              </div>
+            </div>
+          </div>
+          <div class="card-body">
+            <div id="cplVsConversionScatterChart"></div>
           </div>
         </div>
       </div>
-      <div class="card-body">
-        <div id="timeSlotHeatmapChart"></div>
-      </div>
-    </div>
-  </div>
-</div>
-}
+    }
 
-<div class="row">
-  <div class="col-md-6 col-lg-4 order-0 mb-6">
-    <div class="card h-100">
-      <div class="card-header d-flex justify-content-between">
-        <div class="card-title mb-0">
-          <h5 class="mb-1 me-2">Active Campaigns</h5>
-          <p class="card-subtitle">Running Marketing Campaigns</p>
+    @* ---- Chart Row 3: Landing Page + Cohort Retention ---- *@
+    @if (hasLanding || hasCohort)
+    {
+      <div class="grid-stack-item"
+           data-widget-id="marketing-chart-landing"
+           data-gs-x="0" data-gs-y="@(chartRow3 + 8)" data-gs-width="6" data-gs-height="8">
+        <div class="grid-stack-item-content card h-100">
+          <div class="card-header d-flex justify-content-between">
+            <div class="card-title mb-0">
+              <h5 class="mb-1 me-2">Landing Page Performance</h5>
+            </div>
+            <div class="dropdown">
+              <button class="btn p-0" type="button" id="landingPageOpt" data-bs-toggle="dropdown">
+                <i class="icon-base bx bx-dots-vertical-rounded icon-lg text-body-secondary"></i>
+              </button>
+              <div class="dropdown-menu dropdown-menu-end">
+                <a class="dropdown-item" href="javascript:void(0);">Refresh</a>
+              </div>
+            </div>
+          </div>
+          <div class="card-body">
+            <div id="landingPageChart"></div>
+          </div>
         </div>
       </div>
-      <div class="card-body">
-        <ul class="p-0 m-0">
-          @if (Model.ActiveCampaigns.Any())
-          {
-            @foreach (var campaign in Model.ActiveCampaigns.Take(5))
+
+      <div class="grid-stack-item"
+           data-widget-id="marketing-chart-cohort"
+           data-gs-x="6" data-gs-y="@(chartRow3 + 8)" data-gs-width="6" data-gs-height="8">
+        <div class="grid-stack-item-content card h-100">
+          <div class="card-header d-flex justify-content-between">
+            <div class="card-title mb-0">
+              <h5 class="mb-1 me-2">Cohort Retention</h5>
+            </div>
+            <div class="dropdown">
+              <button class="btn p-0" type="button" id="cohortRetentionOpt" data-bs-toggle="dropdown">
+                <i class="icon-base bx bx-dots-vertical-rounded icon-lg text-body-secondary"></i>
+              </button>
+              <div class="dropdown-menu dropdown-menu-end">
+                <a class="dropdown-item" href="javascript:void(0);">Refresh</a>
+              </div>
+            </div>
+          </div>
+          <div class="card-body">
+            <div id="cohortRetentionChart"></div>
+          </div>
+        </div>
+      </div>
+    }
+
+    @* ---- Chart Row 4: TimeSlot Heatmap (full width) ---- *@
+    @if (hasTimeSlot)
+    {
+      <div class="grid-stack-item"
+           data-widget-id="marketing-chart-timeslot"
+           data-gs-x="0" data-gs-y="@chartRow4" data-gs-width="12" data-gs-height="8">
+        <div class="grid-stack-item-content card h-100">
+          <div class="card-header d-flex justify-content-between">
+            <div class="card-title mb-0">
+              <h5 class="mb-1 me-2">Ad Performance by Time Slot</h5>
+            </div>
+            <div class="dropdown">
+              <button class="btn p-0" type="button" id="timeSlotHeatmapOpt" data-bs-toggle="dropdown">
+                <i class="icon-base bx bx-dots-vertical-rounded icon-lg text-body-secondary"></i>
+              </button>
+              <div class="dropdown-menu dropdown-menu-end">
+                <a class="dropdown-item" href="javascript:void(0);">Refresh</a>
+              </div>
+            </div>
+          </div>
+          <div class="card-body">
+            <div id="timeSlotHeatmapChart"></div>
+          </div>
+        </div>
+      </div>
+    }
+
+    @* ---- Bottom row: Active Campaigns (4) + Social Media (4) + Budget (4) ---- *@
+    <div class="grid-stack-item"
+         data-widget-id="marketing-active-campaigns"
+         data-gs-x="0" data-gs-y="@bottomRow" data-gs-width="4" data-gs-height="10">
+      <div class="grid-stack-item-content card h-100">
+        <div class="card-header d-flex justify-content-between">
+          <div class="card-title mb-0">
+            <h5 class="mb-1 me-2">Active Campaigns</h5>
+            <p class="card-subtitle">Running Marketing Campaigns</p>
+          </div>
+        </div>
+        <div class="card-body">
+          <ul class="p-0 m-0">
+            @if (Model.ActiveCampaigns.Any())
+            {
+              @foreach (var campaign in Model.ActiveCampaigns.Take(5))
+              {
+                <li class="d-flex align-items-center mb-5">
+                  <div class="avatar flex-shrink-0 me-3">
+                    <span class="avatar-initial rounded @campaign.IconBgClass"><i class="@campaign.IconClass"></i></span>
+                  </div>
+                  <div class="d-flex w-100 flex-wrap align-items-center justify-content-between gap-2">
+                    <div class="me-2">
+                      <h6 class="mb-0">@campaign.Name</h6>
+                      <small>@campaign.Subtitle</small>
+                    </div>
+                    <div class="user-progress">
+                      <h6 class="mb-0">@campaign.FormattedValue</h6>
+                    </div>
+                  </div>
+                </li>
+              }
+            }
+            else
             {
               <li class="d-flex align-items-center mb-5">
                 <div class="avatar flex-shrink-0 me-3">
-                  <span class="avatar-initial rounded @campaign.IconBgClass"><i class="@campaign.IconClass"></i></span>
+                  <span class="avatar-initial rounded bg-label-primary"><i class="icon-base bx bx-bulb"></i></span>
                 </div>
                 <div class="d-flex w-100 flex-wrap align-items-center justify-content-between gap-2">
                   <div class="me-2">
-                    <h6 class="mb-0">@campaign.Name</h6>
-                    <small>@campaign.Subtitle</small>
+                    <h6 class="mb-0">Brand Awareness</h6>
+                    <small>Social Media</small>
                   </div>
-                  <div class="user-progress">
-                    <h6 class="mb-0">@campaign.FormattedValue</h6>
-                  </div>
+                  <div class="user-progress"><h6 class="mb-0">85%</h6></div>
                 </div>
               </li>
             }
-          }
-          else
-          {
-            <li class="d-flex align-items-center mb-5">
-              <div class="avatar flex-shrink-0 me-3">
-                <span class="avatar-initial rounded bg-label-primary"><i class="icon-base bx bx-bulb"></i></span>
-              </div>
-              <div class="d-flex w-100 flex-wrap align-items-center justify-content-between gap-2">
-                <div class="me-2">
-                  <h6 class="mb-0">Brand Awareness</h6>
-                  <small>Social Media</small>
-                </div>
-                <div class="user-progress"><h6 class="mb-0">85%</h6></div>
-              </div>
-            </li>
-          }
-        </ul>
-      </div>
-    </div>
-  </div>
-
-  <div class="col-md-6 col-lg-4 order-1 mb-6">
-    <div class="card h-100">
-      <div class="card-header d-flex justify-content-between">
-        <div class="card-title mb-0">
-          <h5 class="mb-1 me-2">Social Media</h5>
-          <p class="card-subtitle">Platform Performance</p>
+          </ul>
         </div>
       </div>
-      <div class="card-body pt-4">
-        <ul class="p-0 m-0">
-          @if (Model.SocialMediaPerformance.Any())
-          {
-            @foreach (var sm in Model.SocialMediaPerformance.Take(5))
+    </div>
+
+    <div class="grid-stack-item"
+         data-widget-id="marketing-social-media"
+         data-gs-x="4" data-gs-y="@bottomRow" data-gs-width="4" data-gs-height="10">
+      <div class="grid-stack-item-content card h-100">
+        <div class="card-header d-flex justify-content-between">
+          <div class="card-title mb-0">
+            <h5 class="mb-1 me-2">Social Media</h5>
+            <p class="card-subtitle">Platform Performance</p>
+          </div>
+        </div>
+        <div class="card-body pt-4">
+          <ul class="p-0 m-0">
+            @if (Model.SocialMediaPerformance.Any())
+            {
+              @foreach (var sm in Model.SocialMediaPerformance.Take(5))
+              {
+                <li class="d-flex align-items-center mb-6">
+                  <div class="avatar flex-shrink-0 me-3">
+                    <img src="~/img/icons/unicons/wallet.png" alt="@sm.Column1" class="rounded" />
+                  </div>
+                  <div class="d-flex w-100 flex-wrap align-items-center justify-content-between gap-2">
+                    <div class="me-2">
+                      <small class="d-block">@sm.Column1</small>
+                      <h6 class="fw-normal mb-0">@sm.Column2</h6>
+                    </div>
+                    <div class="user-progress d-flex align-items-center gap-2">
+                      <h6 class="fw-normal mb-0">@sm.Column3</h6>
+                    </div>
+                  </div>
+                </li>
+              }
+            }
+            else
             {
               <li class="d-flex align-items-center mb-6">
                 <div class="avatar flex-shrink-0 me-3">
-                  <img src="~/img/icons/unicons/wallet.png" alt="@sm.Column1" class="rounded" />
+                  <img src="~/img/icons/unicons/wallet.png" alt="Facebook" class="rounded" />
                 </div>
                 <div class="d-flex w-100 flex-wrap align-items-center justify-content-between gap-2">
                   <div class="me-2">
-                    <small class="d-block">@sm.Column1</small>
-                    <h6 class="fw-normal mb-0">@sm.Column2</h6>
+                    <small class="d-block">Facebook</small>
+                    <h6 class="fw-normal mb-0">Followers</h6>
                   </div>
                   <div class="user-progress d-flex align-items-center gap-2">
-                    <h6 class="fw-normal mb-0">@sm.Column3</h6>
+                    <h6 class="fw-normal mb-0">125K</h6>
                   </div>
                 </div>
               </li>
             }
-          }
-          else
-          {
-            <li class="d-flex align-items-center mb-6">
-              <div class="avatar flex-shrink-0 me-3">
-                <img src="~/img/icons/unicons/wallet.png" alt="Facebook" class="rounded" />
-              </div>
-              <div class="d-flex w-100 flex-wrap align-items-center justify-content-between gap-2">
-                <div class="me-2">
-                  <small class="d-block">Facebook</small>
-                  <h6 class="fw-normal mb-0">Followers</h6>
-                </div>
-                <div class="user-progress d-flex align-items-center gap-2">
-                  <h6 class="fw-normal mb-0">125K</h6>
-                </div>
-              </div>
-            </li>
-          }
-        </ul>
-      </div>
-    </div>
-  </div>
-
-  <div class="col-md-6 col-lg-4 order-2 mb-6">
-    <div class="card h-100">
-      <div class="card-header d-flex justify-content-between">
-        <div class="card-title mb-0">
-          <h5 class="mb-1 me-2">Budget Allocation</h5>
-          <p class="card-subtitle">Marketing Spend</p>
+          </ul>
         </div>
       </div>
-      <div class="card-body">
-        <ul class="p-0 m-0">
-          @if (Model.BudgetAllocation.Any())
-          {
-            @foreach (var budget in Model.BudgetAllocation.Take(5))
+    </div>
+
+    <div class="grid-stack-item"
+         data-widget-id="marketing-budget"
+         data-gs-x="8" data-gs-y="@bottomRow" data-gs-width="4" data-gs-height="10">
+      <div class="grid-stack-item-content card h-100">
+        <div class="card-header d-flex justify-content-between">
+          <div class="card-title mb-0">
+            <h5 class="mb-1 me-2">Budget Allocation</h5>
+            <p class="card-subtitle">Marketing Spend</p>
+          </div>
+        </div>
+        <div class="card-body">
+          <ul class="p-0 m-0">
+            @if (Model.BudgetAllocation.Any())
+            {
+              @foreach (var budget in Model.BudgetAllocation.Take(5))
+              {
+                <li class="d-flex align-items-center mb-5">
+                  <div class="avatar flex-shrink-0 me-3">
+                    <span class="avatar-initial rounded @budget.IconBgClass"><i class="@budget.IconClass"></i></span>
+                  </div>
+                  <div class="d-flex w-100 flex-wrap align-items-center justify-content-between gap-2">
+                    <div class="me-2">
+                      <h6 class="mb-0">@budget.Name</h6>
+                      <small>@budget.Subtitle</small>
+                    </div>
+                    <div class="user-progress">
+                      <h6 class="mb-0">@budget.FormattedValue</h6>
+                    </div>
+                  </div>
+                </li>
+              }
+            }
+            else
             {
               <li class="d-flex align-items-center mb-5">
                 <div class="avatar flex-shrink-0 me-3">
-                  <span class="avatar-initial rounded @budget.IconBgClass"><i class="@budget.IconClass"></i></span>
+                  <span class="avatar-initial rounded bg-label-primary">FB</span>
                 </div>
                 <div class="d-flex w-100 flex-wrap align-items-center justify-content-between gap-2">
                   <div class="me-2">
-                    <h6 class="mb-0">@budget.Name</h6>
-                    <small>@budget.Subtitle</small>
+                    <h6 class="mb-0">Facebook Ads</h6>
+                    <small>30% of budget</small>
                   </div>
-                  <div class="user-progress">
-                    <h6 class="mb-0">@budget.FormattedValue</h6>
-                  </div>
+                  <div class="user-progress"><h6 class="mb-0">$12K</h6></div>
                 </div>
               </li>
             }
-          }
-          else
-          {
-            <li class="d-flex align-items-center mb-5">
-              <div class="avatar flex-shrink-0 me-3">
-                <span class="avatar-initial rounded bg-label-primary">FB</span>
-              </div>
-              <div class="d-flex w-100 flex-wrap align-items-center justify-content-between gap-2">
-                <div class="me-2">
-                  <h6 class="mb-0">Facebook Ads</h6>
-                  <small>30% of budget</small>
-                </div>
-                <div class="user-progress"><h6 class="mb-0">$12K</h6></div>
-              </div>
-            </li>
-          }
-        </ul>
+          </ul>
+        </div>
       </div>
     </div>
-  </div>
-</div>
 
-@if (Model.CampaignPerformanceChart.Series.Any())
+  </div>@* end grid-stack *@
+</div>@* end grid container *@
+
+@* ======== Inline chart scripts (preserved from original) ======== *@
+
+@if (hasCampaignChart)
 {
   <script>
     document.addEventListener('DOMContentLoaded', function () {
@@ -665,8 +677,6 @@ window.dashboardCharts.timeSlotHeatmap = @Html.Raw(Json.Serialize(Model.TimeSlot
       var cardColor = config.colors.cardColor || '#ffffff';
       var headingColor = config.colors.headingColor || '#566a7f';
       var legendColor = config.colors.bodyColor || '#697a8d';
-      var labelColor = config.colors.textMuted || '#a1acb8';
-      var borderColor = config.colors.borderColor || '#eceef1';
       var growthEl = document.querySelector('#growthChart');
       if (growthEl && typeof ApexCharts !== 'undefined') {
         var options = {
@@ -686,7 +696,7 @@ window.dashboardCharts.timeSlotHeatmap = @Html.Raw(Json.Serialize(Model.TimeSlot
   </script>
 }
 
-@if (Model.LeadTrendChart.Series.Any())
+@if (hasLeadTrend || hasFunnel || hasChannel || hasCplScatter || hasLanding || hasCohort || hasTimeSlot)
 {
   <script>
     document.addEventListener('DOMContentLoaded', function () {
@@ -696,250 +706,123 @@ window.dashboardCharts.timeSlotHeatmap = @Html.Raw(Json.Serialize(Model.TimeSlot
       var legendColor = config.colors.bodyColor || '#697a8d';
       var labelColor = config.colors.textMuted || '#a1acb8';
       var borderColor = config.colors.borderColor || '#eceef1';
-      // Lead Trend Chart
+
       var leadTrendEl = document.querySelector('#leadTrendChart');
       if (leadTrendEl && typeof ApexCharts !== 'undefined') {
         var leadTrendData = @Html.Raw(Json.Serialize(Model.LeadTrendChart));
-        var leadTrendOptions = {
-          chart: {
-            height: 280,
-            type: 'line',
-            toolbar: { show: false },
-            fontFamily: config.fontFamily,
-            foreColor: labelColor,
-            zoom: { enabled: true }
-          },
+        new ApexCharts(leadTrendEl, {
+          chart: { height: 280, type: 'line', toolbar: { show: false }, fontFamily: config.fontFamily, foreColor: labelColor, zoom: { enabled: true } },
           colors: ['#6965fd', '#03c3ec', '#71dd88', '#ffab00'],
           dataLabels: { enabled: false },
           stroke: { curve: 'smooth', width: 3, lineCap: 'round' },
           legend: { show: true, horizontalAlign: 'left', position: 'top', markers: { size: 4, radius: 12, shape: 'circle', strokeWidth: 0 }, fontSize: '13px', fontFamily: config.fontFamily, labels: { colors: legendColor, useSeriesColors: false }, itemMargin: { horizontal: 10 } },
           grid: { strokeDashArray: 7, borderColor: borderColor, padding: { top: -10, bottom: -10, left: 10, right: 10 } },
-          xaxis: {
-            categories: leadTrendData.categories || [],
-            labels: { style: { fontSize: '13px', fontFamily: config.fontFamily, colors: labelColor } },
-            axisTicks: { show: false },
-            axisBorder: { show: false }
-          },
-          yaxis: {
-            labels: { style: { fontSize: '13px', fontFamily: config.fontFamily, colors: labelColor }, formatter: function (val) { return val.toLocaleString(); } }
-          },
+          xaxis: { categories: leadTrendData.categories || [], labels: { style: { fontSize: '13px', fontFamily: config.fontFamily, colors: labelColor } }, axisTicks: { show: false }, axisBorder: { show: false } },
+          yaxis: { labels: { style: { fontSize: '13px', fontFamily: config.fontFamily, colors: labelColor }, formatter: function (val) { return val.toLocaleString(); } } },
           tooltip: { theme: 'dark' },
           series: leadTrendData.series || []
-        };
-        new ApexCharts(leadTrendEl, leadTrendOptions).render();
+        }).render();
       }
 
-      // Marketing Funnel Chart
       var marketingFunnelEl = document.querySelector('#marketingFunnelChart');
       if (marketingFunnelEl && typeof ApexCharts !== 'undefined') {
         var marketingFunnelData = @Html.Raw(Json.Serialize(Model.MarketingFunnelChart));
-        var marketingFunnelOptions = {
-          chart: {
-            height: 280,
-            type: 'bar',
-            toolbar: { show: false },
-            fontFamily: config.fontFamily,
-            foreColor: labelColor
-          },
+        new ApexCharts(marketingFunnelEl, {
+          chart: { height: 280, type: 'bar', toolbar: { show: false }, fontFamily: config.fontFamily, foreColor: labelColor },
           colors: ['#6965fd', '#03c3ec', '#71dd88', '#ffab00', '#ff3e1d'],
-          plotOptions: {
-            bar: { horizontal: false, columnWidth: '40%', borderRadius: 8, borderRadiusApplication: 'around', dataLabels: { position: 'top' } }
-          },
+          plotOptions: { bar: { horizontal: false, columnWidth: '40%', borderRadius: 8, borderRadiusApplication: 'around', dataLabels: { position: 'top' } } },
           dataLabels: { enabled: true, formatter: function (val) { return val.toLocaleString(); }, style: { fontSize: '12px', fontFamily: config.fontFamily, colors: [headingColor] } },
           legend: { show: true, horizontalAlign: 'left', position: 'top', markers: { size: 4, radius: 12, shape: 'circle', strokeWidth: 0 }, fontSize: '13px', fontFamily: config.fontFamily, labels: { colors: legendColor, useSeriesColors: false }, itemMargin: { horizontal: 10 } },
           grid: { strokeDashArray: 7, borderColor: borderColor, padding: { top: 0, bottom: -8, left: 10, right: 10 } },
-          xaxis: {
-            categories: marketingFunnelData.categories || [],
-            labels: { style: { fontSize: '13px', fontFamily: config.fontFamily, colors: labelColor } },
-            axisTicks: { show: false },
-            axisBorder: { show: false }
-          },
-          yaxis: {
-            labels: { style: { fontSize: '13px', fontFamily: config.fontFamily, colors: labelColor }, formatter: function (val) { return val.toLocaleString(); } }
-          },
+          xaxis: { categories: marketingFunnelData.categories || [], labels: { style: { fontSize: '13px', fontFamily: config.fontFamily, colors: labelColor } }, axisTicks: { show: false }, axisBorder: { show: false } },
+          yaxis: { labels: { style: { fontSize: '13px', fontFamily: config.fontFamily, colors: labelColor }, formatter: function (val) { return val.toLocaleString(); } } },
           tooltip: { theme: 'dark' },
           series: marketingFunnelData.series || []
-        };
-        new ApexCharts(marketingFunnelEl, marketingFunnelOptions).render();
+        }).render();
       }
 
-      // Channel Spend vs Revenue Chart
       var channelSpendEl = document.querySelector('#channelSpendRevenueChart');
       if (channelSpendEl && typeof ApexCharts !== 'undefined') {
         var channelSpendData = @Html.Raw(Json.Serialize(Model.ChannelSpendRevenueChart));
-        var channelSpendOptions = {
-          chart: {
-            height: 280,
-            type: 'bar',
-            toolbar: { show: false },
-            fontFamily: config.fontFamily,
-            foreColor: labelColor
-          },
+        new ApexCharts(channelSpendEl, {
+          chart: { height: 280, type: 'bar', toolbar: { show: false }, fontFamily: config.fontFamily, foreColor: labelColor },
           colors: ['#ff3e1d', '#71dd88'],
-          plotOptions: {
-            bar: { horizontal: false, columnWidth: '35%', borderRadius: 8, borderRadiusApplication: 'around' }
-          },
+          plotOptions: { bar: { horizontal: false, columnWidth: '35%', borderRadius: 8, borderRadiusApplication: 'around' } },
           dataLabels: { enabled: false },
           legend: { show: true, horizontalAlign: 'left', position: 'top', markers: { size: 4, radius: 12, shape: 'circle', strokeWidth: 0 }, fontSize: '13px', fontFamily: config.fontFamily, labels: { colors: legendColor, useSeriesColors: false }, itemMargin: { horizontal: 10 } },
           grid: { strokeDashArray: 7, borderColor: borderColor, padding: { top: -10, bottom: -10, left: 10, right: 10 } },
-          xaxis: {
-            categories: channelSpendData.categories || [],
-            labels: { style: { fontSize: '13px', fontFamily: config.fontFamily, colors: labelColor } },
-            axisTicks: { show: false },
-            axisBorder: { show: false }
-          },
-          yaxis: {
-            labels: { style: { fontSize: '13px', fontFamily: config.fontFamily, colors: labelColor }, formatter: function (val) { return '$' + val.toLocaleString(); } }
-          },
+          xaxis: { categories: channelSpendData.categories || [], labels: { style: { fontSize: '13px', fontFamily: config.fontFamily, colors: labelColor } }, axisTicks: { show: false }, axisBorder: { show: false } },
+          yaxis: { labels: { style: { fontSize: '13px', fontFamily: config.fontFamily, colors: labelColor }, formatter: function (val) { return '$' + val.toLocaleString(); } } },
           tooltip: { theme: 'dark', y: { formatter: function (val) { return '$' + val.toLocaleString(); } } },
           series: channelSpendData.series || []
-        };
-        new ApexCharts(channelSpendEl, channelSpendOptions).render();
+        }).render();
       }
 
-      // CPL vs Conversion Scatter Chart
       var cplConversionEl = document.querySelector('#cplVsConversionScatterChart');
       if (cplConversionEl && typeof ApexCharts !== 'undefined') {
         var cplConversionData = @Html.Raw(Json.Serialize(Model.CplVsConversionScatterChart));
-        var cplConversionOptions = {
-          chart: {
-            height: 280,
-            type: 'scatter',
-            toolbar: { show: false },
-            fontFamily: config.fontFamily,
-            foreColor: labelColor,
-            zoom: { enabled: true }
-          },
+        new ApexCharts(cplConversionEl, {
+          chart: { height: 280, type: 'scatter', toolbar: { show: false }, fontFamily: config.fontFamily, foreColor: labelColor, zoom: { enabled: true } },
           colors: ['#6965fd', '#03c3ec'],
           dataLabels: { enabled: true, formatter: function (val) { return val.toFixed(1); }, style: { fontSize: '11px', fontFamily: config.fontFamily, colors: [headingColor] } },
           legend: { show: true, horizontalAlign: 'left', position: 'top', markers: { size: 6, radius: 12, shape: 'circle', strokeWidth: 0 }, fontSize: '13px', fontFamily: config.fontFamily, labels: { colors: legendColor, useSeriesColors: false }, itemMargin: { horizontal: 10 } },
           grid: { strokeDashArray: 7, borderColor: borderColor, padding: { top: -10, bottom: -10, left: 10, right: 10 } },
-          xaxis: {
-            title: { text: 'CPL', style: { fontSize: '12px', fontFamily: config.fontFamily, color: labelColor } },
-            labels: { style: { fontSize: '13px', fontFamily: config.fontFamily, colors: labelColor }, formatter: function (val) { return '$' + val.toFixed(0); } },
-            axisTicks: { show: false },
-            axisBorder: { show: false }
-          },
-          yaxis: {
-            title: { text: 'Conversion %', style: { fontSize: '12px', fontFamily: config.fontFamily, color: labelColor } },
-            labels: { style: { fontSize: '13px', fontFamily: config.fontFamily, colors: labelColor }, formatter: function (val) { return val.toFixed(1) + '%'; } }
-          },
+          xaxis: { title: { text: 'CPL', style: { fontSize: '12px', fontFamily: config.fontFamily, color: labelColor } }, labels: { style: { fontSize: '13px', fontFamily: config.fontFamily, colors: labelColor }, formatter: function (val) { return '$' + val.toFixed(0); } }, axisTicks: { show: false }, axisBorder: { show: false } },
+          yaxis: { title: { text: 'Conversion %', style: { fontSize: '12px', fontFamily: config.fontFamily, color: labelColor } }, labels: { style: { fontSize: '13px', fontFamily: config.fontFamily, colors: labelColor }, formatter: function (val) { return val.toFixed(1) + '%'; } } },
           tooltip: { theme: 'dark' },
           series: cplConversionData.series || []
-        };
-        new ApexCharts(cplConversionEl, cplConversionOptions).render();
+        }).render();
       }
 
-      // Landing Page Chart
       var landingPageEl = document.querySelector('#landingPageChart');
       if (landingPageEl && typeof ApexCharts !== 'undefined') {
         var landingPageData = @Html.Raw(Json.Serialize(Model.LandingPageChart));
-        var landingPageOptions = {
-          chart: {
-            height: 280,
-            type: 'bar',
-            toolbar: { show: false },
-            fontFamily: config.fontFamily,
-            foreColor: labelColor
-          },
+        new ApexCharts(landingPageEl, {
+          chart: { height: 280, type: 'bar', toolbar: { show: false }, fontFamily: config.fontFamily, foreColor: labelColor },
           colors: ['#6965fd', '#03c3ec', '#71dd88'],
-          plotOptions: {
-            bar: { horizontal: true, barHeight: '60%', borderRadius: 8, borderRadiusApplication: 'around' }
-          },
+          plotOptions: { bar: { horizontal: true, barHeight: '60%', borderRadius: 8, borderRadiusApplication: 'around' } },
           dataLabels: { enabled: true, formatter: function (val) { return val.toLocaleString(); }, style: { fontSize: '11px', fontFamily: config.fontFamily, colors: [headingColor] } },
           legend: { show: true, horizontalAlign: 'left', position: 'top', markers: { size: 4, radius: 12, shape: 'circle', strokeWidth: 0 }, fontSize: '13px', fontFamily: config.fontFamily, labels: { colors: legendColor, useSeriesColors: false }, itemMargin: { horizontal: 10 } },
           grid: { strokeDashArray: 7, borderColor: borderColor, padding: { top: 0, bottom: 0, left: 10, right: 10 } },
-          xaxis: {
-            categories: landingPageData.categories || [],
-            labels: { style: { fontSize: '13px', fontFamily: config.fontFamily, colors: labelColor } },
-            axisTicks: { show: false },
-            axisBorder: { show: false }
-          },
-          yaxis: {
-            labels: { style: { fontSize: '12px', fontFamily: config.fontFamily, colors: labelColor } }
-          },
+          xaxis: { categories: landingPageData.categories || [], labels: { style: { fontSize: '13px', fontFamily: config.fontFamily, colors: labelColor } }, axisTicks: { show: false }, axisBorder: { show: false } },
+          yaxis: { labels: { style: { fontSize: '12px', fontFamily: config.fontFamily, colors: labelColor } } },
           tooltip: { theme: 'dark' },
           series: landingPageData.series || []
-        };
-        new ApexCharts(landingPageEl, landingPageOptions).render();
+        }).render();
       }
 
-      // Cohort Retention Chart
       var cohortRetentionEl = document.querySelector('#cohortRetentionChart');
       if (cohortRetentionEl && typeof ApexCharts !== 'undefined') {
         var cohortRetentionData = @Html.Raw(Json.Serialize(Model.CohortRetentionChart));
-        var cohortRetentionOptions = {
-          chart: {
-            height: 280,
-            type: 'line',
-            toolbar: { show: false },
-            fontFamily: config.fontFamily,
-            foreColor: labelColor,
-            zoom: { enabled: true }
-          },
+        new ApexCharts(cohortRetentionEl, {
+          chart: { height: 280, type: 'line', toolbar: { show: false }, fontFamily: config.fontFamily, foreColor: labelColor, zoom: { enabled: true } },
           colors: ['#6965fd', '#03c3ec', '#71dd88', '#ffab00', '#ff3e1d'],
           stroke: { curve: 'smooth', width: 3, lineCap: 'round' },
           dataLabels: { enabled: false },
           legend: { show: true, horizontalAlign: 'left', position: 'top', markers: { size: 4, radius: 12, shape: 'circle', strokeWidth: 0 }, fontSize: '13px', fontFamily: config.fontFamily, labels: { colors: legendColor, useSeriesColors: false }, itemMargin: { horizontal: 10 } },
           grid: { strokeDashArray: 7, borderColor: borderColor, padding: { top: -10, bottom: -10, left: 10, right: 10 } },
-          xaxis: {
-            categories: cohortRetentionData.categories || [],
-            labels: { style: { fontSize: '13px', fontFamily: config.fontFamily, colors: labelColor } },
-            axisTicks: { show: false },
-            axisBorder: { show: false }
-          },
-          yaxis: {
-            labels: { style: { fontSize: '13px', fontFamily: config.fontFamily, colors: labelColor }, formatter: function (val) { return val.toFixed(0) + '%'; } }
-          },
+          xaxis: { categories: cohortRetentionData.categories || [], labels: { style: { fontSize: '13px', fontFamily: config.fontFamily, colors: labelColor } }, axisTicks: { show: false }, axisBorder: { show: false } },
+          yaxis: { labels: { style: { fontSize: '13px', fontFamily: config.fontFamily, colors: labelColor }, formatter: function (val) { return val.toFixed(0) + '%'; } } },
           tooltip: { theme: 'dark', y: { formatter: function (val) { return val.toFixed(1) + '%'; } } },
           series: cohortRetentionData.series || []
-        };
-        new ApexCharts(cohortRetentionEl, cohortRetentionOptions).render();
+        }).render();
       }
 
-      // TimeSlot Heatmap Chart
       var timeSlotHeatmapEl = document.querySelector('#timeSlotHeatmapChart');
       if (timeSlotHeatmapEl && typeof ApexCharts !== 'undefined') {
         var timeSlotData = @Html.Raw(Json.Serialize(Model.TimeSlotHeatmap));
-        var timeSlotHeatmapOptions = {
-          chart: {
-            height: 320,
-            type: 'heatmap',
-            toolbar: { show: false },
-            fontFamily: config.fontFamily,
-            foreColor: labelColor
-          },
+        new ApexCharts(timeSlotHeatmapEl, {
+          chart: { height: 320, type: 'heatmap', toolbar: { show: false }, fontFamily: config.fontFamily, foreColor: labelColor },
           colors: ['#6965fd', '#03c3ec', '#71dd88'],
           dataLabels: { enabled: true, style: { fontSize: '11px', fontFamily: config.fontFamily, colors: [headingColor] } },
           legend: { show: true, horizontalAlign: 'left', position: 'top', markers: { size: 6, radius: 12, shape: 'circle', strokeWidth: 0 }, fontSize: '13px', fontFamily: config.fontFamily, labels: { colors: legendColor, useSeriesColors: false }, itemMargin: { horizontal: 10 } },
           grid: { strokeDashArray: 7, borderColor: borderColor, padding: { top: -10, bottom: -10, left: 10, right: 10 } },
-          plotOptions: {
-            heatmap: {
-              radius: 4,
-              colorScale: {
-                ranges: [
-                  { from: 0, to: 25, name: 'Low', color: '#ff3e1d' },
-                  { from: 26, to: 50, name: 'Medium', color: '#ffab00' },
-                  { from: 51, to: 75, name: 'High', color: '#03c3ec' },
-                  { from: 76, to: 100, name: 'Excellent', color: '#71dd88' }
-                ]
-              }
-            }
-          },
-          xaxis: {
-            categories: timeSlotData.xCategories || [],
-            labels: { style: { fontSize: '13px', fontFamily: config.fontFamily, colors: labelColor } },
-            axisTicks: { show: false },
-            axisBorder: { show: false }
-          },
-          yaxis: {
-            categories: timeSlotData.yCategories || [],
-            labels: { style: { fontSize: '13px', fontFamily: config.fontFamily, colors: labelColor } }
-          },
+          plotOptions: { heatmap: { radius: 4, colorScale: { ranges: [{ from: 0, to: 25, name: 'Low', color: '#ff3e1d' }, { from: 26, to: 50, name: 'Medium', color: '#ffab00' }, { from: 51, to: 75, name: 'High', color: '#03c3ec' }, { from: 76, to: 100, name: 'Excellent', color: '#71dd88' }] } } },
+          xaxis: { categories: timeSlotData.xCategories || [], labels: { style: { fontSize: '13px', fontFamily: config.fontFamily, colors: labelColor } }, axisTicks: { show: false }, axisBorder: { show: false } },
+          yaxis: { categories: timeSlotData.yCategories || [], labels: { style: { fontSize: '13px', fontFamily: config.fontFamily, colors: labelColor } } },
           tooltip: { theme: 'dark', y: { formatter: function (val) { return val.toLocaleString(); } } },
           series: timeSlotData.data || []
-        };
-        new ApexCharts(timeSlotHeatmapEl, timeSlotHeatmapOptions).render();
+        }).render();
       }
     });
   </script>
@@ -951,10 +834,8 @@ function setRange(type) {
     var toInput = document.querySelector('form[method="get"] input[name="to"]');
     var fromInput = document.querySelector('form[method="get"] input[name="from"]');
     if (!fromInput || !toInput) return;
-
     var to = new Date(today);
     var from = new Date(today);
-
     if (type === 'today') {
         from = new Date(today.getFullYear(), today.getMonth(), today.getDate());
         to = from;
@@ -970,9 +851,39 @@ function setRange(type) {
         from = new Date(today.getFullYear(), 0, 1);
         to = new Date(today.getFullYear(), today.getMonth(), today.getDate());
     }
-
     fromInput.value = from.toISOString().split('T')[0];
     toInput.value = to.toISOString().split('T')[0];
     fromInput.closest('form').submit();
 }
+</script>
+
+@{
+    var aiMarketingModel = new Dashboard.Models.ViewModels.AIChatWidgetModel { Department = "Marketing" };
+}
+<partial name="~/Views/Shared/Partials/_AIChatWidget.cshtml" model="aiMarketingModel" />
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  var el = document.getElementById('marketing-dashboard-grid');
+  if (el && typeof DashboardLayoutManager !== 'undefined') {
+    window.dashboardLayoutManager = new DashboardLayoutManager('marketing-dashboard-grid', {
+      storageKey: 'marketing-dashboard-layout-v1',
+      editMode: false,
+      gap: 20,
+      cellHeight: 60
+    });
+
+    var origToggle = window.dashboardLayoutManager.toggleEditMode.bind(window.dashboardLayoutManager);
+    window.dashboardLayoutManager.toggleEditMode = function () {
+      var editing = origToggle();
+      document.getElementById('btn-layout-edit').classList.toggle('editing', editing);
+    };
+
+    var origSave = window.dashboardLayoutManager.saveLayout.bind(window.dashboardLayoutManager);
+    window.dashboardLayoutManager.saveLayout = function () {
+      origSave();
+      if (typeof toastr !== 'undefined') toastr.success('Dashboard layout saved.');
+    };
+  }
+});
 </script>

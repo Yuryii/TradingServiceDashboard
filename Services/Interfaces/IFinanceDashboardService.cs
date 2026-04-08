@@ -12,6 +12,7 @@ public interface IFinanceDashboardService
     Task<KpiCardDto> GetProfitMarginAsync(DateTime? fromDate = null, DateTime? toDate = null);
     Task<KpiCardDto> GetDsoAsync(DateTime? fromDate = null, DateTime? toDate = null);
     Task<KpiCardDto> GetDpoAsync(DateTime? fromDate = null, DateTime? toDate = null);
+    Task<KpiCardDto> GetArBalanceAsync(DateTime? fromDate = null, DateTime? toDate = null);
     Task<ChartDataDto> GetFinancialOverviewChartAsync(DateTime? fromDate = null, DateTime? toDate = null);
     Task<ChartDataDto> GetExpenseBreakdownChartAsync(DateTime? fromDate = null, DateTime? toDate = null);
     Task<ChartDataDto> GetCashflowTrendChartAsync(DateTime? fromDate = null, DateTime? toDate = null);

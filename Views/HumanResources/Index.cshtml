@@ -4,6 +4,7 @@
 }
 @section VendorStyles {
 <link rel="stylesheet" href="~/vendor/libs/apex-charts/apex-charts.css" />
+<link rel="stylesheet" href="~/vendor/libs/gridstack/gridstack.min.css" />
 }
 @section VendorScripts {
 <script src="~/vendor/libs/apex-charts/apexcharts.js"></script>
@@ -26,9 +27,24 @@ window.dashboardCharts.attritionHeatmap = @Html.Raw(Json.Serialize(Model.Attriti
 <script src="~/js/dashboards-analytics.js"></script>
 }
 
-<div class="row">
-  <div class="col-xxl-8 mb-6 order-0">
-    <div class="card">
+<!-- Layout Toolbar -->
+<div class="d-flex align-items-center gap-2 mb-4">
+  <button type="button" class="btn btn-outline-primary btn-sm" id="btn-layout-edit">
+    <i class="icon-base bx bx-edit-alt me-1"></i> Customize Layout
+  </button>
+  <button type="button" class="btn btn-outline-success btn-sm d-none" id="btn-layout-save">
+    <i class="icon-base bx bx-save me-1"></i> Save Layout
+  </button>
+  <button type="button" class="btn btn-outline-secondary btn-sm" id="btn-layout-reset">
+    <i class="icon-base bx bx-reset me-1"></i> Reset
+  </button>
+</div>
+
+<div id="hr-dashboard-grid-container" style="position: relative;">
+<div id="hr-dashboard-grid" class="grid-stack">
+  <!-- HR Welcome Card -->
+  <div class="grid-stack-item" data-widget-id="hr-welcome" data-gs-x="0" data-gs-y="0" data-gs-width="8" data-gs-height="6">
+    <div class="grid-stack-item-content card">
       <div class="d-flex align-items-start row">
         <div class="col-sm-7">
           <div class="card-body">
@@ -45,60 +61,58 @@ window.dashboardCharts.attritionHeatmap = @Html.Raw(Json.Serialize(Model.Attriti
       </div>
     </div>
   </div>
-  <div class="col-xxl-4 col-lg-12 col-md-4 order-1">
-    <div class="row">
-      <div class="col-lg-6 col-md-12 col-6 mb-6">
-        <div class="card h-100">
-          <div class="card-body">
-            <div class="card-title d-flex align-items-start justify-content-between mb-4">
-              <div class="avatar flex-shrink-0">
-                <img src="~/img/icons/unicons/chart-success.png" alt="Employees" class="rounded" />
-              </div>
-              <div class="dropdown">
-                <button class="btn p-0" type="button" id="cardOpt1" data-bs-toggle="dropdown" aria-haspup="true" aria-expanded="false">
-                  <i class="icon-base bx bx-dots-vertical-rounded text-body-secondary"></i>
-                </button>
-                <div class="dropdown-menu dropdown-menu-end" aria-labelledby="cardOpt1">
-                  <a class="dropdown-item" href="javascript:void(0);">View More</a>
-                </div>
-              </div>
+
+  <!-- Total Employees KPI -->
+  <div class="grid-stack-item" data-widget-id="hr-kpi-employees" data-gs-x="8" data-gs-y="0" data-gs-width="4" data-gs-height="3">
+    <div class="grid-stack-item-content card h-100">
+      <div class="card-body">
+        <div class="card-title d-flex align-items-start justify-content-between mb-4">
+          <div class="avatar flex-shrink-0">
+            <img src="~/img/icons/unicons/chart-success.png" alt="Employees" class="rounded" />
+          </div>
+          <div class="dropdown">
+            <button class="btn p-0" type="button" id="cardOpt1" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+              <i class="icon-base bx bx-dots-vertical-rounded text-body-secondary"></i>
+            </button>
+            <div class="dropdown-menu dropdown-menu-end" aria-labelledby="cardOpt1">
+              <a class="dropdown-item" href="javascript:void(0);">View More</a>
             </div>
-            <p class="mb-1">@Model.TotalEmployees.Title</p>
-            <h4 class="card-title mb-3">@Model.TotalEmployees.Value</h4>
-            <small class="text-success fw-medium"><i class="icon-base bx bx-up-arrow-alt"></i> @Model.TotalEmployees.TrendLabel</small>
           </div>
         </div>
-      </div>
-      <div class="col-lg-6 col-md-12 col-6 mb-6">
-        <div class="card h-100">
-          <div class="card-body">
-            <div class="card-title d-flex align-items-start justify-content-between mb-4">
-              <div class="avatar flex-shrink-0">
-                <img src="~/img/icons/unicons/wallet-info.png" alt="Departments" class="rounded" />
-              </div>
-              <div class="dropdown">
-                <button class="btn p-0" type="button" id="cardOpt2" data-bs-toggle="dropdown" aria-haspup="true" aria-expanded="false">
-                  <i class="icon-base bx bx-dots-vertical-rounded text-body-secondary"></i>
-                </button>
-                <div class="dropdown-menu dropdown-menu-end" aria-labelledby="cardOpt2">
-                  <a class="dropdown-item" href="javascript:void(0);">View More</a>
-                </div>
-              </div>
-            </div>
-            <p class="mb-1">@Model.Departments.Title</p>
-            <h4 class="card-title mb-3">@Model.Departments.Value</h4>
-            <small class="text-success fw-medium"><i class="icon-base bx bx-buildings"></i> @Model.Departments.TrendLabel</small>
-          </div>
-        </div>
+        <p class="mb-1">@Model.TotalEmployees.Title</p>
+        <h4 class="card-title mb-3">@Model.TotalEmployees.Value</h4>
+        <small class="text-success fw-medium"><i class="icon-base bx bx-up-arrow-alt"></i> @Model.TotalEmployees.TrendLabel</small>
       </div>
     </div>
   </div>
-</div>
 
-<!-- New HR KPI Cards -->
-<div class="row mb-6">
-  <div class="col-lg-3 col-md-6 col-12 mb-4">
-    <div class="card h-100">
+  <!-- Departments KPI -->
+  <div class="grid-stack-item" data-widget-id="hr-kpi-departments" data-gs-x="8" data-gs-y="3" data-gs-width="4" data-gs-height="3">
+    <div class="grid-stack-item-content card h-100">
+      <div class="card-body">
+        <div class="card-title d-flex align-items-start justify-content-between mb-4">
+          <div class="avatar flex-shrink-0">
+            <img src="~/img/icons/unicons/wallet-info.png" alt="Departments" class="rounded" />
+          </div>
+          <div class="dropdown">
+            <button class="btn p-0" type="button" id="cardOpt2" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+              <i class="icon-base bx bx-dots-vertical-rounded text-body-secondary"></i>
+            </button>
+            <div class="dropdown-menu dropdown-menu-end" aria-labelledby="cardOpt2">
+              <a class="dropdown-item" href="javascript:void(0);">View More</a>
+            </div>
+          </div>
+        </div>
+        <p class="mb-1">@Model.Departments.Title</p>
+        <h4 class="card-title mb-3">@Model.Departments.Value</h4>
+        <small class="text-success fw-medium"><i class="icon-base bx bx-buildings"></i> @Model.Departments.TrendLabel</small>
+      </div>
+    </div>
+  </div>
+
+  <!-- Avg Salary KPI -->
+  <div class="grid-stack-item" data-widget-id="hr-kpi-avg-salary" data-gs-x="0" data-gs-y="6" data-gs-width="3" data-gs-height="6">
+    <div class="grid-stack-item-content card h-100">
       <div class="card-body">
         <div class="card-title d-flex align-items-start justify-content-between mb-4">
           <div class="avatar flex-shrink-0">
@@ -119,8 +133,10 @@ window.dashboardCharts.attritionHeatmap = @Html.Raw(Json.Serialize(Model.Attriti
       </div>
     </div>
   </div>
-  <div class="col-lg-3 col-md-6 col-12 mb-4">
-    <div class="card h-100">
+
+  <!-- Absenteeism KPI -->
+  <div class="grid-stack-item" data-widget-id="hr-kpi-absenteeism" data-gs-x="3" data-gs-y="6" data-gs-width="3" data-gs-height="6">
+    <div class="grid-stack-item-content card h-100">
       <div class="card-body">
         <div class="card-title d-flex align-items-start justify-content-between mb-4">
           <div class="avatar flex-shrink-0">
@@ -141,8 +157,10 @@ window.dashboardCharts.attritionHeatmap = @Html.Raw(Json.Serialize(Model.Attriti
       </div>
     </div>
   </div>
-  <div class="col-lg-3 col-md-6 col-12 mb-4">
-    <div class="card h-100">
+
+  <!-- OT Hours KPI -->
+  <div class="grid-stack-item" data-widget-id="hr-kpi-ot-hours" data-gs-x="6" data-gs-y="6" data-gs-width="3" data-gs-height="6">
+    <div class="grid-stack-item-content card h-100">
       <div class="card-body">
         <div class="card-title d-flex align-items-start justify-content-between mb-4">
           <div class="avatar flex-shrink-0">
@@ -163,8 +181,10 @@ window.dashboardCharts.attritionHeatmap = @Html.Raw(Json.Serialize(Model.Attriti
       </div>
     </div>
   </div>
-  <div class="col-lg-3 col-md-6 col-12 mb-4">
-    <div class="card h-100">
+
+  <!-- Revenue per Employee KPI -->
+  <div class="grid-stack-item" data-widget-id="hr-kpi-revenue-per-employee" data-gs-x="9" data-gs-y="6" data-gs-width="3" data-gs-height="6">
+    <div class="grid-stack-item-content card h-100">
       <div class="card-body">
         <div class="card-title d-flex align-items-start justify-content-between mb-4">
           <div class="avatar flex-shrink-0">
@@ -185,11 +205,10 @@ window.dashboardCharts.attritionHeatmap = @Html.Raw(Json.Serialize(Model.Attriti
       </div>
     </div>
   </div>
-</div>
 
-<div class="row">
-  <div class="col-12 col-xxl-8 order-2 order-md-3 order-xxl-2 mb-6">
-    <div class="card">
+  <!-- Workforce Overview Chart -->
+  <div class="grid-stack-item" data-widget-id="hr-chart-workforce" data-gs-x="0" data-gs-y="12" data-gs-width="6" data-gs-height="8">
+    <div class="grid-stack-item-content card h-100">
       <div class="row row-bordered g-0">
         <div class="col-lg-8">
           <div class="card-header d-flex align-items-center justify-content-between">
@@ -197,7 +216,7 @@ window.dashboardCharts.attritionHeatmap = @Html.Raw(Json.Serialize(Model.Attriti
               <h5 class="m-0 me-2">Workforce Overview</h5>
             </div>
             <div class="dropdown">
-              <button class="btn p-0" type="button" id="hrChart" data-bs-toggle="dropdown" aria-haspup="true" aria-expanded="false">
+              <button class="btn p-0" type="button" id="hrChart" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                 <i class="icon-base bx bx-dots-vertical-rounded icon-lg text-body-secondary"></i>
               </button>
               <div class="dropdown-menu dropdown-menu-end" aria-labelledby="hrChart">
@@ -219,60 +238,58 @@ window.dashboardCharts.attritionHeatmap = @Html.Raw(Json.Serialize(Model.Attriti
       </div>
     </div>
   </div>
-  <div class="col-12 col-md-8 col-lg-12 col-xxl-4 order-3 order-md-2 mb-6">
-    <div class="row">
-      <div class="col-6 mb-6">
-        <div class="card h-100">
-          <div class="card-body">
-            <div class="card-title d-flex align-items-start justify-content-between mb-4">
-              <div class="avatar flex-shrink-0">
-                <img src="~/img/icons/unicons/paypal.png" alt="New Hires" class="rounded" />
-              </div>
-              <div class="dropdown">
-                <button class="btn p-0" type="button" id="cardOpt3" data-bs-toggle="dropdown" aria-haspup="true" aria-expanded="false">
-                  <i class="icon-base bx bx-dots-vertical-rounded text-body-secondary"></i>
-                </button>
-                <div class="dropdown-menu dropdown-menu-end" aria-labelledby="cardOpt3">
-                  <a class="dropdown-item" href="javascript:void(0);">View More</a>
-                </div>
-              </div>
+
+  <!-- New Hires KPI -->
+  <div class="grid-stack-item" data-widget-id="hr-kpi-new-hires" data-gs-x="6" data-gs-y="12" data-gs-width="3" data-gs-height="4">
+    <div class="grid-stack-item-content card h-100">
+      <div class="card-body">
+        <div class="card-title d-flex align-items-start justify-content-between mb-4">
+          <div class="avatar flex-shrink-0">
+            <img src="~/img/icons/unicons/paypal.png" alt="New Hires" class="rounded" />
+          </div>
+          <div class="dropdown">
+            <button class="btn p-0" type="button" id="cardOpt3" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+              <i class="icon-base bx bx-dots-vertical-rounded text-body-secondary"></i>
+            </button>
+            <div class="dropdown-menu dropdown-menu-end" aria-labelledby="cardOpt3">
+              <a class="dropdown-item" href="javascript:void(0);">View More</a>
             </div>
-            <p class="mb-1">@Model.NewHires.Title</p>
-            <h4 class="card-title mb-3">@Model.NewHires.Value</h4>
-            <small class="text-success fw-medium"><i class="icon-base bx bx-up-arrow-alt"></i> @Model.NewHires.TrendLabel</small>
           </div>
         </div>
-      </div>
-      <div class="col-6 mb-6">
-        <div class="card h-100">
-          <div class="card-body">
-            <div class="card-title d-flex align-items-start justify-content-between mb-4">
-              <div class="avatar flex-shrink-0">
-                <img src="~/img/icons/unicons/cc-primary.png" alt="Open Positions" class="rounded" />
-              </div>
-              <div class="dropdown">
-                <button class="btn p-0" type="button" id="cardOpt4" data-bs-toggle="dropdown" aria-haspup="true" aria-expanded="false">
-                  <i class="icon-base bx bx-dots-vertical-rounded text-body-secondary"></i>
-                </button>
-                <div class="dropdown-menu" aria-labelledby="cardOpt4">
-                  <a class="dropdown-item" href="javascript:void(0);">View More</a>
-                </div>
-              </div>
-            </div>
-            <p class="mb-1">@Model.OpenPositions.Title</p>
-            <h4 class="card-title mb-3">@Model.OpenPositions.Value</h4>
-            <small class="text-warning fw-medium"><i class="icon-base bx bx-time"></i> @Model.OpenPositions.TrendLabel</small>
-          </div>
-        </div>
+        <p class="mb-1">@Model.NewHires.Title</p>
+        <h4 class="card-title mb-3">@Model.NewHires.Value</h4>
+        <small class="text-success fw-medium"><i class="icon-base bx bx-up-arrow-alt"></i> @Model.NewHires.TrendLabel</small>
       </div>
     </div>
   </div>
-</div>
 
-<!-- Chart Section 1: Headcount Trend Area + Turnover Trend Bar -->
-<div class="row mb-4">
-  <div class="col-md-6 mb-4 mb-md-0">
-    <div class="card h-100">
+  <!-- Open Positions KPI -->
+  <div class="grid-stack-item" data-widget-id="hr-kpi-open-positions" data-gs-x="9" data-gs-y="12" data-gs-width="3" data-gs-height="4">
+    <div class="grid-stack-item-content card h-100">
+      <div class="card-body">
+        <div class="card-title d-flex align-items-start justify-content-between mb-4">
+          <div class="avatar flex-shrink-0">
+            <img src="~/img/icons/unicons/cc-primary.png" alt="Open Positions" class="rounded" />
+          </div>
+          <div class="dropdown">
+            <button class="btn p-0" type="button" id="cardOpt4" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+              <i class="icon-base bx bx-dots-vertical-rounded text-body-secondary"></i>
+            </button>
+            <div class="dropdown-menu" aria-labelledby="cardOpt4">
+              <a class="dropdown-item" href="javascript:void(0);">View More</a>
+            </div>
+          </div>
+        </div>
+        <p class="mb-1">@Model.OpenPositions.Title</p>
+        <h4 class="card-title mb-3">@Model.OpenPositions.Value</h4>
+        <small class="text-warning fw-medium"><i class="icon-base bx bx-time"></i> @Model.OpenPositions.TrendLabel</small>
+      </div>
+    </div>
+  </div>
+
+  <!-- Headcount Trend Chart -->
+  <div class="grid-stack-item" data-widget-id="hr-chart-headcount" data-gs-x="0" data-gs-y="20" data-gs-width="6" data-gs-height="8">
+    <div class="grid-stack-item-content card h-100">
       <div class="card-header d-flex justify-content-between">
         <div class="card-title mb-0">
           <h5 class="mb-1 me-2">Headcount Trend</h5>
@@ -283,8 +300,10 @@ window.dashboardCharts.attritionHeatmap = @Html.Raw(Json.Serialize(Model.Attriti
       </div>
     </div>
   </div>
-  <div class="col-md-6">
-    <div class="card h-100">
+
+  <!-- Turnover Trend Chart -->
+  <div class="grid-stack-item" data-widget-id="hr-chart-turnover" data-gs-x="6" data-gs-y="20" data-gs-width="6" data-gs-height="8">
+    <div class="grid-stack-item-content card h-100">
       <div class="card-header d-flex justify-content-between">
         <div class="card-title mb-0">
           <h5 class="mb-1 me-2">Turnover Trend</h5>
@@ -295,12 +314,10 @@ window.dashboardCharts.attritionHeatmap = @Html.Raw(Json.Serialize(Model.Attriti
       </div>
     </div>
   </div>
-</div>
 
-<!-- Chart Section 2: Recruitment Funnel Bar + Recruitment Metrics Line -->
-<div class="row mb-4">
-  <div class="col-md-6 mb-4 mb-md-0">
-    <div class="card h-100">
+  <!-- Recruitment Funnel Chart -->
+  <div class="grid-stack-item" data-widget-id="hr-chart-recruitment-funnel" data-gs-x="0" data-gs-y="28" data-gs-width="6" data-gs-height="8">
+    <div class="grid-stack-item-content card h-100">
       <div class="card-header d-flex justify-content-between">
         <div class="card-title mb-0">
           <h5 class="mb-1 me-2">Recruitment Funnel</h5>
@@ -311,8 +328,10 @@ window.dashboardCharts.attritionHeatmap = @Html.Raw(Json.Serialize(Model.Attriti
       </div>
     </div>
   </div>
-  <div class="col-md-6">
-    <div class="card h-100">
+
+  <!-- Recruitment Metrics Chart -->
+  <div class="grid-stack-item" data-widget-id="hr-chart-recruitment-metrics" data-gs-x="6" data-gs-y="28" data-gs-width="6" data-gs-height="8">
+    <div class="grid-stack-item-content card h-100">
       <div class="card-header d-flex justify-content-between">
         <div class="card-title mb-0">
           <h5 class="mb-1 me-2">Time-to-Hire & Cost-per-Hire</h5>
@@ -323,12 +342,10 @@ window.dashboardCharts.attritionHeatmap = @Html.Raw(Json.Serialize(Model.Attriti
       </div>
     </div>
   </div>
-</div>
 
-<!-- Chart Section 3: Salary Distribution Bar + Training Chart Bar -->
-<div class="row mb-4">
-  <div class="col-md-6 mb-4 mb-md-0">
-    <div class="card h-100">
+  <!-- Salary Distribution Chart -->
+  <div class="grid-stack-item" data-widget-id="hr-chart-salary" data-gs-x="0" data-gs-y="36" data-gs-width="6" data-gs-height="8">
+    <div class="grid-stack-item-content card h-100">
       <div class="card-header d-flex justify-content-between">
         <div class="card-title mb-0">
           <h5 class="mb-1 me-2">Salary Distribution</h5>
@@ -339,8 +356,10 @@ window.dashboardCharts.attritionHeatmap = @Html.Raw(Json.Serialize(Model.Attriti
       </div>
     </div>
   </div>
-  <div class="col-md-6">
-    <div class="card h-100">
+
+  <!-- Training Chart -->
+  <div class="grid-stack-item" data-widget-id="hr-chart-training" data-gs-x="6" data-gs-y="36" data-gs-width="6" data-gs-height="8">
+    <div class="grid-stack-item-content card h-100">
       <div class="card-header d-flex justify-content-between">
         <div class="card-title mb-0">
           <h5 class="mb-1 me-2">Training Hours</h5>
@@ -351,12 +370,10 @@ window.dashboardCharts.attritionHeatmap = @Html.Raw(Json.Serialize(Model.Attriti
       </div>
     </div>
   </div>
-</div>
 
-<!-- Chart Section 4: Engagement Trend Line (Full Width) -->
-<div class="row mb-4">
-  <div class="col-12">
-    <div class="card h-100">
+  <!-- Engagement Trend Chart (Full Width) -->
+  <div class="grid-stack-item" data-widget-id="hr-chart-engagement" data-gs-x="0" data-gs-y="44" data-gs-width="12" data-gs-height="8">
+    <div class="grid-stack-item-content card h-100">
       <div class="card-header d-flex justify-content-between">
         <div class="card-title mb-0">
           <h5 class="mb-1 me-2">Engagement & eNPS Trend</h5>
@@ -367,12 +384,10 @@ window.dashboardCharts.attritionHeatmap = @Html.Raw(Json.Serialize(Model.Attriti
       </div>
     </div>
   </div>
-</div>
 
-<!-- Chart Section 5: Attrition Heatmap (Full Width) -->
-<div class="row mb-4">
-  <div class="col-12">
-    <div class="card h-100">
+  <!-- Attrition Heatmap Chart (Full Width) -->
+  <div class="grid-stack-item" data-widget-id="hr-chart-attrition" data-gs-x="0" data-gs-y="52" data-gs-width="12" data-gs-height="8">
+    <div class="grid-stack-item-content card h-100">
       <div class="card-header d-flex justify-content-between">
         <div class="card-title mb-0">
           <h5 class="mb-1 me-2">Attrition by Department & Tenure</h5>
@@ -383,11 +398,10 @@ window.dashboardCharts.attritionHeatmap = @Html.Raw(Json.Serialize(Model.Attriti
       </div>
     </div>
   </div>
-</div>
 
-<div class="row">
-  <div class="col-md-6 col-lg-4 order-0 mb-6">
-    <div class="card h-100">
+  <!-- Department Distribution Card -->
+  <div class="grid-stack-item" data-widget-id="hr-card-department-dist" data-gs-x="0" data-gs-y="60" data-gs-width="4" data-gs-height="10">
+    <div class="grid-stack-item-content card h-100">
       <div class="card-header d-flex justify-content-between">
         <div class="card-title mb-0">
           <h5 class="mb-1 me-2">Department Distribution</h5>
@@ -438,8 +452,9 @@ window.dashboardCharts.attritionHeatmap = @Html.Raw(Json.Serialize(Model.Attriti
     </div>
   </div>
 
-  <div class="col-md-6 col-lg-4 order-1 mb-6">
-    <div class="card h-100">
+  <!-- Recent Hires Card -->
+  <div class="grid-stack-item" data-widget-id="hr-card-recent-hires" data-gs-x="4" data-gs-y="60" data-gs-width="4" data-gs-height="10">
+    <div class="grid-stack-item-content card h-100">
       <div class="card-header d-flex justify-content-between">
         <div class="card-title mb-0">
           <h5 class="mb-1 me-2">Recent Hires</h5>
@@ -490,8 +505,9 @@ window.dashboardCharts.attritionHeatmap = @Html.Raw(Json.Serialize(Model.Attriti
     </div>
   </div>
 
-  <div class="col-md-6 col-lg-4 order-2 mb-6">
-    <div class="card h-100">
+  <!-- Leave Requests Card -->
+  <div class="grid-stack-item" data-widget-id="hr-card-leave-requests" data-gs-x="8" data-gs-y="60" data-gs-width="4" data-gs-height="10">
+    <div class="grid-stack-item-content card h-100">
       <div class="card-header d-flex justify-content-between">
         <div class="card-title mb-0">
           <h5 class="mb-1 me-2">Leave Requests</h5>
@@ -541,6 +557,8 @@ window.dashboardCharts.attritionHeatmap = @Html.Raw(Json.Serialize(Model.Attriti
       </div>
     </div>
   </div>
+
+</div>
 </div>
 
 @if (Model.WorkforceOverviewChart.Series.Any())
@@ -770,3 +788,66 @@ window.dashboardCharts.attritionHeatmap = @Html.Raw(Json.Serialize(Model.Attriti
     });
   </script>
 }
+
+<!-- Dashboard Layout Manager Initialization -->
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  var el = document.getElementById('hr-dashboard-grid');
+  if (el && typeof DashboardLayoutManager !== 'undefined') {
+    window.dashboardLayoutManager = new DashboardLayoutManager('hr-dashboard-grid', {
+      storageKey: 'hr-dashboard-layout-v1',
+      editMode: false,
+      gap: 20,
+      cellHeight: 60
+    });
+
+    var origToggle = window.dashboardLayoutManager.toggleEditMode.bind(window.dashboardLayoutManager);
+    window.dashboardLayoutManager.toggleEditMode = function () {
+      var editing = origToggle();
+      document.getElementById('btn-layout-edit').classList.toggle('editing', editing);
+    };
+
+    var origSave = window.dashboardLayoutManager.saveLayout.bind(window.dashboardLayoutManager);
+    window.dashboardLayoutManager.saveLayout = function () {
+      origSave();
+      if (typeof toastr !== 'undefined') toastr.success('Dashboard layout saved.');
+    };
+
+    // Bind toolbar buttons
+    var btnEdit = document.getElementById('btn-layout-edit');
+    var btnSave = document.getElementById('btn-layout-save');
+    var btnReset = document.getElementById('btn-layout-reset');
+
+    if (btnEdit) {
+      btnEdit.addEventListener('click', function () {
+        window.dashboardLayoutManager.toggleEditMode();
+        btnEdit.classList.toggle('editing');
+        btnSave.classList.toggle('d-none', !window.dashboardLayoutManager.isEditMode);
+      });
+    }
+
+    if (btnSave) {
+      btnSave.addEventListener('click', function () {
+        window.dashboardLayoutManager.saveLayout();
+        btnSave.classList.add('d-none');
+        btnEdit.classList.remove('editing');
+      });
+    }
+
+    if (btnReset) {
+      btnReset.addEventListener('click', function () {
+        if (confirm('Reset dashboard layout to default?')) {
+          window.dashboardLayoutManager.resetLayout();
+          btnSave.classList.add('d-none');
+          btnEdit.classList.remove('editing');
+        }
+      });
+    }
+  }
+});
+</script>
+
+@{
+    var aiHrModel = new Dashboard.Models.ViewModels.AIChatWidgetModel { Department = "HR" };
+}
+<partial name="~/Views/Shared/Partials/_AIChatWidget.cshtml" model="aiHrModel" />

@@ -60,6 +60,8 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
     public DbSet<MarketingSpendDaily> MarketingSpendDailies { get; set; }
     public DbSet<Notification> Notifications { get; set; }
     public DbSet<NotificationConfig> NotificationConfigs { get; set; }
+    public DbSet<AIChatSession> AIChatSessions { get; set; }
+    public DbSet<AIChatMessage> AIChatMessages { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -197,6 +199,29 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
                 .WithMany()
                 .HasForeignKey(n => n.UserId)
                 .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<AIChatSession>(entity =>
+        {
+            entity.HasOne(s => s.User)
+                .WithMany()
+                .HasForeignKey(s => s.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasIndex(s => s.UserId);
+            entity.HasIndex(s => s.Department);
+            entity.HasIndex(s => s.LastMessageAt);
+        });
+
+        modelBuilder.Entity<AIChatMessage>(entity =>
+        {
+            entity.HasOne(m => m.Session)
+                .WithMany(s => s.Messages)
+                .HasForeignKey(m => m.SessionId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasIndex(m => m.SessionId);
+            entity.HasIndex(m => m.CreatedAt);
         });
     }
 }

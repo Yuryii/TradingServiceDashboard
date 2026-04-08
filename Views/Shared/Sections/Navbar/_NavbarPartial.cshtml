@@ -32,14 +32,50 @@
 
 <div class="navbar-nav-right d-flex align-items-center justify-content-end" id="navbar-collapse">
 
-  <!-- Search -->
-    <div class="navbar-nav align-items-center me-auto">
-      <div class="nav-item d-flex align-items-center">
-        <span class="w-px-22 h-px-22"><i class="icon-base bx bx-search icon-md"></i></span>
-        <input type="text" class="form-control border-0 shadow-none ps-1 ps-sm-2 d-md-block d-none" placeholder="Search..." aria-label="Search..." />
+  <!-- Global search -->
+    <div class="navbar-nav align-items-center me-auto flex-grow-1 flex-xl-grow-0" style="min-width: 0; max-width: 100%;">
+      <div class="nav-item w-100 w-xl-auto">
+        <button type="button"
+                class="btn btn-text-secondary border-0 rounded-pill px-2 px-sm-3 py-2 d-flex align-items-center gap-2 w-100 text-start"
+                style="max-width: 420px;"
+                data-bs-toggle="modal"
+                data-bs-target="#globalSearchModal"
+                title="Search data and dashboards (Ctrl+K)">
+          <i class="icon-base bx bx-search icon-md flex-shrink-0"></i>
+          <span class="text-body-secondary flex-grow-1 text-truncate d-none d-sm-inline">Search data & dashboards…</span>
+          <span class="text-body-secondary flex-grow-1 text-truncate d-sm-none">Search…</span>
+          <kbd class="d-none d-md-inline badge bg-label-secondary border fw-normal px-1">Ctrl K</kbd>
+        </button>
       </div>
     </div>
-  <!-- /Search -->
+  <!-- /Global search -->
+
+  <!-- Global search modal -->
+  <div class="modal fade" id="globalSearchModal" tabindex="-1" aria-labelledby="globalSearchModalLabel" aria-hidden="true" data-search-url="@Url.Action("Query", "GlobalSearch")" style="pointer-events: none;">
+    <div class="modal-dialog modal-dialog-centered modal-lg" style="z-index: 1060; pointer-events: auto;">
+      <div class="modal-content">
+        <div class="modal-header border-bottom-0 pb-0">
+          <h5 class="modal-title" id="globalSearchModalLabel">Global search</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body pt-2">
+          <input type="search"
+                 id="globalSearchInput"
+                 class="form-control form-control-lg mb-2"
+                 placeholder="Search customers, products, orders, tickets…"
+                 autocomplete="off"
+                 aria-label="Global search" />
+          <div class="d-flex justify-content-between align-items-center mb-1">
+            <small id="globalSearchStatus" class="text-muted"></small>
+            <small class="text-muted d-none d-sm-inline">Opens from navbar or Ctrl+K</small>
+          </div>
+          <div id="globalSearchResults" class="list-group list-group-flush border rounded" style="max-height: min(52vh, 420px); overflow-y: auto;">
+            <div class="list-group-item text-muted small py-4 text-center">Type at least 2 characters.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
 
 
 
