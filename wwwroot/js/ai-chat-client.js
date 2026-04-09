@@ -12,6 +12,13 @@
 
     const MAX_MESSAGES_BEFORE_CLEANUP = 100;
 
+    /** Prefer sidebar list on full-page AI Assistant; fallback to floating widget #aiSessionList. */
+    function getSessionListEl() {
+        const fromSidebar = document.querySelector(".cgpt-sidebar #aiSessionList");
+        if (fromSidebar) return fromSidebar;
+        return document.getElementById("aiSessionList");
+    }
+
     function activeDepartment() {
         if (typeof window.AI_CHAT_DEPARTMENT === "string" && window.AI_CHAT_DEPARTMENT.length) {
             return window.AI_CHAT_DEPARTMENT;
@@ -167,38 +174,51 @@
 
     async function loadSessionList() {
         try {
+            const list = getSessionListEl();
+            if (!list) return;
+
             const response = await fetch(`/api/aichat/sessions?department=${encodeURIComponent(activeDepartment())}`, {
                 credentials: "same-origin",
                 headers: { "RequestVerificationToken": getCsrfToken() }
             });
 
-            if (!response.ok) return;
+            if (!response.ok) {
+                list.innerHTML =
+                    '<div class="cgpt-session-empty">Không thể tải danh sách phiên. Vui lòng tải lại trang.</div>';
+                return;
+            }
 
-            const sessions = await response.json();
-            const list = document.getElementById("aiSessionList");
-            if (!list) return;
+            const data = await response.json();
+            const sessions = Array.isArray(data) ? data : [];
 
-            let html = `<span class="ai-session-new-btn" onclick="createNewSession()">
+            let html = "";
+            if (!window.AI_CHAT_STANDALONE) {
+                html = `<span class="ai-session-new-btn" onclick="createNewSession()">
                 <i class="icon-base bx bx-plus"></i> New session
             </span>`;
+            }
 
             sessions.forEach(function (s) {
                 const date = new Date(s.lastMessageAt);
                 const timeStr = date.toLocaleDateString("vi-VN", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" });
-                const isActive = s.sessionId === currentSessionId ? "active" : "";
+                const isActive =
+                    Number(s.sessionId) === Number(currentSessionId) ? "active" : "";
+                const safeTitle = escapeHtml(s.title || ("Phiên " + s.sessionId));
 
-                html += `<div class="session-item ${isActive}" onclick="selectSession(${s.sessionId})">
-                    <i class="icon-base bx bx-chat" style="font-size:14px;"></i>
-                    <span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
-                        ${s.title || "Phien " + s.sessionId}
-                    </span>
-                    <span style="font-size:10px;color:#aaa;">${timeStr}</span>
+                html += `<div class="session-item ${isActive}" role="button" tabindex="0" data-session-id="${s.sessionId}" onclick="selectSession(${s.sessionId})">
+                    <i class="icon-base bx bx-message-rounded-dots cgpt-session-item-icon"></i>
+                    <span class="cgpt-session-item-title">${safeTitle}</span>
+                    <span class="cgpt-session-item-time">${timeStr}</span>
                 </div>`;
             });
 
+            if (!html) {
+                html = '<div class="cgpt-session-empty">Chưa có cuộc trò chuyện nào cho phòng ban này.</div>';
+            }
+
             list.innerHTML = html;
 
-            if (sessions.length > 0 && !currentSessionId) {
+            if (!window.AI_CHAT_STANDALONE && sessions.length > 0 && !currentSessionId) {
                 selectSession(sessions[0].sessionId);
             }
         } catch (err) {
@@ -214,21 +234,36 @@
     };
 
     async function loadSessionHistory(sessionId) {
+        const container = document.getElementById("aiChatMessages");
+        if (container) {
+            container.innerHTML =
+                '<div id="aiHistoryLoading" class="ai-chat-empty" style="flex-direction:row;gap:8px;">' +
+                '<div class="spinner-border spinner-border-sm text-secondary" role="status"></div>' +
+                '<span style="font-size:13px;color:var(--bs-secondary-color);">Đang tải lịch sử…</span></div>';
+        }
+
         try {
             const response = await fetch(`/api/aichat/sessions/${sessionId}/messages`, {
                 credentials: "same-origin",
                 headers: { "RequestVerificationToken": getCsrfToken() }
             });
 
-            if (!response.ok) return;
-
             const messages = await response.json();
             const emptyState = document.getElementById("aiEmptyState");
             const quickActions = document.getElementById("aiQuickActions");
 
-            if (!messages.length) {
-                if (emptyState) emptyState.style.display = "flex";
+            if (!response.ok || !messages.length) {
+                if (container) {
+                    container.innerHTML =
+                        '<div class="ai-chat-empty cgpt-empty" id="aiEmptyState">' +
+                        '<div class="cgpt-empty-inner">' +
+                        '<div class="cgpt-empty-icon"><i class="icon-base bx bx-chat"></i></div>' +
+                        '<h2 class="cgpt-empty-title">Chưa có tin nhắn</h2>' +
+                        '<p class="cgpt-empty-sub">Bắt đầu cuộc trò chuyện mới.</p>' +
+                        '</div></div>';
+                }
                 if (quickActions) quickActions.style.display = "";
+                loadSessionList();
                 return;
             }
 
@@ -246,6 +281,15 @@
             scrollToBottom();
         } catch (err) {
             console.error("Load history error:", err);
+            if (container) {
+                container.innerHTML =
+                    '<div class="ai-chat-empty cgpt-empty">' +
+                    '<div class="cgpt-empty-inner">' +
+                    '<div class="cgpt-empty-icon"><i class="icon-base bx bx-wifi-exclamation"></i></div>' +
+                    '<h2 class="cgpt-empty-title">Lỗi kết nối</h2>' +
+                    '<p class="cgpt-empty-sub">Không thể tải lịch sử. Vui lòng thử lại.</p>' +
+                    '</div></div>';
+            }
         }
     }
 
@@ -388,6 +432,14 @@
         updateSendButton();
         hideTypingIndicator();
         cleanupOldMessages();
+        const sessionListEl = getSessionListEl();
+        const chatPanel = document.getElementById("ai-chat-panel");
+        if (
+            sessionListEl &&
+            (window.AI_CHAT_STANDALONE || (chatPanel && chatPanel.classList.contains("open")))
+        ) {
+            loadSessionList();
+        }
     }
 
     function appendUserMessage(content, createdAt) {
@@ -466,6 +518,11 @@
     }
 
     function appendAssistantMessage(content, createdAt) {
+        isStreaming = false;
+        if (currentAssistantBubble) {
+            finalizeAssistantBubble();
+        }
+
         const container = document.getElementById("aiChatMessages");
         if (!container) return;
 
@@ -512,11 +569,20 @@
     function clearMessages() {
         const container = document.getElementById("aiChatMessages");
         if (!container) return;
+
         const empty = document.getElementById("aiEmptyState");
-        container.innerHTML = "";
-        if (empty) {
-            container.innerHTML = empty.outerHTML;
-        }
+        const quickActions = document.getElementById("aiQuickActions");
+        const dept = window.AI_CHAT_DEPARTMENT || "sales";
+
+        container.innerHTML =
+            '<div class="ai-chat-empty cgpt-empty" id="aiEmptyState">' +
+            '<div class="cgpt-empty-inner">' +
+            '<div class="cgpt-empty-icon"><i class="icon-base bx ' + getDeptIcon(dept) + '"></i></div>' +
+            '<h2 class="cgpt-empty-title">Đã xóa lịch sử</h2>' +
+            '<p class="cgpt-empty-sub">Nhập câu hỏi bên dưới để bắt đầu cuộc trò chuyện mới.</p>' +
+            '</div></div>';
+
+        if (quickActions) quickActions.style.display = "";
     }
 
     function showWelcome() {
@@ -622,5 +688,6 @@
     window.sendQuickMessage = sendQuickMessage;
     window.getCsrfToken = getCsrfToken;
     window.connectAIHub = connectAIHub;
+    window.loadAIChatSessionList = loadSessionList;
 
 })();

@@ -19,7 +19,6 @@
 }
 @section VendorStyles {
 <link rel="stylesheet" href="~/vendor/libs/apex-charts/apex-charts.css" />
-<link rel="stylesheet" href="~/vendor/libs/gridstack/gridstack.min.css" />
 }
 @section VendorScripts {
 <script src="~/vendor/libs/apex-charts/apexcharts.js"></script>
@@ -42,6 +41,7 @@ Object.assign(window.dashboardCharts, {
 </script>
 @section PageScripts {
 <script src="~/js/dashboards-analytics.js"></script>
+<script src="~/js/dashboard-layout-manager.js"></script>
 }
 
 @* Layout Toolbar *@
@@ -98,7 +98,7 @@ Object.assign(window.dashboardCharts, {
           </div>
           <p class="mb-1">@Model.TotalIncome.Title</p>
           <h4 class="card-title mb-3">@Model.TotalIncome.Value</h4>
-          <small class="text-success fw-medium"><i class="icon-base bx bx-up-arrow-alt"></i> @Model.TotalIncome.TrendLabel</small>
+          <small class="text-@(Model.TotalIncome.Trend == "up" ? "success" : Model.TotalIncome.Trend == "down" ? "danger" : "body-secondary") fw-medium"><i class="icon-base bx @(Model.TotalIncome.Trend == "up" ? "bx-up-arrow-alt" : Model.TotalIncome.Trend == "down" ? "bx-down-arrow-alt" : "bx-minus")"></i> @Model.TotalIncome.TrendLabel</small>
         </div>
       </div>
     </div>
@@ -115,7 +115,7 @@ Object.assign(window.dashboardCharts, {
           </div>
           <p class="mb-1">@Model.TotalExpenses.Title</p>
           <h4 class="card-title mb-3">@Model.TotalExpenses.Value</h4>
-          <small class="text-success fw-medium"><i class="icon-base bx bx-up-arrow-alt"></i> @Model.TotalExpenses.TrendLabel</small>
+          <small class="text-@(Model.TotalExpenses.Trend == "up" ? "success" : Model.TotalExpenses.Trend == "down" ? "danger" : "body-secondary") fw-medium"><i class="icon-base bx @(Model.TotalExpenses.Trend == "up" ? "bx-up-arrow-alt" : Model.TotalExpenses.Trend == "down" ? "bx-down-arrow-alt" : "bx-minus")"></i> @Model.TotalExpenses.TrendLabel</small>
         </div>
       </div>
     </div>
@@ -167,7 +167,7 @@ Object.assign(window.dashboardCharts, {
           </div>
           <p class="mb-1">@Model.ArBalance.Title</p>
           <h4 class="card-title mb-3">@Model.ArBalance.Value</h4>
-          <small class="text-success fw-medium"><i class="icon-base bx bx-up-arrow-alt"></i> @Model.ArBalance.TrendLabel</small>
+          <small class="text-@(Model.ArBalance.Trend == "up" ? "success" : Model.ArBalance.Trend == "down" ? "danger" : "body-secondary") fw-medium"><i class="icon-base bx @(Model.ArBalance.Trend == "up" ? "bx-up-arrow-alt" : Model.ArBalance.Trend == "down" ? "bx-down-arrow-alt" : "bx-minus")"></i> @Model.ArBalance.TrendLabel</small>
         </div>
       </div>
     </div>
@@ -349,7 +349,7 @@ Object.assign(window.dashboardCharts, {
             </div>
             <p class="mb-1">@Model.NetProfit.Title</p>
             <h4 class="card-title mb-3">@Model.NetProfit.Value</h4>
-            <small class="text-success fw-medium"><i class="icon-base bx bx-up-arrow-alt"></i> @Model.NetProfit.TrendLabel</small>
+            <small class="text-@(Model.NetProfit.Trend == "up" ? "success" : Model.NetProfit.Trend == "down" ? "danger" : "body-secondary") fw-medium"><i class="icon-base bx @(Model.NetProfit.Trend == "up" ? "bx-up-arrow-alt" : Model.NetProfit.Trend == "down" ? "bx-down-arrow-alt" : "bx-minus")"></i> @Model.NetProfit.TrendLabel</small>
           </div>
         </div>
       </div>
@@ -366,7 +366,7 @@ Object.assign(window.dashboardCharts, {
             </div>
             <p class="mb-1">@Model.CashFlow.Title</p>
             <h4 class="card-title mb-3">@Model.CashFlow.Value</h4>
-            <small class="text-success fw-medium"><i class="icon-base bx bx-up-arrow-alt"></i> @Model.CashFlow.TrendLabel</small>
+            <small class="text-@(Model.CashFlow.Trend == "up" ? "success" : Model.CashFlow.Trend == "down" ? "danger" : "body-secondary") fw-medium"><i class="icon-base bx @(Model.CashFlow.Trend == "up" ? "bx-up-arrow-alt" : Model.CashFlow.Trend == "down" ? "bx-down-arrow-alt" : "bx-minus")"></i> @Model.CashFlow.TrendLabel</small>
           </div>
         </div>
       </div>
@@ -795,7 +795,7 @@ document.addEventListener('DOMContentLoaded', function () {
   var el = document.getElementById('finance-dashboard-grid');
   if (el && typeof DashboardLayoutManager !== 'undefined') {
     window.dashboardLayoutManager = new DashboardLayoutManager('finance-dashboard-grid', {
-      storageKey: 'finance-dashboard-layout-v1',
+      storageKey: 'finance-dashboard-layout-v2',
       editMode: false,
       gap: 20,
       cellHeight: 60

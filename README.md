@@ -2,7 +2,7 @@
 
 <p align="center">
   <strong>Dashboard-X</strong> — Hệ thống quản lý và giám sát hoạt động doanh nghiệp toàn diện.<br>
-  Xây dựng trên <strong>ASP.NET Core 8 MVC</strong> + <strong>SQL Server</strong> + <strong>SignalR</strong> + <strong>Hangfire</strong>.
+  Xây dựng trên <strong>ASP.NET Core 9 MVC</strong> + <strong>SQL Server</strong> + <strong>SignalR</strong> + <strong>Hangfire</strong> + <strong>AI Chat Assistant</strong>.
 </p>
 
 ## Mục lục
@@ -11,19 +11,20 @@
 - [Tính năng chính](#tính-năng-chính)
 - [Yêu cầu hệ thống](#yêu-cầu-hệ-thống)
 - [Cài đặt](#cài-đặt)
-- [Cấu trúc dự án](#cấu-trúc-dự án)
+- [Cấu trúc dự án](#cấu-trúc-dự-án)
 - [Tài khoản mặc định](#tài-khoản-mặc-định)
 - [Các module](#các-module)
 - [Danh sách entity](#danh-sách-entity)
+- [AI Chat Assistant](#ai-chat-assistant)
 - [Đặc biệt](#đặc-biệt)
 
 ---
 
 ## Giới thiệu
 
-**Dashboard-X** (tên gốc: TradingServiceDashboard) là một hệ thống dashboard doanh nghiệp được xây dựng bằng ASP.NET Core 8 MVC, hỗ trợ quản lý đa ngành: Bán hàng, Marketing, Kho vận, Tài chính, Nhân sự và Chăm sóc khách hàng.
+**Dashboard-X** (tên gốc: TradingServiceDashboard) là một hệ thống dashboard doanh nghiệp được xây dựng bằng ASP.NET Core 9 MVC, hỗ trợ quản lý đa ngành: Bán hàng, Marketing, Kho vận, Tài chính, Nhân sự, Chăm sóc khách hàng và điều hành.
 
-Hệ thống sử dụng **SQL Server** làm cơ sở dữ liệu, **Entity Framework Core** cho ORM, **ASP.NET Identity** cho xác thực phân quyền, **SignalR** cho thông báo thời gian thực, và **Hangfire** cho các job nền tự động.
+Hệ thống sử dụng **SQL Server** làm cơ sở dữ liệu, **Entity Framework Core** cho ORM, **ASP.NET Identity** cho xác thực phân quyền, **SignalR** cho thông báo thời gian thực, **Hangfire** cho các job nền tự động, và **AI Chat Assistant** (GPT-4o-mini) để hỗ trợ phân tích dữ liệu tự động.
 
 ---
 
@@ -32,19 +33,22 @@ Hệ thống sử dụng **SQL Server** làm cơ sở dữ liệu, **Entity Fram
 - **7 module phân quyền theo vai trò** — Executive, Sales, Marketing, Inventory, Finance, HR, Customer Service
 - **Dashboard tổng quan** cho từng module với biểu đồ ApexCharts
 - **50+ entity CRUD** — quản lý qua generic `CrudService<T>` registry
+- **AI Chat Assistant thông minh** — trợ lý AI trong từng module, trả lời dựa trên dữ liệu thực tế của doanh nghiệp, hỗ trợ streaming real-time
 - **Thông báo thời gian thực** qua SignalR hub
 - **Job nền tự động** qua Hangfire (tổng hợp dữ liệu, thông báo, reminder)
 - **Import/Export Excel** cho tất cả bảng dữ liệu
 - **Identity** — xác thực, phân quyền, khóa tài khoản, quản lý user
 - **Auto-seed** — dữ liệu mẫu và tài khoản được tạo tự động khi khởi chạy
+- **Tìm kiếm toàn cầu** — Global search across all entities
 
 ---
 
 ## Yêu cầu hệ thống
 
-- [.NET 8 SDK](https://dotnet.microsoft.com/download/dotnet/8.0)
-- [SQL Server](https://www.microsoft.com/sql-server/sql-server-downloads) (LocalDB hoặc Express)
+- [.NET 9 SDK](https://dotnet.microsoft.com/download/dotnet/9.0)
+- [SQL Server](https://www.microsoft.com/sql-server/sql-server-downloads) (LocalDB, Express hoặc bản đầy đủ)
 - Trình duyệt hiện đại (Chrome, Edge, Firefox)
+- OpenAI-compatible API endpoint cho AI Chat (cấu hình trong `appsettings.json`)
 
 ---
 
@@ -53,7 +57,7 @@ Hệ thống sử dụng **SQL Server** làm cơ sở dữ liệu, **Entity Fram
 ### 1. Clone và mở project
 
 ```bash
-cd dashboard-x/dashboard-x
+cd TradingServiceDashboard
 ```
 
 ### 2. Cấu hình chuỗi kết nối
@@ -66,17 +70,30 @@ Sửa `appsettings.json` hoặc `appsettings.Development.json`:
 }
 ```
 
-### 3. Chạy ứng dụng
+### 3. Cấu hình AI Chat (tùy chọn)
+
+```json
+"AIChat": {
+  "Endpoint": "https://routerapi.vovantin.online/v1/chat/completions",
+  "ApiKey": "your-api-key",
+  "Model": "gpt-4o-mini",
+  "MaxTokens": "4000",
+  "MaxHistoryMessages": "10"
+}
+```
+
+### 4. Chạy ứng dụng
 
 ```bash
 dotnet run
 ```
 
-- Hệ thống sẽ tự động tạo database và seed dữ liệu mẫu + tài khoản.
+- Hệ thống sẽ tự động tạo database, chạy migration và seed dữ liệu mẫu + tài khoản.
 - Hangfire dashboard: `http://localhost:<port>/hangfire`
 - SignalR hub: `/notificationHub`
+- AI Chat hub: `/aiChatHub`
 
-### 4. Truy cập
+### 5. Truy cập
 
 Mở trình duyệt tại `http://localhost:<port>` và đăng nhập bằng tài khoản bên dưới.
 
@@ -85,14 +102,14 @@ Mở trình duyệt tại `http://localhost:<port>` và đăng nhập bằng tà
 ## Cấu trúc dự án
 
 ```
-dashboard-x/
-├── Controllers/            # 23 MVC controllers
+TradingServiceDashboard/
+├── Controllers/              # MVC controllers (23+ controllers)
 ├── Models/
-│   ├── *.cs                # 64 entity models
-│   ├── ViewModels/         # View-specific models
-│   └── SD.cs               # Role & URL constants
+│   ├── *.cs                 # 65+ entity models
+│   ├── ViewModels/          # View-specific models (DTOs)
+│   └── SD.cs                # Role & URL constants
 ├── Views/
-│   ├── Shared/             # Layout, Partial, Navbar, Footer
+│   ├── Shared/              # Layout, Partial, Navbar, Footer
 │   ├── Auth/                # Login, Register, Forgot Password
 │   ├── Executive/          # Dashboard + CRUD
 │   ├── Sales/              # Dashboard + CRUD
@@ -100,23 +117,29 @@ dashboard-x/
 │   ├── Inventory/          # Dashboard + CRUD
 │   ├── Finance/            # Dashboard + CRUD
 │   ├── HumanResources/      # Dashboard + CRUD
-│   └── CustomerService/    # Dashboard + CRUD
+│   ├── CustomerService/    # Dashboard + CRUD
+│   └── AIAssistant/        # AI Chat Assistant standalone page
 ├── Data/
 │   ├── ApplicationDbContext.cs
-│   ├── DbSeeder.cs         # 45+ seed methods
+│   ├── DbSeeder.cs         # 50+ seed methods
 │   └── RoleSeeder.cs       # Roles & user accounts
 ├── Services/
 │   ├── Dashboard/          # Dashboard data services (7 modules)
+│   ├── Interfaces/         # Service interfaces
 │   ├── Crud/               # Generic CRUD service registry
-│   └── ExcelCrudService.cs  # Excel import/export
+│   ├── ExcelCrudService.cs  # Excel import/export
+│   ├── AIChatService.cs     # AI chat (OpenAI-compatible API)
+│   └── AIContextAggregator.cs # Context aggregation per department
 ├── Jobs/
 │   └── NotificationJobs.cs  # Hangfire background jobs
 ├── Hubs/
-│   └── NotificationHub.cs   # SignalR real-time hub
+│   ├── NotificationHub.cs   # SignalR real-time notifications
+│   └── AIChatHub.cs         # SignalR AI chat streaming
+├── Migrations/              # EF Core migrations
 └── wwwroot/
     ├── css/
     ├── js/
-    └── vendor/             # Bootstrap, ApexCharts, libs
+    └── vendor/              # Bootstrap, ApexCharts, libs
 ```
 
 ---
@@ -212,18 +235,80 @@ Quản lý chăm sóc khách hàng — Support Tickets.
 | 44 | SupportTicket | Customer Service |
 | 45 | DimDate | BI/Dashboard |
 | 46 | KpiTarget | BI/Dashboard |
+| 47 | AIChatSession | AI Chat |
+| 48 | AIChatMessage | AI Chat |
+
+---
+
+## AI Chat Assistant
+
+### Tổng quan
+
+AI Chat Assistant là trợ lý thông minh tích hợp sâu vào từng module của hệ thống. Mỗi khi người dùng chat, AI sẽ được cung cấp context bao gồm:
+
+- **KPI Summary** — Tổng hợp các chỉ số KPI của module (doanh số, chi phí, tồn kho...)
+- **Top Items** — Top sản phẩm, khách hàng, nhân viên xuất sắc
+- **Recent Data** — Dữ liệu và hoạt động gần nhất
+- **Chart Summary** — Tóm tắt xu hướng từ các biểu đồ dashboard
+
+### Tính năng
+
+- **Streaming real-time** — Phản hồi AI hiển thị từng token trong khi đang generate (SignalR streaming)
+- **Multi-department** — Chuyên gia AI riêng cho từng module: Sales, Finance, Marketing, Inventory, HR, CSKH, Executive
+- **Session management** — Lưu lịch sử chat theo phiên, hỗ trợ đa phiên
+- **Context-aware** — AI đọc dữ liệu thực tế từ database và đưa ra insights có số liệu cụ thể
+- **Quick actions** — Câu hỏi gợi ý nhanh được custom theo từng department
+- **Caching** — Context data được cache 5 phút để tối ưu hiệu năng
+- **Widget nhúng** — AI Chat widget có thể nhúng vào bất kỳ trang dashboard nào
+- **Trang standalone** — `/AIAssistant` — Giao diện ChatGPT-like riêng biệt
+
+### Cấu trúc kỹ thuật
+
+| File | Mô tả |
+|------|--------|
+| `AIChatService.cs` | Xử lý chat logic, gọi LLM API, quản lý session/message |
+| `AIContextAggregator.cs` | Tổng hợp context (KPI, top items, chart data) theo department |
+| `AIChatHub.cs` | SignalR hub cho streaming real-time |
+| `AIChatController.cs` | REST API: sessions, messages, departments |
+| `AIAssistantController.cs` | MVC controller cho trang `/AIAssistant` |
+| `AIChatSession.cs` | Entity lưu session chat |
+| `AIChatMessage.cs` | Entity lưu từng message |
+| `_AIChatWidget.cshtml` | Widget có thể nhúng vào layout |
+| `ai-chat-client.js` | Client-side SignalR cho AI chat |
+| `ai-assistant-chatgpt.css` | Styles giao diện ChatGPT-like |
+
+### API Endpoints
+
+| Method | Endpoint | Mô tả |
+|--------|----------|--------|
+| POST | `/api/aichat/sessions` | Tạo phiên chat mới |
+| GET | `/api/aichat/sessions` | Lấy danh sách phiên |
+| GET | `/api/aichat/sessions/{id}/messages` | Lấy lịch sử tin nhắn |
+| DELETE | `/api/aichat/sessions/{id}` | Xóa phiên chat |
+| GET | `/api/aichat/departments` | Lấy danh sách departments |
+
+### SignalR Events
+
+| Event | Chiều | Mô tả |
+|-------|--------|--------|
+| `SendMessage` | Client → Server | Gửi tin nhắn |
+| `ReceiveChunk` | Server → Client | Nhận từng token (streaming) |
+| `StreamComplete` | Server → Client | Kết thúc stream |
+| `ReceiveError` | Server → Client | Thông báo lỗi |
+| `TypingIndicator` | Server → Client | Trạng thái đang typing |
 
 ---
 
 ## Đặc biệt
 
 - **RoleSeeder** — Tạo 7 vai trò + 7 tài khoản mặc định tự động khi khởi chạy.
-- **DbSeeder** — Seed 45+ bảng dữ liệu mẫu (regions, branches, employees, customers, products, orders, invoices, marketing, HR...).
+- **DbSeeder** — Seed 50+ bảng dữ liệu mẫu (regions, branches, employees, customers, products, orders, invoices, marketing, HR...).
 - **Generic CRUD** — `CrudServiceRegistry` quản lý CRUD cho 50+ entity types qua 7 controller.
 - **Excel Import/Export** — Mỗi module hỗ trợ tải lên và tải xuống file Excel.
 - **Thông báo thời gian thực** — SignalR hub gửi notification trực tiếp đến trình duyệt.
 - **Background Jobs** — Hangfire chạy tổng hợp dữ liệu định kỳ cho từng module.
 - **Authorization Policies** — 8 policy riêng biệt giới hạn quyền truy cập theo vai trò.
+- **AI Chat Assistant** — Trợ lý AI thông minh với context-aware, streaming real-time, multi-department expertise.
 
 ---
 

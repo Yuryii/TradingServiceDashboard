@@ -1,9 +1,15 @@
 @{
     ViewData["Title"] = "AI Assistant";
-    Layout = "~/Views/Shared/_CommonMasterLayout.cshtml";
+    Layout = "~/Views/Shared/_ContentNavbarLayout.cshtml";
+    ViewData["isFlex"] = true;
+    ViewData["isFooter"] = false;
+    ViewData["isNavbar"] = false;
+    ViewData["navbarType"] = "layout-navbar-hidden";
 }
 
-<link rel="stylesheet" href="~/css/ai-assistant-chatgpt.css" asp-append-version="true" />
+@section PageStyles {
+    <link rel="stylesheet" href="~/css/ai-assistant-chatgpt.css" asp-append-version="true" />
+}
 
 <div class="ai-chatgpt-page">
     <aside class="cgpt-sidebar">
@@ -14,7 +20,13 @@
                 Cuộc trò chuyện mới
             </button>
         </div>
-        <div class="cgpt-sidebar-label">Phòng ban</div>
+        <div class="cgpt-sidebar-sessions">
+            <div class="cgpt-sidebar-label">Phiên gần đây</div>
+            <div class="cgpt-session-list-scroll">
+                <div id="aiSessionList" class="cgpt-session-list" aria-live="polite"></div>
+            </div>
+        </div>
+        <div class="cgpt-sidebar-label cgpt-sidebar-label-dept">Phòng ban</div>
         <div class="ai-dept-selector" id="deptSelector">
             <button type="button" class="ai-dept-btn active" data-dept="sales" onclick="selectDepartment('sales')">
                 <i class="icon-base bx bx-trending-up"></i> Sales
@@ -43,6 +55,7 @@
     </main>
 </div>
 
+@section PageScripts {
 <script>
     window.AI_CHAT_DEPARTMENT = 'sales';
     window.AI_CHAT_STANDALONE = true;
@@ -121,6 +134,9 @@
 
             if (typeof connectAIHub === 'function') {
                 connectAIHub();
+            }
+            if (typeof window.loadAIChatSessionList === 'function') {
+                window.loadAIChatSessionList();
             }
         } catch (err) {
             container.innerHTML = '<div class="d-flex flex-column align-items-center justify-content-center flex-grow-1 py-5 text-danger"><i class="icon-base bx bx-error-alt" style="font-size:32px;"></i><p class="mt-2 mb-0">Lỗi tạo phiên. Vui lòng thử lại.</p></div>';
@@ -222,9 +238,13 @@
                 '<p class="cgpt-empty-sub">Nhập câu hỏi bên dưới để bắt đầu cuộc trò chuyện mới.</p>' +
                 '</div></div>';
         }
+        if (typeof window.loadAIChatSessionList === 'function') {
+            window.loadAIChatSessionList();
+        }
     }
 
     document.addEventListener('DOMContentLoaded', function() {
         selectDepartment('sales');
     });
 </script>
+}

@@ -24,7 +24,6 @@
 }
 @section VendorStyles {
 <link rel="stylesheet" href="~/vendor/libs/apex-charts/apex-charts.css" />
-<link rel="stylesheet" href="~/vendor/libs/gridstack/gridstack.min.css" />
 }
 @section VendorScripts {
 <script src="~/vendor/libs/apex-charts/apexcharts.js"></script>
@@ -46,6 +45,7 @@ Object.assign(window.dashboardCharts, {
 </script>
 @section PageScripts {
 <script src="~/js/dashboards-analytics.js"></script>
+<script src="~/js/dashboard-layout-manager.js"></script>
 }
 
 @* Layout Toolbar *@
@@ -132,7 +132,7 @@ Object.assign(window.dashboardCharts, {
           </div>
           <p class="mb-1">@Model.TotalReach.Title</p>
           <h4 class="card-title mb-3">@Model.TotalReach.Value</h4>
-          <small class="text-success fw-medium"><i class="icon-base bx bx-up-arrow-alt"></i> @Model.TotalReach.TrendLabel</small>
+          <small class="text-@(Model.TotalReach.Trend == "up" ? "success" : Model.TotalReach.Trend == "down" ? "danger" : "body-secondary") fw-medium"><i class="icon-base bx @(Model.TotalReach.Trend == "up" ? "bx-up-arrow-alt" : Model.TotalReach.Trend == "down" ? "bx-down-arrow-alt" : "bx-minus")"></i> @Model.TotalReach.TrendLabel</small>
         </div>
       </div>
     </div>
@@ -149,7 +149,7 @@ Object.assign(window.dashboardCharts, {
           </div>
           <p class="mb-1">@Model.EngagementRate.Title</p>
           <h4 class="card-title mb-3">@Model.EngagementRate.Value</h4>
-          <small class="text-success fw-medium"><i class="icon-base bx bx-up-arrow-alt"></i> @Model.EngagementRate.TrendLabel</small>
+          <small class="text-@(Model.EngagementRate.Trend == "up" ? "success" : Model.EngagementRate.Trend == "down" ? "danger" : "body-secondary") fw-medium"><i class="icon-base bx @(Model.EngagementRate.Trend == "up" ? "bx-up-arrow-alt" : Model.EngagementRate.Trend == "down" ? "bx-down-arrow-alt" : "bx-minus")"></i> @Model.EngagementRate.TrendLabel</small>
         </div>
       </div>
     </div>
@@ -203,7 +203,7 @@ Object.assign(window.dashboardCharts, {
             </div>
             <p class="mb-1">@Model.NewLeads.Title</p>
             <h4 class="card-title mb-3">@Model.NewLeads.Value</h4>
-            <small class="text-success fw-medium"><i class="icon-base bx bx-up-arrow-alt"></i> @Model.NewLeads.TrendLabel</small>
+            <small class="text-@(Model.NewLeads.Trend == "up" ? "success" : Model.NewLeads.Trend == "down" ? "danger" : "body-secondary") fw-medium"><i class="icon-base bx @(Model.NewLeads.Trend == "up" ? "bx-up-arrow-alt" : Model.NewLeads.Trend == "down" ? "bx-down-arrow-alt" : "bx-minus")"></i> @Model.NewLeads.TrendLabel</small>
           </div>
         </div>
       </div>
@@ -220,7 +220,7 @@ Object.assign(window.dashboardCharts, {
             </div>
             <p class="mb-1">@Model.Conversions.Title</p>
             <h4 class="card-title mb-3">@Model.Conversions.Value</h4>
-            <small class="text-success fw-medium"><i class="icon-base bx bx-up-arrow-alt"></i> @Model.Conversions.TrendLabel</small>
+            <small class="text-@(Model.Conversions.Trend == "up" ? "success" : Model.Conversions.Trend == "down" ? "danger" : "body-secondary") fw-medium"><i class="icon-base bx @(Model.Conversions.Trend == "up" ? "bx-up-arrow-alt" : Model.Conversions.Trend == "down" ? "bx-down-arrow-alt" : "bx-minus")"></i> @Model.Conversions.TrendLabel</small>
           </div>
         </div>
       </div>
@@ -239,7 +239,7 @@ Object.assign(window.dashboardCharts, {
           </div>
           <p class="mb-1">@Model.Cpl.Title</p>
           <h4 class="card-title mb-3">@Model.Cpl.Value</h4>
-          <small class="text-success fw-medium"><i class="icon-base bx bx-up-arrow-alt"></i> @Model.Cpl.TrendLabel</small>
+          <small class="text-@(Model.Cpl.Trend == "up" ? "success" : Model.Cpl.Trend == "down" ? "danger" : "body-secondary") fw-medium"><i class="icon-base bx @(Model.Cpl.Trend == "up" ? "bx-up-arrow-alt" : Model.Cpl.Trend == "down" ? "bx-down-arrow-alt" : "bx-minus")"></i> @Model.Cpl.TrendLabel</small>
         </div>
       </div>
     </div>
@@ -256,7 +256,7 @@ Object.assign(window.dashboardCharts, {
           </div>
           <p class="mb-1">@Model.Roas.Title</p>
           <h4 class="card-title mb-3">@Model.Roas.Value</h4>
-          <small class="text-success fw-medium"><i class="icon-base bx bx-up-arrow-alt"></i> @Model.Roas.TrendLabel</small>
+          <small class="text-@(Model.Roas.Trend == "up" ? "success" : Model.Roas.Trend == "down" ? "danger" : "body-secondary") fw-medium"><i class="icon-base bx @(Model.Roas.Trend == "up" ? "bx-up-arrow-alt" : Model.Roas.Trend == "down" ? "bx-down-arrow-alt" : "bx-minus")"></i> @Model.Roas.TrendLabel</small>
         </div>
       </div>
     </div>
@@ -273,7 +273,7 @@ Object.assign(window.dashboardCharts, {
           </div>
           <p class="mb-1">@Model.Roi.Title</p>
           <h4 class="card-title mb-3">@Model.Roi.Value</h4>
-          <small class="text-success fw-medium"><i class="icon-base bx bx-up-arrow-alt"></i> @Model.Roi.TrendLabel</small>
+          <small class="text-@(Model.Roi.Trend == "up" ? "success" : Model.Roi.Trend == "down" ? "danger" : "body-secondary") fw-medium"><i class="icon-base bx @(Model.Roi.Trend == "up" ? "bx-up-arrow-alt" : Model.Roi.Trend == "down" ? "bx-down-arrow-alt" : "bx-minus")"></i> @Model.Roi.TrendLabel</small>
         </div>
       </div>
     </div>
@@ -290,7 +290,7 @@ Object.assign(window.dashboardCharts, {
           </div>
           <p class="mb-1">@Model.Cac.Title</p>
           <h4 class="card-title mb-3">@Model.Cac.Value</h4>
-          <small class="text-success fw-medium"><i class="icon-base bx bx-up-arrow-alt"></i> @Model.Cac.TrendLabel</small>
+          <small class="text-@(Model.Cac.Trend == "up" ? "success" : Model.Cac.Trend == "down" ? "danger" : "body-secondary") fw-medium"><i class="icon-base bx @(Model.Cac.Trend == "up" ? "bx-up-arrow-alt" : Model.Cac.Trend == "down" ? "bx-down-arrow-alt" : "bx-minus")"></i> @Model.Cac.TrendLabel</small>
         </div>
       </div>
     </div>
@@ -867,7 +867,7 @@ document.addEventListener('DOMContentLoaded', function () {
   var el = document.getElementById('marketing-dashboard-grid');
   if (el && typeof DashboardLayoutManager !== 'undefined') {
     window.dashboardLayoutManager = new DashboardLayoutManager('marketing-dashboard-grid', {
-      storageKey: 'marketing-dashboard-layout-v1',
+      storageKey: 'marketing-dashboard-layout-v2',
       editMode: false,
       gap: 20,
       cellHeight: 60

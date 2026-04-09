@@ -1,1 +1,141 @@
-/* Custom styles goes here */
+/* ============================================================
+   NAV ENTRY TYPE — dashboard vs crud visual distinction
+   ============================================================ */
+
+/* Section header hints (e.g. "KPIs & Charts" / "Tables & CRUD") */
+.layout-menu .menu-header .menu-header-hint {
+  font-size: 0.65rem;
+  margin-top: 1px;
+  line-height: 1;
+  letter-spacing: 0.01em;
+  pointer-events: none;
+}
+
+/* Dashboard entries: left accent border in primary colour */
+.layout-menu .menu-inner > .nav-entry--dashboard > .menu-link {
+  border-left: 3px solid transparent;
+  transition: border-left-color 0.2s ease, padding-left 0.2s ease;
+}
+.layout-menu .menu-inner > .nav-entry--dashboard:hover > .menu-link,
+.layout-menu .menu-inner > .nav-entry--dashboard.active > .menu-link {
+  border-left-color: var(--bs-primary);
+}
+
+/* CRUD entries: left accent border in info colour */
+.layout-menu .menu-inner > .nav-entry--crud > .menu-link {
+  border-left: 3px solid transparent;
+  transition: border-left-color 0.2s ease, padding-left 0.2s ease;
+}
+.layout-menu .menu-inner > .nav-entry--crud:hover > .menu-link,
+.layout-menu .menu-inner > .nav-entry--crud.active > .menu-link,
+.layout-menu .menu-inner > .nav-entry--crud.open > .menu-link {
+  border-left-color: var(--bs-info);
+}
+
+/* Compact / collapsed menu — tighten the border offset */
+.layout-menu:not(.menu-expanded) .menu-inner > .nav-entry--dashboard > .menu-link,
+.layout-menu:not(.menu-expanded) .menu-inner > .nav-entry--crud > .menu-link {
+  border-left-width: 0;
+}
+
+/* ============================================================
+   EXISTING RULES BELOW
+   ============================================================ */
+
+/* Custom styles */
+
+/* Date filter — always outside the resizable grid */
+#executive-date-filter.executive-date-filter-card,
+#sales-date-filter.sales-date-filter-card {
+  position: relative;
+  z-index: 2;
+  width: 100%;
+}
+
+/* ---- All dashboard grids: absolute layout ---- */
+[id$="dashboard-grid"] {
+  position: relative;
+  width: 100%;
+}
+
+[id$="dashboard-grid"] .grid-stack-item {
+  overflow: visible;
+  box-sizing: border-box;
+}
+
+[id$="dashboard-grid"] .grid-stack-item .grid-stack-item-content {
+  height: 100%;
+  overflow: hidden;
+  position: relative;
+}
+
+/* ---- Edit mode visual chrome ---- */
+[id$="dashboard-grid"].grid-edit-mode .grid-stack-item .grid-stack-item-content {
+  overflow: visible;
+}
+
+[id$="dashboard-grid"].grid-edit-mode .grid-stack-item {
+  border: 2px dashed rgba(105, 108, 255, 0.45);
+  border-radius: 10px;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+[id$="dashboard-grid"].grid-edit-mode .grid-stack-item:hover {
+  border-color: #6965fd;
+  box-shadow: 0 0 0 3px rgba(105, 108, 255, 0.12);
+}
+
+/* ---- Resize handle: hidden until Customize Layout ---- */
+[id$="dashboard-grid"] .ui-resizable-handle.ui-resizable-se {
+  display: none;
+}
+
+[id$="dashboard-grid"].grid-edit-mode .ui-resizable-handle.ui-resizable-se {
+  display: block !important;
+  position: absolute;
+  right: 6px;
+  bottom: 6px;
+  width: 22px;
+  height: 22px;
+  z-index: 40;
+  cursor: se-resize;
+  border-radius: 6px;
+  background: linear-gradient(135deg, #6965fd 0%, #5a57e0 100%);
+  box-shadow: 0 2px 8px rgba(105, 108, 255, 0.45);
+  border: 2px solid #fff;
+  touch-action: none;
+  pointer-events: auto;
+}
+
+[id$="dashboard-grid"].grid-edit-mode .ui-resizable-handle.ui-resizable-se::after {
+  content: '';
+  position: absolute;
+  inset: 5px 5px auto auto;
+  width: 8px;
+  height: 8px;
+  border-right: 2px solid rgba(255, 255, 255, 0.95);
+  border-bottom: 2px solid rgba(255, 255, 255, 0.95);
+  pointer-events: none;
+}
+
+/* ---- Layout toolbar buttons ---- */
+.btn-layout-action {
+  border: 1px solid #d9dee3;
+  background: #fff;
+  border-radius: 6px;
+  padding: 5px 12px;
+  font-size: 13px;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+  color: #697a8d;
+}
+.btn-layout-action:hover {
+  background: #f0f2f5;
+  border-color: #b4b7c4;
+}
+.btn-layout-action.editing,
+.btn-layout-action.editing:hover {
+  background-color: #6965fd;
+  color: #fff;
+  border-color: #6965fd;
+}

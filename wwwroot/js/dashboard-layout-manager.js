@@ -63,16 +63,35 @@
     }
 
     _setupLayout() {
-      // Restore saved layout or apply defaults
       const saved = this.loadFromStorage();
-      if (saved && saved.length > 0) {
+      if (saved && saved.length > 0 && this.isSavedLayoutCompatible(saved)) {
         this.applyLayout(saved);
       } else {
+        if (saved && saved.length > 0) {
+          try {
+            localStorage.removeItem(this.storageKey);
+          } catch (e) { /* ignore */ }
+        }
         this.applyPositionsFromAttributes();
       }
 
       this.setupDragAndDrop();
       this.initialized = true;
+    }
+
+    /** Reject cached layout when widget set changed (deploy / conditional charts) or counts differ */
+    isSavedLayoutCompatible(layout) {
+      if (!Array.isArray(layout) || layout.length === 0) return false;
+      const domIds = this.widgets
+        .map(w => w.getAttribute('data-widget-id'))
+        .filter(Boolean);
+      const domSet = new Set(domIds);
+      if (layout.length !== domSet.size) return false;
+      for (let i = 0; i < layout.length; i++) {
+        const item = layout[i];
+        if (!item || !item.id || !domSet.has(item.id)) return false;
+      }
+      return true;
     }
 
     /** Convert data-gs-* attributes to pixel positions */
@@ -146,6 +165,7 @@
           const handle = document.createElement('div');
           handle.className = 'ui-resizable-handle ui-resizable-se';
           handle.title = 'Resize widget';
+          handle.setAttribute('draggable', 'false');
           widget.appendChild(handle);
           this.setupResizeEvents(widget, handle);
         }
@@ -165,6 +185,10 @@
 
     setupDragEvents(widget) {
       widget.addEventListener('dragstart', (e) => {
+        if (e.target && e.target.closest && e.target.closest('.ui-resizable-handle')) {
+          e.preventDefault();
+          return;
+        }
         if (!this.editMode) {
           e.preventDefault();
           return;
@@ -362,14 +386,31 @@
 
     triggerChartUpdate(widget) {
       const widgetId = widget.getAttribute('data-widget-id');
-      if (widgetId && window.dashboardChartInstances && window.dashboardChartInstances[widgetId]) {
-        const chart = window.dashboardChartInstances[widgetId];
-        if (chart && typeof chart.update === 'function') {
-          setTimeout(() => {
-            chart.update();
-          }, 50);
+      if (!widgetId || !window.dashboardChartInstances || !window.dashboardChartInstances[widgetId]) return;
+      const chart = window.dashboardChartInstances[widgetId];
+      const plotHost =
+        widget.querySelector('.grid-stack-item-content [id$="Chart"]') ||
+        widget.querySelector('.grid-stack-item-content [id*="Chart"]') ||
+        widget.querySelector('.grid-stack-item-content .card-body');
+
+      setTimeout(() => {
+        let h = 200;
+        if (plotHost) {
+          const r = plotHost.getBoundingClientRect();
+          h = Math.max(80, Math.floor(r.height) || 200);
         }
-      }
+        try {
+          if (chart && typeof chart.updateOptions === 'function') {
+            chart.updateOptions({ chart: { height: h } }, false, true);
+          } else if (chart && typeof chart.update === 'function') {
+            chart.update();
+          }
+        } catch (err) {
+          if (chart && typeof chart.update === 'function') {
+            chart.update();
+          }
+        }
+      }, 50);
     }
 
     getLayout() {
@@ -404,6 +445,7 @@
 
     saveToStorage() {
       try {
+        this.applyPositionsFromAttributes();
         const layout = this.getLayout();
         localStorage.setItem(this.storageKey, JSON.stringify(layout));
       } catch (e) {
@@ -425,18 +467,20 @@
 
     setEditMode(enabled) {
       this.editMode = enabled;
+      // Find the nearest parent container that wraps the grid (e.g. #dashboard-grid-container)
+      const outer = this.container.closest('[id$="dashboard-grid-container"]') || this.container.parentElement;
 
       if (enabled) {
-        this.container.classList.add('edit-mode');
-        this.container.classList.add('grid-edit-mode');
+        this.container.classList.add('edit-mode', 'grid-edit-mode');
+        if (outer && outer !== this.container) outer.classList.add('grid-edit-mode');
         this.widgets.forEach((widget, i) => {
           widget.style.cursor = 'grab';
           widget.classList.add('editable');
           widget.style.zIndex = String(i + 1);
         });
       } else {
-        this.container.classList.remove('edit-mode');
-        this.container.classList.remove('grid-edit-mode');
+        this.container.classList.remove('edit-mode', 'grid-edit-mode');
+        if (outer && outer !== this.container) outer.classList.remove('grid-edit-mode');
         this.widgets.forEach((widget, i) => {
           widget.style.cursor = '';
           widget.classList.remove('editable', 'dragging', 'drag-over', 'resizing');

@@ -9,7 +9,6 @@
 }
 @section VendorStyles {
 <link rel="stylesheet" href="~/vendor/libs/apex-charts/apex-charts.css" />
-<link rel="stylesheet" href="~/vendor/libs/gridstack/gridstack.min.css" />
 }
 @section VendorScripts {
 <script src="~/vendor/libs/apex-charts/apexcharts.js"></script>
@@ -31,6 +30,7 @@ Object.assign(window.dashboardCharts, {
 </script>
 @section PageScripts {
 <script src="~/js/dashboards-analytics.js"></script>
+<script src="~/js/dashboard-layout-manager.js"></script>
 }
 
 @* Layout Toolbar *@
@@ -117,7 +117,7 @@ Object.assign(window.dashboardCharts, {
           </div>
           <p class="mb-1">@Model.TotalSales.Title</p>
           <h4 class="card-title mb-3">@Model.TotalSales.Value</h4>
-          <small class="text-success fw-medium"><i class="icon-base bx bx-up-arrow-alt"></i> @Model.TotalSales.TrendLabel</small>
+          <small class="text-@(Model.TotalSales.Trend == "up" ? "success" : Model.TotalSales.Trend == "down" ? "danger" : "body-secondary") fw-medium"><i class="icon-base bx @(Model.TotalSales.Trend == "up" ? "bx-up-arrow-alt" : Model.TotalSales.Trend == "down" ? "bx-down-arrow-alt" : "bx-minus")"></i> @Model.TotalSales.TrendLabel</small>
         </div>
       </div>
     </div>
@@ -134,7 +134,7 @@ Object.assign(window.dashboardCharts, {
           </div>
           <p class="mb-1">@Model.TotalOrders.Title</p>
           <h4 class="card-title mb-3">@Model.TotalOrders.Value</h4>
-          <small class="text-success fw-medium"><i class="icon-base bx bx-up-arrow-alt"></i> @Model.TotalOrders.TrendLabel</small>
+          <small class="text-@(Model.TotalOrders.Trend == "up" ? "success" : Model.TotalOrders.Trend == "down" ? "danger" : "body-secondary") fw-medium"><i class="icon-base bx @(Model.TotalOrders.Trend == "up" ? "bx-up-arrow-alt" : Model.TotalOrders.Trend == "down" ? "bx-down-arrow-alt" : "bx-minus")"></i> @Model.TotalOrders.TrendLabel</small>
         </div>
       </div>
     </div>
@@ -186,7 +186,7 @@ Object.assign(window.dashboardCharts, {
           </div>
           <p class="mb-1">@Model.NewCustomers.Title</p>
           <h4 class="card-title mb-3">@Model.NewCustomers.Value</h4>
-          <small class="text-success fw-medium"><i class="icon-base bx bx-up-arrow-alt"></i> @Model.NewCustomers.TrendLabel</small>
+          <small class="text-@(Model.NewCustomers.Trend == "up" ? "success" : Model.NewCustomers.Trend == "down" ? "danger" : "body-secondary") fw-medium"><i class="icon-base bx @(Model.NewCustomers.Trend == "up" ? "bx-up-arrow-alt" : Model.NewCustomers.Trend == "down" ? "bx-down-arrow-alt" : "bx-minus")"></i> @Model.NewCustomers.TrendLabel</small>
         </div>
       </div>
     </div>
@@ -221,7 +221,7 @@ Object.assign(window.dashboardCharts, {
           </div>
           <p class="mb-1">@Model.WinRate.Title</p>
           <h4 class="card-title mb-2">@Model.WinRate.Value</h4>
-          <small class="text-success fw-medium"><i class="icon-base bx bx-trophy"></i> @Model.WinRate.TrendLabel</small>
+          <small class="text-@(Model.WinRate.Trend == "up" ? "success" : Model.WinRate.Trend == "down" ? "danger" : "body-secondary") fw-medium"><i class="icon-base bx bx-trophy"></i> @Model.WinRate.TrendLabel</small>
         </div>
       </div>
     </div>
@@ -255,7 +255,7 @@ Object.assign(window.dashboardCharts, {
           </div>
           <p class="mb-1">@Model.GrossMargin.Title</p>
           <h4 class="card-title mb-2">@Model.GrossMargin.Value</h4>
-          <small class="text-success fw-medium"><i class="icon-base bx bx-chart"></i> @Model.GrossMargin.TrendLabel</small>
+          <small class="text-@(Model.GrossMargin.Trend == "up" ? "success" : Model.GrossMargin.Trend == "down" ? "danger" : Model.GrossMargin.Trend == "neutral" ? "primary" : "body-secondary") fw-medium"><i class="icon-base bx bx-chart"></i> @Model.GrossMargin.TrendLabel</small>
         </div>
       </div>
     </div>
@@ -837,7 +837,7 @@ document.addEventListener('DOMContentLoaded', function () {
   var el = document.getElementById('sales-dashboard-grid');
   if (el && typeof DashboardLayoutManager !== 'undefined') {
     window.dashboardLayoutManager = new DashboardLayoutManager('sales-dashboard-grid', {
-      storageKey: 'sales-dashboard-layout-v1',
+      storageKey: 'sales-dashboard-layout-v2',
       editMode: false,
       gap: 20,
       cellHeight: 60

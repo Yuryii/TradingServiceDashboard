@@ -4,39 +4,6 @@
 }
 @section VendorStyles {
 <link rel="stylesheet" href="~/vendor/libs/apex-charts/apex-charts.css" />
-<link rel="stylesheet" href="~/vendor/libs/gridstack/gridstack.min.css" />
-<style>
-  .inventory-kpi-row > .inventory-kpi-cell {
-    flex: 0 0 auto;
-    width: 100%;
-    max-width: 100%;
-  }
-  @@media (min-width: 576px) {
-    .inventory-kpi-row > .inventory-kpi-cell { width: 50%; }
-  }
-  @@media (min-width: 768px) {
-    .inventory-kpi-row > .inventory-kpi-cell { width: 25%; }
-  }
-  @@media (min-width: 1200px) {
-    .inventory-kpi-row > .inventory-kpi-cell { width: 12.5%; }
-  }
-  .inventory-kpi-cell .card-body { padding: 1rem; }
-  .inventory-kpi-cell .card-title.mb-4 { margin-bottom: 0.75rem !important; }
-  .inventory-kpi-cell h4.card-title { font-size: 1.1rem; word-break: break-word; }
-  .inventory-kpi-cell p.mb-1 { font-size: 0.8125rem; }
-  .layout-toolbar {
-    margin-bottom: 1rem;
-    display: flex;
-    gap: 0.5rem;
-    justify-content: flex-end;
-  }
-  .layout-toolbar .btn {
-    display: none;
-  }
-  .layout-toolbar.edit-mode .btn {
-    display: inline-flex;
-  }
-</style>
 }
 @section VendorScripts {
 <script src="~/vendor/libs/apex-charts/apexcharts.js"></script>
@@ -57,651 +24,644 @@ window.dashboardCharts.inventoryAccuracyHeatmap = @Html.Raw(Json.Serialize(Model
 </script>
 @section PageScripts {
 <script src="~/js/dashboards-analytics.js"></script>
+<script src="~/js/dashboard-layout-manager.js"></script>
 }
 
-<div class="layout-toolbar" id="layout-toolbar">
-  <button class="btn btn-primary" id="btn-layout-edit" title="Customize Layout">
-    <i class="icon-base bx bx-edit-alt me-1"></i> Customize Layout
+@* Layout Toolbar *@
+<div class="d-flex align-items-center gap-2 mb-4 justify-content-end flex-wrap" id="layout-toolbar-inventory">
+  <button type="button" class="btn-layout-action" id="btn-layout-edit-inventory" title="Customize Layout"
+    onclick="window.dashboardLayoutManager && window.dashboardLayoutManager.toggleEditMode()">
+    <i class="icon-base bx bx-palette me-1"></i> Customize Layout
   </button>
-  <button class="btn btn-success" id="btn-layout-save" title="Save Layout" style="display:none;">
-    <i class="icon-base bx bx-save me-1"></i> Save
+  <button type="button" class="btn-layout-action" id="btn-layout-save-inventory" title="Save Layout"
+    onclick="window.dashboardLayoutManager && window.dashboardLayoutManager.saveLayout()">
+    <i class="icon-base bx bx-check me-1"></i> Save
   </button>
-  <button class="btn btn-secondary" id="btn-layout-reset" title="Reset Layout" style="display:none;">
-    <i class="icon-base bx bx-reset me-1"></i> Reset
+  <button type="button" class="btn-layout-action" id="btn-layout-reset-inventory" title="Reset Layout"
+    onclick="window.dashboardLayoutManager && window.dashboardLayoutManager.resetLayout()">
+    <i class="icon-base bx bx-refresh me-1"></i> Reset
   </button>
 </div>
 
+@* ============ GRID ============ *@
 <div id="inventory-dashboard-grid-container" style="position: relative;">
 <div id="inventory-dashboard-grid" class="grid-stack">
-  <div class="grid-stack-item" data-widget-id="inventory-welcome" data-gs-x="0" data-gs-y="0" data-gs-width="12" data-gs-height="6"><div class="grid-stack-item-content card">
-    <div class="row mb-6">
-      <div class="col-12">
-        <div class="card">
-          <div class="d-flex align-items-start row">
-            <div class="col-sm-7">
-              <div class="card-body">
-                <h5 class="card-title text-primary mb-3">Inventory Overview 📦</h5>
-                <p class="mb-6">Welcome to the Inventory Dashboard. Monitor stock levels and logistics.</p>
-                <a href="javascript:;" class="btn btn-sm btn-outline-primary">View Inventory</a>
-              </div>
-            </div>
-            <div class="col-sm-5 text-center text-sm-left">
-              <div class="card-body pb-0 px-0 px-md-6">
-                <img src="~/img/illustrations/man-with-laptop.png" height="175" alt="Inventory Dashboard" />
-              </div>
-            </div>
+
+  @* ---- Row 0: Welcome (full width) ---- *@
+  <div class="grid-stack-item"
+       data-widget-id="inventory-welcome"
+       data-gs-x="0" data-gs-y="0" data-gs-width="12" data-gs-height="6">
+    <div class="grid-stack-item-content card">
+      <div class="d-flex align-items-start row">
+        <div class="col-sm-7">
+          <div class="card-body">
+            <h5 class="card-title text-primary mb-3">Inventory Overview 📦</h5>
+            <p class="mb-6">Welcome to the Inventory Dashboard. Monitor stock levels and logistics.</p>
+            <a href="javascript:;" class="btn btn-sm btn-outline-primary">View Inventory</a>
+          </div>
+        </div>
+        <div class="col-sm-5 text-center text-sm-left">
+          <div class="card-body pb-0 px-0 px-md-6">
+            <img src="~/img/illustrations/man-with-laptop.png" height="175" alt="Inventory Dashboard" />
           </div>
         </div>
       </div>
     </div>
-  </div></div>
+  </div>
 
-  <div class="grid-stack-item" data-widget-id="inventory-kpi-stock" data-gs-x="0" data-gs-y="6" data-gs-width="3" data-gs-height="6"><div class="grid-stack-item-content card">
-    <div class="inventory-kpi-cell">
-      <div class="card h-100">
-        <div class="card-body">
-          <div class="card-title d-flex align-items-start justify-content-between mb-4">
-            <div class="avatar flex-shrink-0">
-              <img src="~/img/icons/unicons/chart-success.png" alt="Stock" class="rounded" />
-            </div>
-            <div class="dropdown">
-              <button class="btn p-0" type="button" id="cardOpt1" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                <i class="icon-base bx bx-dots-vertical-rounded text-body-secondary"></i>
-              </button>
-              <div class="dropdown-menu dropdown-menu-end" aria-labelledby="cardOpt1">
-                <a class="dropdown-item" href="javascript:void(0);">View More</a>
-              </div>
-            </div>
+  @* ---- Row 6: KPI cards (4 x 3 columns) ---- *@
+  <div class="grid-stack-item"
+       data-widget-id="inventory-kpi-stock"
+       data-gs-x="0" data-gs-y="6" data-gs-width="3" data-gs-height="6">
+    <div class="grid-stack-item-content card h-100">
+      <div class="card-body">
+        <div class="card-title d-flex align-items-start justify-content-between mb-4">
+          <div class="avatar flex-shrink-0">
+            <img src="~/img/icons/unicons/chart-success.png" alt="Stock" class="rounded" />
           </div>
-          <p class="mb-1">@Model.TotalItems.Title</p>
-          <h4 class="card-title mb-2">@Model.TotalItems.Value</h4>
-          <small class="text-success fw-medium"><i class="icon-base bx bx-up-arrow-alt"></i> @Model.TotalItems.TrendLabel</small>
-        </div>
-      </div>
-    </div>
-  </div></div>
-
-  <div class="grid-stack-item" data-widget-id="inventory-kpi-value" data-gs-x="3" data-gs-y="6" data-gs-width="3" data-gs-height="6"><div class="grid-stack-item-content card">
-    <div class="inventory-kpi-cell">
-      <div class="card h-100">
-        <div class="card-body">
-          <div class="card-title d-flex align-items-start justify-content-between mb-4">
-            <div class="avatar flex-shrink-0">
-              <img src="~/img/icons/unicons/wallet-info.png" alt="Value" class="rounded" />
-            </div>
-            <div class="dropdown">
-              <button class="btn p-0" type="button" id="cardOpt2" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                <i class="icon-base bx bx-dots-vertical-rounded text-body-secondary"></i>
-              </button>
-              <div class="dropdown-menu dropdown-menu-end" aria-labelledby="cardOpt2">
-                <a class="dropdown-item" href="javascript:void(0);">View More</a>
-              </div>
-            </div>
-          </div>
-          <p class="mb-1">@Model.StockValue.Title</p>
-          <h4 class="card-title mb-2">@Model.StockValue.Value</h4>
-          <small class="text-success fw-medium"><i class="icon-base bx bx-up-arrow-alt"></i> @Model.StockValue.TrendLabel</small>
-        </div>
-      </div>
-    </div>
-  </div></div>
-
-  <div class="grid-stack-item" data-widget-id="inventory-kpi-turnover" data-gs-x="6" data-gs-y="6" data-gs-width="3" data-gs-height="6"><div class="grid-stack-item-content card">
-    <div class="inventory-kpi-cell">
-      <div class="card h-100">
-        <div class="card-body">
-          <div class="card-title d-flex align-items-start justify-content-between mb-4">
-            <div class="avatar flex-shrink-0">
-              <img src="~/img/icons/unicons/chart-success.png" alt="Turnover" class="rounded" />
-            </div>
-            <div class="dropdown">
-              <button class="btn p-0" type="button" id="cardOptKpi1" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                <i class="icon-base bx bx-dots-vertical-rounded text-body-secondary"></i>
-              </button>
-              <div class="dropdown-menu dropdown-menu-end" aria-labelledby="cardOptKpi1">
-                <a class="dropdown-item" href="javascript:void(0);">View More</a>
-              </div>
-            </div>
-          </div>
-          <p class="mb-1">Inventory Turnover</p>
-          <h4 class="card-title mb-2">@(Model.InventoryTurnover?.NumericValue > 0 ? Model.InventoryTurnover.FormattedValue : "8.5x")</h4>
-          <small class="text-success fw-medium"><i class="icon-base bx bx-up-arrow-alt"></i> 5.2%</small>
-        </div>
-      </div>
-    </div>
-  </div></div>
-
-  <div class="grid-stack-item" data-widget-id="inventory-kpi-fillrate" data-gs-x="9" data-gs-y="6" data-gs-width="3" data-gs-height="6"><div class="grid-stack-item-content card">
-    <div class="inventory-kpi-cell">
-      <div class="card h-100">
-        <div class="card-body">
-          <div class="card-title d-flex align-items-start justify-content-between mb-4">
-            <div class="avatar flex-shrink-0">
-              <span class="avatar-initial rounded bg-label-success"><i class="icon-base bx bx-bar-chart-alt-2"></i></span>
-            </div>
-            <div class="dropdown">
-              <button class="btn p-0" type="button" id="cardOptKpi2" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                <i class="icon-base bx bx-dots-vertical-rounded text-body-secondary"></i>
-              </button>
-              <div class="dropdown-menu dropdown-menu-end" aria-labelledby="cardOptKpi2">
-                <a class="dropdown-item" href="javascript:void(0);">View More</a>
-              </div>
-            </div>
-          </div>
-          <p class="mb-1">Fill Rate</p>
-          <h4 class="card-title mb-2">@(Model.FillRate?.NumericValue > 0 ? Model.FillRate.FormattedValue : "85%")</h4>
-          <small class="text-success fw-medium"><i class="icon-base bx bx-up-arrow-alt"></i> 2.1%</small>
-        </div>
-      </div>
-    </div>
-  </div></div>
-
-  <div class="grid-stack-item" data-widget-id="inventory-kpi-otif" data-gs-x="0" data-gs-y="12" data-gs-width="3" data-gs-height="6"><div class="grid-stack-item-content card">
-    <div class="inventory-kpi-cell">
-      <div class="card h-100">
-        <div class="card-body">
-          <div class="card-title d-flex align-items-start justify-content-between mb-4">
-            <div class="avatar flex-shrink-0">
-              <span class="avatar-initial rounded bg-label-info"><i class="icon-base bx bx-check-shield"></i></span>
-            </div>
-            <div class="dropdown">
-              <button class="btn p-0" type="button" id="cardOptKpi3" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                <i class="icon-base bx bx-dots-vertical-rounded text-body-secondary"></i>
-              </button>
-              <div class="dropdown-menu dropdown-menu-end" aria-labelledby="cardOptKpi3">
-                <a class="dropdown-item" href="javascript:void(0);">View More</a>
-              </div>
-            </div>
-          </div>
-          <p class="mb-1">OTIF</p>
-          <h4 class="card-title mb-2">85%</h4>
-          <small class="text-success fw-medium"><i class="icon-base bx bx-up-arrow-alt"></i> 3.0%</small>
-        </div>
-      </div>
-    </div>
-  </div></div>
-
-  <div class="grid-stack-item" data-widget-id="inventory-kpi-shrinkage" data-gs-x="3" data-gs-y="12" data-gs-width="3" data-gs-height="6"><div class="grid-stack-item-content card">
-    <div class="inventory-kpi-cell">
-      <div class="card h-100">
-        <div class="card-body">
-          <div class="card-title d-flex align-items-start justify-content-between mb-4">
-            <div class="avatar flex-shrink-0">
-              <span class="avatar-initial rounded bg-label-warning"><i class="icon-base bx bx-trending-down"></i></span>
-            </div>
-            <div class="dropdown">
-              <button class="btn p-0" type="button" id="cardOptKpi4" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                <i class="icon-base bx bx-dots-vertical-rounded text-body-secondary"></i>
-              </button>
-              <div class="dropdown-menu dropdown-menu-end" aria-labelledby="cardOptKpi4">
-                <a class="dropdown-item" href="javascript:void(0);">View More</a>
-              </div>
-            </div>
-          </div>
-          <p class="mb-1">Shrinkage</p>
-          <h4 class="card-title mb-2">2.5%</h4>
-          <small class="text-danger fw-medium"><i class="icon-base bx bx-down-arrow-alt"></i> 0.3%</small>
-        </div>
-      </div>
-    </div>
-  </div></div>
-
-  <div class="grid-stack-item" data-widget-id="inventory-kpi-inbound" data-gs-x="6" data-gs-y="12" data-gs-width="3" data-gs-height="6"><div class="grid-stack-item-content card">
-    <div class="inventory-kpi-cell">
-      <div class="card h-100">
-        <div class="card-body">
-          <div class="card-title d-flex align-items-start justify-content-between mb-4">
-            <div class="avatar flex-shrink-0">
-              <img src="~/img/icons/unicons/paypal.png" alt="Inbound" class="rounded" />
-            </div>
-            <div class="dropdown">
-              <button class="btn p-0" type="button" id="cardOpt3" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                <i class="icon-base bx bx-dots-vertical-rounded text-body-secondary"></i>
-              </button>
-              <div class="dropdown-menu dropdown-menu-end" aria-labelledby="cardOpt3">
-                <a class="dropdown-item" href="javascript:void(0);">View More</a>
-              </div>
-            </div>
-          </div>
-          <p class="mb-1">@Model.InboundOrders.Title</p>
-          <h4 class="card-title mb-2">@Model.InboundOrders.Value</h4>
-          <small class="text-success fw-medium"><i class="icon-base bx bx-up-arrow-alt"></i> @Model.InboundOrders.TrendLabel</small>
-        </div>
-      </div>
-    </div>
-  </div></div>
-
-  <div class="grid-stack-item" data-widget-id="inventory-kpi-outbound" data-gs-x="9" data-gs-y="12" data-gs-width="3" data-gs-height="6"><div class="grid-stack-item-content card">
-    <div class="inventory-kpi-cell">
-      <div class="card h-100">
-        <div class="card-body">
-          <div class="card-title d-flex align-items-start justify-content-between mb-4">
-            <div class="avatar flex-shrink-0">
-              <img src="~/img/icons/unicons/cc-primary.png" alt="Outbound" class="rounded" />
-            </div>
-            <div class="dropdown">
-              <button class="btn p-0" type="button" id="cardOpt4" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                <i class="icon-base bx bx-dots-vertical-rounded text-body-secondary"></i>
-              </button>
-              <div class="dropdown-menu" aria-labelledby="cardOpt4">
-                <a class="dropdown-item" href="javascript:void(0);">View More</a>
-              </div>
-            </div>
-          </div>
-          <p class="mb-1">@Model.OutboundOrders.Title</p>
-          <h4 class="card-title mb-2">@Model.OutboundOrders.Value</h4>
-          <small class="text-success fw-medium"><i class="icon-base bx bx-up-arrow-alt"></i> @Model.OutboundOrders.TrendLabel</small>
-        </div>
-      </div>
-    </div>
-  </div></div>
-
-  <div class="grid-stack-item" data-widget-id="inventory-chart-stock-movement" data-gs-x="0" data-gs-y="18" data-gs-width="12" data-gs-height="8"><div class="grid-stack-item-content card">
-    <div class="row">
-      <div class="col-12 mb-6">
-        <div class="card">
-          <div class="row row-bordered g-0">
-            <div class="col-lg-8">
-              <div class="card-header d-flex align-items-center justify-content-between">
-                <div class="card-title mb-0">
-                  <h5 class="m-0 me-2">Stock Movement</h5>
-                </div>
-                <div class="dropdown">
-                  <button class="btn p-0" type="button" id="stockChart" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                    <i class="icon-base bx bx-dots-vertical-rounded icon-lg text-body-secondary"></i>
-                  </button>
-                  <div class="dropdown-menu dropdown-menu-end" aria-labelledby="stockChart">
-                    <a class="dropdown-item" href="javascript:void(0);">This Week</a>
-                    <a class="dropdown-item" href="javascript:void(0);">This Month</a>
-                  </div>
-                </div>
-              </div>
-              <div id="totalRevenueChart" class="px-3"></div>
-            </div>
-            <div class="col-lg-4">
-              <div class="card-body px-xl-9 py-12 d-flex align-items-center flex-column">
-                <div class="text-center mb-6">
-                  <h6 class="mb-0">@Model.StockUtilizationPercent% Stock Utilization</h6>
-                </div>
-                <div id="growthChart"></div>
-              </div>
+          <div class="dropdown">
+            <button class="btn p-0" type="button" id="cardOpt1" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+              <i class="icon-base bx bx-dots-vertical-rounded text-body-secondary"></i>
+            </button>
+            <div class="dropdown-menu dropdown-menu-end" aria-labelledby="cardOpt1">
+              <a class="dropdown-item" href="javascript:void(0);">View More</a>
             </div>
           </div>
         </div>
+        <p class="mb-1">@Model.TotalItems.Title</p>
+        <h4 class="card-title mb-2">@Model.TotalItems.Value</h4>
+        <small class="text-@(Model.TotalItems.Trend == "up" ? "success" : Model.TotalItems.Trend == "down" ? "danger" : "body-secondary") fw-medium"><i class="icon-base bx @(Model.TotalItems.Trend == "up" ? "bx-up-arrow-alt" : Model.TotalItems.Trend == "down" ? "bx-down-arrow-alt" : "bx-minus")"></i> @Model.TotalItems.TrendLabel</small>
       </div>
     </div>
-  </div></div>
+  </div>
 
-  <div class="grid-stack-item" data-widget-id="inventory-chart-trend" data-gs-x="0" data-gs-y="26" data-gs-width="6" data-gs-height="8"><div class="grid-stack-item-content card">
-    <div class="row">
-      <div class="col-md-6 col-lg-6 order-0 mb-6">
-        <div class="card h-100">
+  <div class="grid-stack-item"
+       data-widget-id="inventory-kpi-value"
+       data-gs-x="3" data-gs-y="6" data-gs-width="3" data-gs-height="6">
+    <div class="grid-stack-item-content card h-100">
+      <div class="card-body">
+        <div class="card-title d-flex align-items-start justify-content-between mb-4">
+          <div class="avatar flex-shrink-0">
+            <img src="~/img/icons/unicons/wallet-info.png" alt="Value" class="rounded" />
+          </div>
+          <div class="dropdown">
+            <button class="btn p-0" type="button" id="cardOpt2" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+              <i class="icon-base bx bx-dots-vertical-rounded text-body-secondary"></i>
+            </button>
+            <div class="dropdown-menu dropdown-menu-end" aria-labelledby="cardOpt2">
+              <a class="dropdown-item" href="javascript:void(0);">View More</a>
+            </div>
+          </div>
+        </div>
+        <p class="mb-1">@Model.StockValue.Title</p>
+        <h4 class="card-title mb-2">@Model.StockValue.Value</h4>
+        <small class="text-@(Model.StockValue.Trend == "up" ? "success" : Model.StockValue.Trend == "down" ? "danger" : "body-secondary") fw-medium"><i class="icon-base bx @(Model.StockValue.Trend == "up" ? "bx-up-arrow-alt" : Model.StockValue.Trend == "down" ? "bx-down-arrow-alt" : "bx-minus")"></i> @Model.StockValue.TrendLabel</small>
+      </div>
+    </div>
+  </div>
+
+  <div class="grid-stack-item"
+       data-widget-id="inventory-kpi-turnover"
+       data-gs-x="6" data-gs-y="6" data-gs-width="3" data-gs-height="6">
+    <div class="grid-stack-item-content card h-100">
+      <div class="card-body">
+        <div class="card-title d-flex align-items-start justify-content-between mb-4">
+          <div class="avatar flex-shrink-0">
+            <img src="~/img/icons/unicons/chart-success.png" alt="Turnover" class="rounded" />
+          </div>
+          <div class="dropdown">
+            <button class="btn p-0" type="button" id="cardOptKpi1" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+              <i class="icon-base bx bx-dots-vertical-rounded text-body-secondary"></i>
+            </button>
+            <div class="dropdown-menu dropdown-menu-end" aria-labelledby="cardOptKpi1">
+              <a class="dropdown-item" href="javascript:void(0);">View More</a>
+            </div>
+          </div>
+        </div>
+        <p class="mb-1">Inventory Turnover</p>
+        <h4 class="card-title mb-2">@(Model.InventoryTurnover?.NumericValue > 0 ? Model.InventoryTurnover.FormattedValue : "8.5x")</h4>
+        <small class="text-success fw-medium"><i class="icon-base bx bx-up-arrow-alt"></i> 5.2%</small>
+      </div>
+    </div>
+  </div>
+
+  <div class="grid-stack-item"
+       data-widget-id="inventory-kpi-fillrate"
+       data-gs-x="9" data-gs-y="6" data-gs-width="3" data-gs-height="6">
+    <div class="grid-stack-item-content card h-100">
+      <div class="card-body">
+        <div class="card-title d-flex align-items-start justify-content-between mb-4">
+          <div class="avatar flex-shrink-0">
+            <span class="avatar-initial rounded bg-label-success"><i class="icon-base bx bx-bar-chart-alt-2"></i></span>
+          </div>
+          <div class="dropdown">
+            <button class="btn p-0" type="button" id="cardOptKpi2" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+              <i class="icon-base bx bx-dots-vertical-rounded text-body-secondary"></i>
+            </button>
+            <div class="dropdown-menu dropdown-menu-end" aria-labelledby="cardOptKpi2">
+              <a class="dropdown-item" href="javascript:void(0);">View More</a>
+            </div>
+          </div>
+        </div>
+        <p class="mb-1">Fill Rate</p>
+        <h4 class="card-title mb-2">@(Model.FillRate?.NumericValue > 0 ? Model.FillRate.FormattedValue : "85%")</h4>
+        <small class="text-success fw-medium"><i class="icon-base bx bx-up-arrow-alt"></i> 2.1%</small>
+      </div>
+    </div>
+  </div>
+
+  @* ---- Row 12: 4 KPI cards ---- *@
+  <div class="grid-stack-item"
+       data-widget-id="inventory-kpi-otif"
+       data-gs-x="0" data-gs-y="12" data-gs-width="3" data-gs-height="6">
+    <div class="grid-stack-item-content card h-100">
+      <div class="card-body">
+        <div class="card-title d-flex align-items-start justify-content-between mb-4">
+          <div class="avatar flex-shrink-0">
+            <span class="avatar-initial rounded bg-label-info"><i class="icon-base bx bx-check-shield"></i></span>
+          </div>
+          <div class="dropdown">
+            <button class="btn p-0" type="button" id="cardOptKpi3" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+              <i class="icon-base bx bx-dots-vertical-rounded text-body-secondary"></i>
+            </button>
+            <div class="dropdown-menu dropdown-menu-end" aria-labelledby="cardOptKpi3">
+              <a class="dropdown-item" href="javascript:void(0);">View More</a>
+            </div>
+          </div>
+        </div>
+        <p class="mb-1">OTIF</p>
+        <h4 class="card-title mb-2">85%</h4>
+        <small class="text-success fw-medium"><i class="icon-base bx bx-up-arrow-alt"></i> 3.0%</small>
+      </div>
+    </div>
+  </div>
+
+  <div class="grid-stack-item"
+       data-widget-id="inventory-kpi-shrinkage"
+       data-gs-x="3" data-gs-y="12" data-gs-width="3" data-gs-height="6">
+    <div class="grid-stack-item-content card h-100">
+      <div class="card-body">
+        <div class="card-title d-flex align-items-start justify-content-between mb-4">
+          <div class="avatar flex-shrink-0">
+            <span class="avatar-initial rounded bg-label-warning"><i class="icon-base bx bx-trending-down"></i></span>
+          </div>
+          <div class="dropdown">
+            <button class="btn p-0" type="button" id="cardOptKpi4" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+              <i class="icon-base bx bx-dots-vertical-rounded text-body-secondary"></i>
+            </button>
+            <div class="dropdown-menu dropdown-menu-end" aria-labelledby="cardOptKpi4">
+              <a class="dropdown-item" href="javascript:void(0);">View More</a>
+            </div>
+          </div>
+        </div>
+        <p class="mb-1">Shrinkage</p>
+        <h4 class="card-title mb-2">2.5%</h4>
+        <small class="text-danger fw-medium"><i class="icon-base bx bx-down-arrow-alt"></i> 0.3%</small>
+      </div>
+    </div>
+  </div>
+
+  <div class="grid-stack-item"
+       data-widget-id="inventory-kpi-inbound"
+       data-gs-x="6" data-gs-y="12" data-gs-width="3" data-gs-height="6">
+    <div class="grid-stack-item-content card h-100">
+      <div class="card-body">
+        <div class="card-title d-flex align-items-start justify-content-between mb-4">
+          <div class="avatar flex-shrink-0">
+            <img src="~/img/icons/unicons/paypal.png" alt="Inbound" class="rounded" />
+          </div>
+          <div class="dropdown">
+            <button class="btn p-0" type="button" id="cardOpt3" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+              <i class="icon-base bx bx-dots-vertical-rounded text-body-secondary"></i>
+            </button>
+            <div class="dropdown-menu dropdown-menu-end" aria-labelledby="cardOpt3">
+              <a class="dropdown-item" href="javascript:void(0);">View More</a>
+            </div>
+          </div>
+        </div>
+        <p class="mb-1">@Model.InboundOrders.Title</p>
+        <h4 class="card-title mb-2">@Model.InboundOrders.Value</h4>
+        <small class="text-@(Model.InboundOrders.Trend == "up" ? "success" : Model.InboundOrders.Trend == "down" ? "danger" : "body-secondary") fw-medium"><i class="icon-base bx @(Model.InboundOrders.Trend == "up" ? "bx-up-arrow-alt" : Model.InboundOrders.Trend == "down" ? "bx-down-arrow-alt" : "bx-minus")"></i> @Model.InboundOrders.TrendLabel</small>
+      </div>
+    </div>
+  </div>
+
+  <div class="grid-stack-item"
+       data-widget-id="inventory-kpi-outbound"
+       data-gs-x="9" data-gs-y="12" data-gs-width="3" data-gs-height="6">
+    <div class="grid-stack-item-content card h-100">
+      <div class="card-body">
+        <div class="card-title d-flex align-items-start justify-content-between mb-4">
+          <div class="avatar flex-shrink-0">
+            <img src="~/img/icons/unicons/cc-primary.png" alt="Outbound" class="rounded" />
+          </div>
+          <div class="dropdown">
+            <button class="btn p-0" type="button" id="cardOpt4" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+              <i class="icon-base bx bx-dots-vertical-rounded text-body-secondary"></i>
+            </button>
+            <div class="dropdown-menu dropdown-menu-end" aria-labelledby="cardOpt4">
+              <a class="dropdown-item" href="javascript:void(0);">View More</a>
+            </div>
+          </div>
+        </div>
+        <p class="mb-1">@Model.OutboundOrders.Title</p>
+        <h4 class="card-title mb-2">@Model.OutboundOrders.Value</h4>
+        <small class="text-@(Model.OutboundOrders.Trend == "up" ? "success" : Model.OutboundOrders.Trend == "down" ? "danger" : "body-secondary") fw-medium"><i class="icon-base bx @(Model.OutboundOrders.Trend == "up" ? "bx-up-arrow-alt" : Model.OutboundOrders.Trend == "down" ? "bx-down-arrow-alt" : "bx-minus")"></i> @Model.OutboundOrders.TrendLabel</small>
+      </div>
+    </div>
+  </div>
+
+  @* ---- Row 18: Stock Movement (full width) ---- *@
+  <div class="grid-stack-item"
+       data-widget-id="inventory-chart-stock-movement"
+       data-gs-x="0" data-gs-y="18" data-gs-width="12" data-gs-height="8">
+    <div class="grid-stack-item-content card h-100">
+      <div class="row row-bordered g-0 h-100">
+        <div class="col-lg-8">
           <div class="card-header d-flex align-items-center justify-content-between">
             <div class="card-title mb-0">
-              <h5 class="m-0 me-2">Inventory Level Trend</h5>
+              <h5 class="m-0 me-2">Stock Movement</h5>
             </div>
             <div class="dropdown">
-              <button class="btn p-0" type="button" id="invTrendOpt" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+              <button class="btn p-0" type="button" id="stockChart" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                 <i class="icon-base bx bx-dots-vertical-rounded icon-lg text-body-secondary"></i>
               </button>
-              <div class="dropdown-menu dropdown-menu-end" aria-labelledby="invTrendOpt">
+              <div class="dropdown-menu dropdown-menu-end" aria-labelledby="stockChart">
                 <a class="dropdown-item" href="javascript:void(0);">This Week</a>
                 <a class="dropdown-item" href="javascript:void(0);">This Month</a>
               </div>
-            </div>
-          </div>
-          <div class="card-body px-3">
-            <div id="inventoryTrendAreaChart" height="280"></div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div></div>
-
-  <div class="grid-stack-item" data-widget-id="inventory-chart-days" data-gs-x="6" data-gs-y="26" data-gs-width="6" data-gs-height="8"><div class="grid-stack-item-content card">
-    <div class="row">
-      <div class="col-md-6 col-lg-6 order-1 mb-6">
-        <div class="card h-100">
-          <div class="card-header d-flex align-items-center justify-content-between">
-            <div class="card-title mb-0">
-              <h5 class="m-0 me-2">Days of Inventory</h5>
-            </div>
-            <div class="dropdown">
-              <button class="btn p-0" type="button" id="doiOpt" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                <i class="icon-base bx bx-dots-vertical-rounded icon-lg text-body-secondary"></i>
-              </button>
-              <div class="dropdown-menu dropdown-menu-end" aria-labelledby="doiOpt">
-                <a class="dropdown-item" href="javascript:void(0);">This Week</a>
-                <a class="dropdown-item" href="javascript:void(0);">This Month</a>
-              </div>
-            </div>
-          </div>
-          <div class="card-body px-3">
-            <div id="daysOfInventoryChart" height="280"></div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div></div>
-
-  <div class="grid-stack-item" data-widget-id="inventory-chart-abc" data-gs-x="0" data-gs-y="34" data-gs-width="6" data-gs-height="8"><div class="grid-stack-item-content card">
-    <div class="row">
-      <div class="col-md-6 col-lg-6 order-0 mb-6">
-        <div class="card h-100">
-          <div class="card-header d-flex align-items-center justify-content-between">
-            <div class="card-title mb-0">
-              <h5 class="m-0 me-2">ABC Analysis</h5>
-            </div>
-            <div class="dropdown">
-              <button class="btn p-0" type="button" id="abcOpt" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                <i class="icon-base bx bx-dots-vertical-rounded icon-lg text-body-secondary"></i>
-              </button>
-              <div class="dropdown-menu dropdown-menu-end" aria-labelledby="abcOpt">
-                <a class="dropdown-item" href="javascript:void(0);">View More</a>
-              </div>
-            </div>
-          </div>
-          <div class="card-body px-3">
-            <div id="abcAnalysisChart" height="280"></div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div></div>
-
-  <div class="grid-stack-item" data-widget-id="inventory-chart-stockout" data-gs-x="6" data-gs-y="34" data-gs-width="6" data-gs-height="8"><div class="grid-stack-item-content card">
-    <div class="row">
-      <div class="col-md-6 col-lg-6 order-1 mb-6">
-        <div class="card h-100">
-          <div class="card-header d-flex align-items-center justify-content-between">
-            <div class="card-title mb-0">
-              <h5 class="m-0 me-2">Stockout & Backorder Trend</h5>
-            </div>
-            <div class="dropdown">
-              <button class="btn p-0" type="button" id="stockoutOpt" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                <i class="icon-base bx bx-dots-vertical-rounded icon-lg text-body-secondary"></i>
-              </button>
-              <div class="dropdown-menu dropdown-menu-end" aria-labelledby="stockoutOpt">
-                <a class="dropdown-item" href="javascript:void(0);">This Week</a>
-                <a class="dropdown-item" href="javascript:void(0);">This Month</a>
-              </div>
-            </div>
-          </div>
-          <div class="card-body px-3">
-            <div id="stockoutTrendChart" height="280"></div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div></div>
-
-  <div class="grid-stack-item" data-widget-id="inventory-chart-aging" data-gs-x="0" data-gs-y="42" data-gs-width="6" data-gs-height="8"><div class="grid-stack-item-content card">
-    <div class="row">
-      <div class="col-md-6 col-lg-6 order-0 mb-6">
-        <div class="card h-100">
-          <div class="card-header d-flex align-items-center justify-content-between">
-            <div class="card-title mb-0">
-              <h5 class="m-0 me-2">Aging Inventory</h5>
-            </div>
-            <div class="dropdown">
-              <button class="btn p-0" type="button" id="agingOpt" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                <i class="icon-base bx bx-dots-vertical-rounded icon-lg text-body-secondary"></i>
-              </button>
-              <div class="dropdown-menu dropdown-menu-end" aria-labelledby="agingOpt">
-                <a class="dropdown-item" href="javascript:void(0);">View More</a>
-              </div>
-            </div>
-          </div>
-          <div class="card-body px-3">
-            <div id="agingInventoryChart" height="280"></div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div></div>
-
-  <div class="grid-stack-item" data-widget-id="inventory-chart-inbound" data-gs-x="6" data-gs-y="42" data-gs-width="6" data-gs-height="8"><div class="grid-stack-item-content card">
-    <div class="row">
-      <div class="col-md-6 col-lg-6 order-1 mb-6">
-        <div class="card h-100">
-          <div class="card-header d-flex align-items-center justify-content-between">
-            <div class="card-title mb-0">
-              <h5 class="m-0 me-2">Inbound vs Outbound</h5>
-            </div>
-            <div class="dropdown">
-              <button class="btn p-0" type="button" id="ioOpt" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                <i class="icon-base bx bx-dots-vertical-rounded icon-lg text-body-secondary"></i>
-              </button>
-              <div class="dropdown-menu dropdown-menu-end" aria-labelledby="ioOpt">
-                <a class="dropdown-item" href="javascript:void(0);">This Week</a>
-                <a class="dropdown-item" href="javascript:void(0);">This Month</a>
-              </div>
-            </div>
-          </div>
-          <div class="card-body px-3">
-            <div id="inboundOutboundChart" height="280"></div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div></div>
-
-  <div class="grid-stack-item" data-widget-id="inventory-chart-warehouse" data-gs-x="0" data-gs-y="50" data-gs-width="12" data-gs-height="8"><div class="grid-stack-item-content card">
-    <div class="row">
-      <div class="col-12 order-0 mb-6">
-        <div class="card h-100">
-          <div class="card-header d-flex align-items-center justify-content-between">
-            <div class="card-title mb-0">
-              <h5 class="m-0 me-2">Warehouse Productivity</h5>
-            </div>
-            <div class="dropdown">
-              <button class="btn p-0" type="button" id="whProdOpt" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                <i class="icon-base bx bx-dots-vertical-rounded icon-lg text-body-secondary"></i>
-              </button>
-              <div class="dropdown-menu dropdown-menu-end" aria-labelledby="whProdOpt">
-                <a class="dropdown-item" href="javascript:void(0);">This Week</a>
-                <a class="dropdown-item" href="javascript:void(0);">This Month</a>
-              </div>
-            </div>
-          </div>
-          <div class="card-body px-3">
-            <div id="warehouseProductivityChart" height="280"></div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div></div>
-
-  <div class="grid-stack-item" data-widget-id="inventory-chart-accuracy" data-gs-x="0" data-gs-y="58" data-gs-width="12" data-gs-height="8"><div class="grid-stack-item-content card">
-    <div class="row">
-      <div class="col-12 order-0 mb-6">
-        <div class="card h-100">
-          <div class="card-header d-flex align-items-center justify-content-between">
-            <div class="card-title mb-0">
-              <h5 class="m-0 me-2">Inventory Accuracy by Warehouse Zone</h5>
-            </div>
-            <div class="dropdown">
-              <button class="btn p-0" type="button" id="heatmapOpt" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                <i class="icon-base bx bx-dots-vertical-rounded icon-lg text-body-secondary"></i>
-              </button>
-              <div class="dropdown-menu dropdown-menu-end" aria-labelledby="heatmapOpt">
-                <a class="dropdown-item" href="javascript:void(0);">View More</a>
-              </div>
-            </div>
-          </div>
-          <div class="card-body px-3">
-            <div id="inventoryAccuracyHeatmap" height="300"></div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div></div>
-
-  <div class="grid-stack-item" data-widget-id="inventory-low-stock" data-gs-x="0" data-gs-y="66" data-gs-width="4" data-gs-height="10"><div class="grid-stack-item-content card">
-    <div class="row">
-      <div class="col-md-6 col-lg-4 order-0 mb-6">
-        <div class="card h-100">
-          <div class="card-header d-flex justify-content-between">
-            <div class="card-title mb-0">
-              <h5 class="mb-1 me-2">Low Stock Items</h5>
-              <p class="card-subtitle">Items Below Threshold</p>
             </div>
           </div>
           <div class="card-body">
-            <ul class="p-0 m-0">
-              @if (Model.LowStockItems.Any())
-              {
-                @foreach (var item in Model.LowStockItems.Take(5))
-                {
-                  <li class="d-flex align-items-center mb-5">
-                    <div class="avatar flex-shrink-0 me-3">
-                      <span class="avatar-initial rounded @item.IconBgClass"><i class="@item.IconClass"></i></span>
-                    </div>
-                    <div class="d-flex w-100 flex-wrap align-items-center justify-content-between gap-2">
-                      <div class="me-2">
-                        <h6 class="mb-0">@item.Name</h6>
-                        <small>@item.Subtitle</small>
-                      </div>
-                      <div class="user-progress">
-                        <h6 class="mb-0 @item.IconBgClass.Replace("bg-label-", "text-").Replace("bg-", "")">@item.FormattedValue</h6>
-                      </div>
-                    </div>
-                  </li>
-                }
-              }
-              else
-              {
-                <li class="d-flex align-items-center mb-5">
-                  <div class="avatar flex-shrink-0 me-3">
-                    <span class="avatar-initial rounded bg-label-danger"><i class="icon-base bx bx-error"></i></span>
-                  </div>
-                  <div class="d-flex w-100 flex-wrap align-items-center justify-content-between gap-2">
-                    <div class="me-2">
-                      <h6 class="mb-0">SKU-1024</h6>
-                      <small>12 units left</small>
-                    </div>
-                    <div class="user-progress">
-                      <h6 class="mb-0 text-danger">Critical</h6>
-                    </div>
-                  </div>
-                </li>
-              }
-            </ul>
+            <div id="totalRevenueChart" class="px-3" style="min-height:220px;"></div>
           </div>
         </div>
-      </div>
-    </div>
-  </div></div>
-
-  <div class="grid-stack-item" data-widget-id="inventory-warehouse-status" data-gs-x="4" data-gs-y="66" data-gs-width="4" data-gs-height="10"><div class="grid-stack-item-content card">
-    <div class="row">
-      <div class="col-md-6 col-lg-4 order-1 mb-6">
-        <div class="card h-100">
-          <div class="card-header d-flex justify-content-between">
-            <div class="card-title mb-0">
-              <h5 class="mb-1 me-2">Warehouse Status</h5>
-              <p class="card-subtitle">Storage Utilization</p>
+        <div class="col-lg-4">
+          <div class="card-body px-xl-9 py-12 d-flex align-items-center flex-column">
+            <div class="text-center mb-6">
+              <h6 class="mb-0">@Model.StockUtilizationPercent% Stock Utilization</h6>
             </div>
-          </div>
-          <div class="card-body pt-4">
-            <ul class="p-0 m-0">
-              @if (Model.WarehouseStatus.Any())
-              {
-                @foreach (var wh in Model.WarehouseStatus.Take(5))
-                {
-                  <li class="d-flex align-items-center mb-6">
-                    <div class="avatar flex-shrink-0 me-3">
-                      <img src="~/img/icons/unicons/wallet.png" alt="@wh.Name" class="rounded" />
-                    </div>
-                    <div class="d-flex w-100 flex-wrap align-items-center justify-content-between gap-2">
-                      <div class="me-2">
-                        <small class="d-block">@wh.Name</small>
-                        <h6 class="fw-normal mb-0">@wh.Subtitle</h6>
-                      </div>
-                      <div class="user-progress d-flex align-items-center gap-2">
-                        <h6 class="fw-normal mb-0">@wh.FormattedValue</h6>
-                      </div>
-                    </div>
-                  </li>
-                }
-              }
-              else
-              {
-                <li class="d-flex align-items-center mb-6">
-                  <div class="avatar flex-shrink-0 me-3">
-                    <img src="~/img/icons/unicons/wallet.png" alt="Warehouse A" class="rounded" />
-                  </div>
-                  <div class="d-flex w-100 flex-wrap align-items-center justify-content-between gap-2">
-                    <div class="me-2">
-                      <small class="d-block">Warehouse A</small>
-                      <h6 class="fw-normal mb-0">Main Storage</h6>
-                    </div>
-                    <div class="user-progress d-flex align-items-center gap-2">
-                      <h6 class="fw-normal mb-0">78%</h6>
-                    </div>
-                  </div>
-                </li>
-              }
-            </ul>
+            <div id="growthChart"></div>
           </div>
         </div>
       </div>
     </div>
-  </div></div>
+  </div>
 
-  <div class="grid-stack-item" data-widget-id="inventory-categories" data-gs-x="8" data-gs-y="66" data-gs-width="4" data-gs-height="10"><div class="grid-stack-item-content card">
-    <div class="row">
-      <div class="col-md-6 col-lg-4 order-2 mb-6">
-        <div class="card h-100">
-          <div class="card-header d-flex justify-content-between">
-            <div class="card-title mb-0">
-              <h5 class="mb-1 me-2">Top Categories</h5>
-              <p class="card-subtitle">Stock by Category</p>
-            </div>
-          </div>
-          <div class="card-body">
-            <ul class="p-0 m-0">
-              @if (Model.TopCategories.Any())
-              {
-                @foreach (var cat in Model.TopCategories.Take(5))
-                {
-                  <li class="d-flex align-items-center mb-5">
-                    <div class="avatar flex-shrink-0 me-3">
-                      <span class="avatar-initial rounded @cat.IconBgClass"><i class="@cat.IconClass"></i></span>
-                    </div>
-                    <div class="d-flex w-100 flex-wrap align-items-center justify-content-between gap-2">
-                      <div class="me-2">
-                        <h6 class="mb-0">@cat.Name</h6>
-                        <small>@cat.Subtitle</small>
-                      </div>
-                      <div class="user-progress">
-                        <h6 class="mb-0">@cat.FormattedValue</h6>
-                      </div>
-                    </div>
-                  </li>
-                }
-              }
-              else
-              {
-                <li class="d-flex align-items-center mb-5">
-                  <div class="avatar flex-shrink-0 me-3">
-                    <span class="avatar-initial rounded bg-label-primary"><i class="icon-base bx bx-mobile-alt"></i></span>
-                  </div>
-                  <div class="d-flex w-100 flex-wrap align-items-center justify-content-between gap-2">
-                    <div class="me-2">
-                      <h6 class="mb-0">Electronics</h6>
-                      <small>4,256 units</small>
-                    </div>
-                    <div class="user-progress"><h6 class="mb-0">27%</h6></div>
-                  </div>
-                </li>
-              }
-            </ul>
+  @* ---- Row 26: Inventory Trend (6) + Days of Inventory (6) ---- *@
+  <div class="grid-stack-item"
+       data-widget-id="inventory-chart-trend"
+       data-gs-x="0" data-gs-y="26" data-gs-width="6" data-gs-height="8">
+    <div class="grid-stack-item-content card h-100">
+      <div class="card-header d-flex align-items-center justify-content-between">
+        <div class="card-title mb-0">
+          <h5 class="m-0 me-2">Inventory Level Trend</h5>
+        </div>
+        <div class="dropdown">
+          <button class="btn p-0" type="button" id="invTrendOpt" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+            <i class="icon-base bx bx-dots-vertical-rounded icon-lg text-body-secondary"></i>
+          </button>
+          <div class="dropdown-menu dropdown-menu-end" aria-labelledby="invTrendOpt">
+            <a class="dropdown-item" href="javascript:void(0);">This Week</a>
+            <a class="dropdown-item" href="javascript:void(0);">This Month</a>
           </div>
         </div>
       </div>
+      <div class="card-body">
+        <div id="inventoryTrendAreaChart" style="min-height:220px;"></div>
+      </div>
     </div>
-  </div></div>
+  </div>
+
+  <div class="grid-stack-item"
+       data-widget-id="inventory-chart-days"
+       data-gs-x="6" data-gs-y="26" data-gs-width="6" data-gs-height="8">
+    <div class="grid-stack-item-content card h-100">
+      <div class="card-header d-flex align-items-center justify-content-between">
+        <div class="card-title mb-0">
+          <h5 class="m-0 me-2">Days of Inventory</h5>
+        </div>
+        <div class="dropdown">
+          <button class="btn p-0" type="button" id="doiOpt" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+            <i class="icon-base bx bx-dots-vertical-rounded icon-lg text-body-secondary"></i>
+          </button>
+          <div class="dropdown-menu dropdown-menu-end" aria-labelledby="doiOpt">
+            <a class="dropdown-item" href="javascript:void(0);">This Week</a>
+            <a class="dropdown-item" href="javascript:void(0);">This Month</a>
+          </div>
+        </div>
+      </div>
+      <div class="card-body">
+        <div id="daysOfInventoryChart" style="min-height:220px;"></div>
+      </div>
+    </div>
+  </div>
+
+  @* ---- Row 34: ABC Analysis (6) + Stockout Trend (6) ---- *@
+  <div class="grid-stack-item"
+       data-widget-id="inventory-chart-abc"
+       data-gs-x="0" data-gs-y="34" data-gs-width="6" data-gs-height="8">
+    <div class="grid-stack-item-content card h-100">
+      <div class="card-header d-flex align-items-center justify-content-between">
+        <div class="card-title mb-0">
+          <h5 class="m-0 me-2">ABC Analysis</h5>
+        </div>
+        <div class="dropdown">
+          <button class="btn p-0" type="button" id="abcOpt" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+            <i class="icon-base bx bx-dots-vertical-rounded icon-lg text-body-secondary"></i>
+          </button>
+          <div class="dropdown-menu dropdown-menu-end" aria-labelledby="abcOpt">
+            <a class="dropdown-item" href="javascript:void(0);">View More</a>
+          </div>
+        </div>
+      </div>
+      <div class="card-body">
+        <div id="abcAnalysisChart" style="min-height:220px;"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="grid-stack-item"
+       data-widget-id="inventory-chart-stockout"
+       data-gs-x="6" data-gs-y="34" data-gs-width="6" data-gs-height="8">
+    <div class="grid-stack-item-content card h-100">
+      <div class="card-header d-flex align-items-center justify-content-between">
+        <div class="card-title mb-0">
+          <h5 class="m-0 me-2">Stockout & Backorder Trend</h5>
+        </div>
+        <div class="dropdown">
+          <button class="btn p-0" type="button" id="stockoutOpt" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+            <i class="icon-base bx bx-dots-vertical-rounded icon-lg text-body-secondary"></i>
+          </button>
+          <div class="dropdown-menu dropdown-menu-end" aria-labelledby="stockoutOpt">
+            <a class="dropdown-item" href="javascript:void(0);">This Week</a>
+            <a class="dropdown-item" href="javascript:void(0);">This Month</a>
+          </div>
+        </div>
+      </div>
+      <div class="card-body">
+        <div id="stockoutTrendChart" style="min-height:220px;"></div>
+      </div>
+    </div>
+  </div>
+
+  @* ---- Row 42: Aging Inventory (6) + Inbound vs Outbound (6) ---- *@
+  <div class="grid-stack-item"
+       data-widget-id="inventory-chart-aging"
+       data-gs-x="0" data-gs-y="42" data-gs-width="6" data-gs-height="8">
+    <div class="grid-stack-item-content card h-100">
+      <div class="card-header d-flex align-items-center justify-content-between">
+        <div class="card-title mb-0">
+          <h5 class="m-0 me-2">Aging Inventory</h5>
+        </div>
+        <div class="dropdown">
+          <button class="btn p-0" type="button" id="agingOpt" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+            <i class="icon-base bx bx-dots-vertical-rounded icon-lg text-body-secondary"></i>
+          </button>
+          <div class="dropdown-menu dropdown-menu-end" aria-labelledby="agingOpt">
+            <a class="dropdown-item" href="javascript:void(0);">View More</a>
+          </div>
+        </div>
+      </div>
+      <div class="card-body">
+        <div id="agingInventoryChart" style="min-height:220px;"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="grid-stack-item"
+       data-widget-id="inventory-chart-inbound"
+       data-gs-x="6" data-gs-y="42" data-gs-width="6" data-gs-height="8">
+    <div class="grid-stack-item-content card h-100">
+      <div class="card-header d-flex align-items-center justify-content-between">
+        <div class="card-title mb-0">
+          <h5 class="m-0 me-2">Inbound vs Outbound</h5>
+        </div>
+        <div class="dropdown">
+          <button class="btn p-0" type="button" id="ioOpt" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+            <i class="icon-base bx bx-dots-vertical-rounded icon-lg text-body-secondary"></i>
+          </button>
+          <div class="dropdown-menu dropdown-menu-end" aria-labelledby="ioOpt">
+            <a class="dropdown-item" href="javascript:void(0);">This Week</a>
+            <a class="dropdown-item" href="javascript:void(0);">This Month</a>
+          </div>
+        </div>
+      </div>
+      <div class="card-body">
+        <div id="inboundOutboundChart" style="min-height:220px;"></div>
+      </div>
+    </div>
+  </div>
+
+  @* ---- Row 50: Warehouse Productivity (full width) ---- *@
+  <div class="grid-stack-item"
+       data-widget-id="inventory-chart-warehouse"
+       data-gs-x="0" data-gs-y="50" data-gs-width="12" data-gs-height="8">
+    <div class="grid-stack-item-content card h-100">
+      <div class="card-header d-flex align-items-center justify-content-between">
+        <div class="card-title mb-0">
+          <h5 class="m-0 me-2">Warehouse Productivity</h5>
+        </div>
+        <div class="dropdown">
+          <button class="btn p-0" type="button" id="whProdOpt" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+            <i class="icon-base bx bx-dots-vertical-rounded icon-lg text-body-secondary"></i>
+          </button>
+          <div class="dropdown-menu dropdown-menu-end" aria-labelledby="whProdOpt">
+            <a class="dropdown-item" href="javascript:void(0);">This Week</a>
+            <a class="dropdown-item" href="javascript:void(0);">This Month</a>
+          </div>
+        </div>
+      </div>
+      <div class="card-body">
+        <div id="warehouseProductivityChart" style="min-height:220px;"></div>
+      </div>
+    </div>
+  </div>
+
+  @* ---- Row 58: Inventory Accuracy (full width) ---- *@
+  <div class="grid-stack-item"
+       data-widget-id="inventory-chart-accuracy"
+       data-gs-x="0" data-gs-y="58" data-gs-width="12" data-gs-height="8">
+    <div class="grid-stack-item-content card h-100">
+      <div class="card-header d-flex align-items-center justify-content-between">
+        <div class="card-title mb-0">
+          <h5 class="m-0 me-2">Inventory Accuracy by Warehouse Zone</h5>
+        </div>
+        <div class="dropdown">
+          <button class="btn p-0" type="button" id="heatmapOpt" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+            <i class="icon-base bx bx-dots-vertical-rounded icon-lg text-body-secondary"></i>
+          </button>
+          <div class="dropdown-menu dropdown-menu-end" aria-labelledby="heatmapOpt">
+            <a class="dropdown-item" href="javascript:void(0);">View More</a>
+          </div>
+        </div>
+      </div>
+      <div class="card-body">
+        <div id="inventoryAccuracyHeatmap" style="min-height:220px;"></div>
+      </div>
+    </div>
+  </div>
+
+  @* ---- Row 66: Bottom 3 cards (4 + 4 + 4) ---- *@
+  <div class="grid-stack-item"
+       data-widget-id="inventory-low-stock"
+       data-gs-x="0" data-gs-y="66" data-gs-width="4" data-gs-height="10">
+    <div class="grid-stack-item-content card h-100">
+      <div class="card-header d-flex justify-content-between">
+        <div class="card-title mb-0">
+          <h5 class="mb-1 me-2">Low Stock Items</h5>
+          <p class="card-subtitle">Items Below Threshold</p>
+        </div>
+      </div>
+      <div class="card-body">
+        <ul class="list-unstyled mb-0">
+          @if (Model.LowStockItems.Any())
+          {
+            @foreach (var item in Model.LowStockItems.Take(5))
+            {
+              <li class="d-flex align-items-center mb-5">
+                <div class="avatar flex-shrink-0 me-3">
+                  <span class="avatar-initial rounded @item.IconBgClass"><i class="@item.IconClass"></i></span>
+                </div>
+                <div class="d-flex w-100 flex-wrap align-items-center justify-content-between gap-2">
+                  <div class="me-2">
+                    <h6 class="mb-0">@item.Name</h6>
+                    <small>@item.Subtitle</small>
+                  </div>
+                  <div class="user-progress">
+                    <h6 class="mb-0">@item.FormattedValue</h6>
+                  </div>
+                </div>
+              </li>
+            }
+          }
+          else
+          {
+            <li class="d-flex align-items-center mb-5">
+              <div class="avatar flex-shrink-0 me-3">
+                <span class="avatar-initial rounded bg-label-danger"><i class="icon-base bx bx-error"></i></span>
+              </div>
+              <div class="d-flex w-100 flex-wrap align-items-center justify-content-between gap-2">
+                <div class="me-2">
+                  <h6 class="mb-0">SKU-1024</h6>
+                  <small>12 units left</small>
+                </div>
+                <div class="user-progress">
+                  <h6 class="mb-0 text-danger">Critical</h6>
+                </div>
+              </div>
+            </li>
+          }
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <div class="grid-stack-item"
+       data-widget-id="inventory-warehouse-status"
+       data-gs-x="4" data-gs-y="66" data-gs-width="4" data-gs-height="10">
+    <div class="grid-stack-item-content card h-100">
+      <div class="card-header d-flex justify-content-between">
+        <div class="card-title mb-0">
+          <h5 class="mb-1 me-2">Warehouse Status</h5>
+          <p class="card-subtitle">Storage Utilization</p>
+        </div>
+      </div>
+      <div class="card-body">
+        <ul class="list-unstyled mb-0">
+          @if (Model.WarehouseStatus.Any())
+          {
+            @foreach (var wh in Model.WarehouseStatus.Take(5))
+            {
+              <li class="d-flex align-items-center mb-6">
+                <div class="avatar flex-shrink-0 me-3">
+                  <img src="~/img/icons/unicons/wallet.png" alt="@wh.Name" class="rounded" />
+                </div>
+                <div class="d-flex w-100 flex-wrap align-items-center justify-content-between gap-2">
+                  <div class="me-2">
+                    <small class="d-block">@wh.Name</small>
+                    <h6 class="fw-normal mb-0">@wh.Subtitle</h6>
+                  </div>
+                  <div class="user-progress">
+                    <h6 class="fw-normal mb-0">@wh.FormattedValue</h6>
+                  </div>
+                </div>
+              </li>
+            }
+          }
+          else
+          {
+            <li class="d-flex align-items-center mb-6">
+              <div class="avatar flex-shrink-0 me-3">
+                <img src="~/img/icons/unicons/wallet.png" alt="Warehouse A" class="rounded" />
+              </div>
+              <div class="d-flex w-100 flex-wrap align-items-center justify-content-between gap-2">
+                <div class="me-2">
+                  <small class="d-block">Warehouse A</small>
+                  <h6 class="fw-normal mb-0">Main Storage</h6>
+                </div>
+                <div class="user-progress">
+                  <h6 class="fw-normal mb-0">78%</h6>
+                </div>
+              </div>
+            </li>
+          }
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <div class="grid-stack-item"
+       data-widget-id="inventory-categories"
+       data-gs-x="8" data-gs-y="66" data-gs-width="4" data-gs-height="10">
+    <div class="grid-stack-item-content card h-100">
+      <div class="card-header d-flex justify-content-between">
+        <div class="card-title mb-0">
+          <h5 class="mb-1 me-2">Top Categories</h5>
+          <p class="card-subtitle">Stock by Category</p>
+        </div>
+      </div>
+      <div class="card-body">
+        <ul class="list-unstyled mb-0">
+          @if (Model.TopCategories.Any())
+          {
+            @foreach (var cat in Model.TopCategories.Take(5))
+            {
+              <li class="d-flex align-items-center mb-5">
+                <div class="avatar flex-shrink-0 me-3">
+                  <span class="avatar-initial rounded @cat.IconBgClass"><i class="@cat.IconClass"></i></span>
+                </div>
+                <div class="d-flex w-100 flex-wrap align-items-center justify-content-between gap-2">
+                  <div class="me-2">
+                    <h6 class="mb-0">@cat.Name</h6>
+                    <small>@cat.Subtitle</small>
+                  </div>
+                  <div class="user-progress">
+                    <h6 class="mb-0">@cat.FormattedValue</h6>
+                  </div>
+                </div>
+              </li>
+            }
+          }
+          else
+          {
+            <li class="d-flex align-items-center mb-5">
+              <div class="avatar flex-shrink-0 me-3">
+                <span class="avatar-initial rounded bg-label-primary"><i class="icon-base bx bx-mobile-alt"></i></span>
+              </div>
+              <div class="d-flex w-100 flex-wrap align-items-center justify-content-between gap-2">
+                <div class="me-2">
+                  <h6 class="mb-0">Electronics</h6>
+                  <small>4,256 units</small>
+                </div>
+                <div class="user-progress"><h6 class="mb-0">27%</h6></div>
+              </div>
+            </li>
+          }
+        </ul>
+      </div>
+    </div>
+  </div>
 
 </div>
 </div>
@@ -1021,7 +981,7 @@ document.addEventListener('DOMContentLoaded', function () {
   var el = document.getElementById('inventory-dashboard-grid');
   if (el && typeof DashboardLayoutManager !== 'undefined') {
     window.dashboardLayoutManager = new DashboardLayoutManager('inventory-dashboard-grid', {
-      storageKey: 'inventory-dashboard-layout-v1',
+      storageKey: 'inventory-dashboard-layout-v2',
       editMode: false,
       gap: 20,
       cellHeight: 60
@@ -1030,7 +990,10 @@ document.addEventListener('DOMContentLoaded', function () {
     var origToggle = window.dashboardLayoutManager.toggleEditMode.bind(window.dashboardLayoutManager);
     window.dashboardLayoutManager.toggleEditMode = function () {
       var editing = origToggle();
-      document.getElementById('btn-layout-edit').classList.toggle('editing', editing);
+      var editBtn = document.getElementById('btn-layout-edit-inventory');
+      var toolbar = document.getElementById('layout-toolbar-inventory');
+      if (editBtn) editBtn.classList.toggle('editing', editing);
+      if (toolbar) toolbar.classList.toggle('edit-mode', editing);
     };
 
     var origSave = window.dashboardLayoutManager.saveLayout.bind(window.dashboardLayoutManager);

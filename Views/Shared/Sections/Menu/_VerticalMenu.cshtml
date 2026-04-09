@@ -37,15 +37,19 @@
     </li>
 
     <!-- Business Dashboards -->
-    <li class="menu-header small text-uppercase mt-3"><span class="menu-header-text">Business Dashboards</span></li>
+    <li class="menu-header small text-uppercase mt-3">
+      <span class="menu-header-text">Business Dashboards</span>
+      <span class="menu-header-hint d-block text-body-secondary text-lowercase fw-normal">KPIs &amp; Charts</span>
+    </li>
 
     <!-- Executive -->
     @if (User.IsInRole(SD.Role_Executive))
     {
-    <li class='menu-item@(currentPage.StartsWith("/Executive") ? " active" : "")'>
+    <li class='menu-item nav-entry--dashboard@(currentPage.StartsWith("/Executive") ? " active" : "")'>
       <a asp-controller="Executive" asp-action="Index" class="menu-link">
-        <i class="menu-icon icon-base bx bx-building-house"></i>
+        <i class="menu-icon icon-base bx bx-bar-chart-alt-2"></i>
         <div class="text-truncate">Executive</div>
+        <div class="badge rounded-pill bg-label-primary text-uppercase fs-tiny ms-auto">Overview</div>
       </a>
     </li>
     }
@@ -53,10 +57,11 @@
     <!-- User Management (Executive Only) -->
     @if (User.IsInRole(SD.Role_Executive))
     {
-    <li class='menu-item@(currentPage.StartsWith("/UserManagement") ? " active" : "")'>
+    <li class='menu-item nav-entry--dashboard@(currentPage.StartsWith("/UserManagement") ? " active" : "")'>
       <a asp-controller="UserManagement" asp-action="Index" class="menu-link">
         <i class="menu-icon icon-base bx bx-user-circle"></i>
         <div class="text-truncate">User Management</div>
+        <div class="badge rounded-pill bg-label-primary text-uppercase fs-tiny ms-auto">Overview</div>
       </a>
     </li>
     }
@@ -64,10 +69,11 @@
     <!-- Sales -->
     @if (User.IsInRole(SD.Role_Sales) || User.IsInRole(SD.Role_Executive))
     {
-    <li class='menu-item@(currentPage.StartsWith("/Sales") ? " active" : "")'>
+    <li class='menu-item nav-entry--dashboard@(currentPage.StartsWith("/Sales") ? " active" : "")'>
       <a asp-controller="Sales" asp-action="Index" class="menu-link">
-        <i class="menu-icon icon-base bx bx-trending-up"></i>
+        <i class="menu-icon icon-base bx bx-bar-chart-alt-2"></i>
         <div class="text-truncate">Sales</div>
+        <div class="badge rounded-pill bg-label-primary text-uppercase fs-tiny ms-auto">Overview</div>
       </a>
     </li>
     }
@@ -75,10 +81,11 @@
     <!-- Marketing -->
     @if (User.IsInRole(SD.Role_Marketing) || User.IsInRole(SD.Role_Executive))
     {
-    <li class='menu-item@(currentPage.StartsWith("/Marketing") ? " active" : "")'>
+    <li class='menu-item nav-entry--dashboard@(currentPage.StartsWith("/Marketing") ? " active" : "")'>
       <a asp-controller="Marketing" asp-action="Index" class="menu-link">
-        <i class="menu-icon icon-base bx bx-megaphone"></i>
+        <i class="menu-icon icon-base bx bx-poll"></i>
         <div class="text-truncate">Marketing</div>
+        <div class="badge rounded-pill bg-label-primary text-uppercase fs-tiny ms-auto">Overview</div>
       </a>
     </li>
     }
@@ -86,10 +93,11 @@
     <!-- Finance -->
     @if (User.IsInRole(SD.Role_Finance) || User.IsInRole(SD.Role_Executive))
     {
-    <li class='menu-item@(currentPage.StartsWith("/Finance") ? " active" : "")'>
+    <li class='menu-item nav-entry--dashboard@(currentPage.StartsWith("/Finance") ? " active" : "")'>
       <a asp-controller="Finance" asp-action="Index" class="menu-link">
-        <i class="menu-icon icon-base bx bx-dollar"></i>
+        <i class="menu-icon icon-base bx bx-line-chart"></i>
         <div class="text-truncate">Finance</div>
+        <div class="badge rounded-pill bg-label-primary text-uppercase fs-tiny ms-auto">Overview</div>
       </a>
     </li>
     }
@@ -97,10 +105,11 @@
     <!-- Inventory -->
     @if (User.IsInRole(SD.Role_Inventory) || User.IsInRole(SD.Role_Executive))
     {
-    <li class='menu-item@(currentPage.StartsWith("/Inventory") ? " active" : "")'>
+    <li class='menu-item nav-entry--dashboard@(currentPage.StartsWith("/Inventory") ? " active" : "")'>
       <a asp-controller="Inventory" asp-action="Index" class="menu-link">
-        <i class="menu-icon icon-base bx bx-package"></i>
+        <i class="menu-icon icon-base bx bx-chart"></i>
         <div class="text-truncate">Inventory</div>
+        <div class="badge rounded-pill bg-label-primary text-uppercase fs-tiny ms-auto">Overview</div>
       </a>
     </li>
     }
@@ -108,10 +117,11 @@
     <!-- HR -->
     @if (User.IsInRole(SD.Role_HumanResources) || User.IsInRole(SD.Role_Executive))
     {
-    <li class='menu-item@(currentPage.StartsWith("/HumanResources") ? " active" : "")'>
+    <li class='menu-item nav-entry--dashboard@(currentPage.StartsWith("/HumanResources") ? " active" : "")'>
       <a asp-controller="HumanResources" asp-action="Index" class="menu-link">
-        <i class="menu-icon icon-base bx bx-user"></i>
+        <i class="menu-icon icon-base bx bx-group"></i>
         <div class="text-truncate">HR</div>
+        <div class="badge rounded-pill bg-label-primary text-uppercase fs-tiny ms-auto">Overview</div>
       </a>
     </li>
     }
@@ -119,24 +129,29 @@
     <!-- Customer Service -->
     @if (User.IsInRole(SD.Role_CustomerService) || User.IsInRole(SD.Role_Executive))
     {
-    <li class='menu-item@(currentPage.StartsWith("/CustomerService") ? " active" : "")'>
+    <li class='menu-item nav-entry--dashboard@(currentPage.StartsWith("/CustomerService") ? " active" : "")'>
       <a asp-controller="CustomerService" asp-action="Index" class="menu-link">
-        <i class="menu-icon icon-base bx bx-headphone"></i>
+        <i class="menu-icon icon-base bx bx-satisfied"></i>
         <div class="text-truncate">Customer Service</div>
+        <div class="badge rounded-pill bg-label-primary text-uppercase fs-tiny ms-auto">Overview</div>
       </a>
     </li>
     }
 
     <!-- Data Management -->
-    <li class="menu-header small text-uppercase mt-3"><span class="menu-header-text">Data Management</span></li>
+    <li class="menu-header small text-uppercase mt-3">
+      <span class="menu-header-text">Data Management</span>
+      <span class="menu-header-hint d-block text-body-secondary text-lowercase fw-normal">Tables &amp; CRUD</span>
+    </li>
 
     <!-- Executive CRUD -->
     @if (User.IsInRole(SD.Role_Executive))
     {
-    <li class='menu-item@(currentPage.StartsWith("/ExecutiveCrud") ? " active open" : "")'>
+    <li class='menu-item nav-entry--crud@(currentPage.StartsWith("/ExecutiveCrud") ? " active open" : "")'>
       <a href="javascript:void(0);" class="menu-link menu-toggle">
-        <i class="menu-icon icon-base bx bx-building"></i>
+        <i class="menu-icon icon-base bx bx-server"></i>
         <div class="text-truncate">System Data</div>
+        <div class="badge rounded-pill bg-label-info text-uppercase fs-tiny ms-auto">Tables</div>
       </a>
       <ul class="menu-sub">
         <li class='menu-item@(currentPage.StartsWith("/ExecutiveCrud/Regions") ? " active" : "")'>
@@ -155,10 +170,11 @@
     <!-- Sales CRUD -->
     @if (User.IsInRole(SD.Role_Sales) || User.IsInRole(SD.Role_Executive))
     {
-    <li class='menu-item@(currentPage.StartsWith("/SalesCrud") ? " active open" : "")'>
+    <li class='menu-item nav-entry--crud@(currentPage.StartsWith("/SalesCrud") ? " active open" : "")'>
       <a href="javascript:void(0);" class="menu-link menu-toggle">
-        <i class="menu-icon icon-base bx bx-trending-up"></i>
+        <i class="menu-icon icon-base bx bx-table"></i>
         <div class="text-truncate">Sales Data</div>
+        <div class="badge rounded-pill bg-label-info text-uppercase fs-tiny ms-auto">Tables</div>
       </a>
       <ul class="menu-sub">
         <li class='menu-item@(currentPage.StartsWith("/SalesCrud/Customers") ? " active" : "")'>
@@ -198,10 +214,11 @@
     <!-- Marketing CRUD -->
     @if (User.IsInRole(SD.Role_Marketing) || User.IsInRole(SD.Role_Executive))
     {
-    <li class='menu-item@(currentPage.StartsWith("/MarketingCrud") ? " active open" : "")'>
+    <li class='menu-item nav-entry--crud@(currentPage.StartsWith("/MarketingCrud") ? " active open" : "")'>
       <a href="javascript:void(0);" class="menu-link menu-toggle">
-        <i class="menu-icon icon-base bx bx-megaphone"></i>
+        <i class="menu-icon icon-base bx bx-table"></i>
         <div class="text-truncate">Marketing Data</div>
+        <div class="badge rounded-pill bg-label-info text-uppercase fs-tiny ms-auto">Tables</div>
       </a>
       <ul class="menu-sub">
         <li class='menu-item@(currentPage.StartsWith("/MarketingCrud/MarketingCampaignsIndex") ? " active" : "")'>
@@ -220,10 +237,11 @@
     <!-- Inventory CRUD -->
     @if (User.IsInRole(SD.Role_Inventory) || User.IsInRole(SD.Role_Executive))
     {
-    <li class='menu-item@(currentPage.StartsWith("/InventoryCrud") ? " active open" : "")'>
+    <li class='menu-item nav-entry--crud@(currentPage.StartsWith("/InventoryCrud") ? " active open" : "")'>
       <a href="javascript:void(0);" class="menu-link menu-toggle">
-        <i class="menu-icon icon-base bx bx-package"></i>
+        <i class="menu-icon icon-base bx bx-table"></i>
         <div class="text-truncate">Inventory Data</div>
+        <div class="badge rounded-pill bg-label-info text-uppercase fs-tiny ms-auto">Tables</div>
       </a>
       <ul class="menu-sub">
         <li class='menu-item@(currentPage.StartsWith("/InventoryCrud/Products") ? " active" : "")'>
@@ -257,10 +275,11 @@
     <!-- Finance CRUD -->
     @if (User.IsInRole(SD.Role_Finance) || User.IsInRole(SD.Role_Executive))
     {
-    <li class='menu-item@(currentPage.StartsWith("/FinanceCrud") ? " active open" : "")'>
+    <li class='menu-item nav-entry--crud@(currentPage.StartsWith("/FinanceCrud") ? " active open" : "")'>
       <a href="javascript:void(0);" class="menu-link menu-toggle">
-        <i class="menu-icon icon-base bx bx-dollar"></i>
+        <i class="menu-icon icon-base bx bx-table"></i>
         <div class="text-truncate">Finance Data</div>
+        <div class="badge rounded-pill bg-label-info text-uppercase fs-tiny ms-auto">Tables</div>
       </a>
       <ul class="menu-sub">
         <li class='menu-item@(currentPage.StartsWith("/FinanceCrud/Expenses_Index") ? " active" : "")'>
@@ -276,10 +295,11 @@
     <!-- HR CRUD -->
     @if (User.IsInRole(SD.Role_HumanResources) || User.IsInRole(SD.Role_Executive))
     {
-    <li class='menu-item@(currentPage.StartsWith("/HumanResourcesCrud") ? " active open" : "")'>
+    <li class='menu-item nav-entry--crud@(currentPage.StartsWith("/HumanResourcesCrud") ? " active open" : "")'>
       <a href="javascript:void(0);" class="menu-link menu-toggle">
-        <i class="menu-icon icon-base bx bx-user"></i>
+        <i class="menu-icon icon-base bx bx-table"></i>
         <div class="text-truncate">HR Data</div>
+        <div class="badge rounded-pill bg-label-info text-uppercase fs-tiny ms-auto">Tables</div>
       </a>
       <ul class="menu-sub">
         <li class='menu-item@(currentPage.StartsWith("/HumanResourcesCrud/Positions") ? " active" : "")'>
@@ -313,10 +333,11 @@
     <!-- Customer Service CRUD -->
     @if (User.IsInRole(SD.Role_CustomerService) || User.IsInRole(SD.Role_Executive))
     {
-    <li class='menu-item@(currentPage.StartsWith("/CustomerServiceCrud") ? " active open" : "")'>
+    <li class='menu-item nav-entry--crud@(currentPage.StartsWith("/CustomerServiceCrud") ? " active open" : "")'>
       <a href="javascript:void(0);" class="menu-link menu-toggle">
-        <i class="menu-icon icon-base bx bx-headphone"></i>
+        <i class="menu-icon icon-base bx bx-table"></i>
         <div class="text-truncate">Customer Service Data</div>
+        <div class="badge rounded-pill bg-label-info text-uppercase fs-tiny ms-auto">Tables</div>
       </a>
       <ul class="menu-sub">
         <li class='menu-item@(currentPage.StartsWith("/CustomerServiceCrud/SupportTickets_Index") ? " active" : "")'>

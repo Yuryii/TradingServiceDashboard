@@ -59,6 +59,36 @@
   @RenderBody()
   <!--/ Layout Content -->
 
+  @* Modal outside navbar so fixed positioning stacks above Bootstrap backdrop. *@
+  @if (User.Identity?.IsAuthenticated == true)
+  {
+    <div class="modal fade" id="globalSearchModal" tabindex="-1" aria-labelledby="globalSearchModalLabel" aria-hidden="true" data-search-url="@Url.Action("Query", "GlobalSearch")">
+      <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content">
+          <div class="modal-header border-bottom-0 pb-0">
+            <h5 class="modal-title" id="globalSearchModalLabel">Global search</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body pt-2">
+            <input type="search"
+                   id="globalSearchInput"
+                   class="form-control form-control-lg mb-2"
+                   placeholder="Search customers, products, orders, tickets…"
+                   autocomplete="off"
+                   aria-label="Global search" />
+            <div class="d-flex justify-content-between align-items-center mb-1">
+              <small id="globalSearchStatus" class="text-muted"></small>
+              <small class="text-muted d-none d-sm-inline">Opens from navbar or Ctrl+K</small>
+            </div>
+            <div id="globalSearchResults" class="list-group list-group-flush border rounded" style="max-height: min(52vh, 420px); overflow-y: auto;">
+              <div class="list-group-item text-muted small py-4 text-center">Type at least 2 characters.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  }
+
   <!-- Core Scripts -->
   @await Html.PartialAsync("Sections/_Scripts")
 

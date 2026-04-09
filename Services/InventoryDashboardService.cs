@@ -59,14 +59,24 @@ public class InventoryDashboardService : IInventoryDashboardService
     public async Task<KpiCardDto> GetTotalItemsAsync(DateTime? fromDate = null, DateTime? toDate = null)
     {
         var totalQty = await _context.Inventories.SumAsync(i => (decimal?)i.QuantityOnHand) ?? 0;
-        var lastPeriod = await _context.InventorySnapshots
-            .Where(s => s.SnapshotDate >= DateTime.Now.AddDays(-30))
+
+        // Compare live quantity to the most recent snapshot day's total quantity (same unit)
+        var latestSnapshotDate = await _context.InventorySnapshots
             .OrderByDescending(s => s.SnapshotDate)
-            .Take(1)
-            .Select(s => s.TotalValue)
+            .Select(s => (DateTime?)s.SnapshotDate)
             .FirstOrDefaultAsync();
 
-        var growth = lastPeriod > 0 ? ((totalQty - lastPeriod) / lastPeriod) * 100 : 0;
+        decimal lastPeriodQty = 0;
+        if (latestSnapshotDate.HasValue)
+        {
+            var d = latestSnapshotDate.Value.Date;
+            lastPeriodQty = await _context.InventorySnapshots
+                .Where(s => s.SnapshotDate.Date == d)
+                .SumAsync(s => s.QuantityOnHand);
+        }
+
+        var growth = lastPeriodQty > 0 ? ((totalQty - lastPeriodQty) / lastPeriodQty) * 100 : 0;
+        var trend = growth > 0 ? "up" : growth < 0 ? "down" : "neutral";
 
         return new KpiCardDto
         {
@@ -75,7 +85,7 @@ public class InventoryDashboardService : IInventoryDashboardService
             FormattedValue = totalQty.ToString("N0"),
             NumericValue = totalQty,
             GrowthPercent = growth,
-            Trend = growth >= 0 ? "up" : "down",
+            Trend = trend,
             TrendLabel = $"{growth:+0.0;-0.0}%",
             IconClass = "icon-base bx bx-box",
             IconBgClass = "bg-label-primary",

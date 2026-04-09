@@ -40,6 +40,8 @@ public class AIChatService : IAIChatService
 
     public async Task<ChatSessionDto> CreateSessionAsync(string userId, string department)
     {
+        department = NormalizeDepartmentKey(department);
+
         var session = new AIChatSession
         {
             UserId = userId,
@@ -62,17 +64,29 @@ public class AIChatService : IAIChatService
             .Where(s => s.UserId == userId)
             .AsQueryable();
 
-        if (!string.IsNullOrEmpty(department))
-            query = query.Where(s => s.Department == department);
+        if (!string.IsNullOrWhiteSpace(department))
+        {
+            var d = NormalizeDepartmentKey(department);
+            query = query.Where(s => s.Department.ToLower() == d);
+        }
 
-        var sessions = await query
+        return await query
             .OrderByDescending(s => s.LastMessageAt)
-            .Include(s => s.Messages)
             .Take(20)
+            .Select(s => new ChatSessionDto
+            {
+                SessionId = s.SessionId,
+                Department = s.Department,
+                Title = s.Title,
+                CreatedAt = s.CreatedAt,
+                LastMessageAt = s.LastMessageAt,
+                MessageCount = s.Messages.Count
+            })
             .ToListAsync();
-
-        return sessions.Select(s => MapToDto(s, s.Messages.Count)).ToList();
     }
+
+    private static string NormalizeDepartmentKey(string department) =>
+        department.Trim().ToLowerInvariant();
 
     public async Task<List<ChatMessageDto>> GetChatHistoryAsync(int sessionId, int page = 1, int pageSize = 50)
     {

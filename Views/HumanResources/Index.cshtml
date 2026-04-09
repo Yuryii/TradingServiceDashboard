@@ -4,7 +4,6 @@
 }
 @section VendorStyles {
 <link rel="stylesheet" href="~/vendor/libs/apex-charts/apex-charts.css" />
-<link rel="stylesheet" href="~/vendor/libs/gridstack/gridstack.min.css" />
 }
 @section VendorScripts {
 <script src="~/vendor/libs/apex-charts/apexcharts.js"></script>
@@ -25,18 +24,22 @@ window.dashboardCharts.attritionHeatmap = @Html.Raw(Json.Serialize(Model.Attriti
 </script>
 @section PageScripts {
 <script src="~/js/dashboards-analytics.js"></script>
+<script src="~/js/dashboard-layout-manager.js"></script>
 }
 
 <!-- Layout Toolbar -->
 <div class="d-flex align-items-center gap-2 mb-4">
-  <button type="button" class="btn btn-outline-primary btn-sm" id="btn-layout-edit">
-    <i class="icon-base bx bx-edit-alt me-1"></i> Customize Layout
+  <button type="button" class="btn-layout-action" id="btn-layout-edit"
+    onclick="window.dashboardLayoutManager && window.dashboardLayoutManager.toggleEditMode()">
+    <i class="icon-base bx bx-palette me-1"></i> Customize Layout
   </button>
-  <button type="button" class="btn btn-outline-success btn-sm d-none" id="btn-layout-save">
-    <i class="icon-base bx bx-save me-1"></i> Save Layout
+  <button type="button" class="btn-layout-action" id="btn-layout-save"
+    onclick="window.dashboardLayoutManager && window.dashboardLayoutManager.saveLayout()">
+    <i class="icon-base bx bx-check me-1"></i> Save
   </button>
-  <button type="button" class="btn btn-outline-secondary btn-sm" id="btn-layout-reset">
-    <i class="icon-base bx bx-reset me-1"></i> Reset
+  <button type="button" class="btn-layout-action" id="btn-layout-reset"
+    onclick="window.dashboardLayoutManager && window.dashboardLayoutManager.resetLayout()">
+    <i class="icon-base bx bx-refresh me-1"></i> Reset
   </button>
 </div>
 
@@ -795,7 +798,7 @@ document.addEventListener('DOMContentLoaded', function () {
   var el = document.getElementById('hr-dashboard-grid');
   if (el && typeof DashboardLayoutManager !== 'undefined') {
     window.dashboardLayoutManager = new DashboardLayoutManager('hr-dashboard-grid', {
-      storageKey: 'hr-dashboard-layout-v1',
+      storageKey: 'hr-dashboard-layout-v2',
       editMode: false,
       gap: 20,
       cellHeight: 60
@@ -804,7 +807,8 @@ document.addEventListener('DOMContentLoaded', function () {
     var origToggle = window.dashboardLayoutManager.toggleEditMode.bind(window.dashboardLayoutManager);
     window.dashboardLayoutManager.toggleEditMode = function () {
       var editing = origToggle();
-      document.getElementById('btn-layout-edit').classList.toggle('editing', editing);
+      var editBtn = document.getElementById('btn-layout-edit');
+      if (editBtn) editBtn.classList.toggle('editing', editing);
     };
 
     var origSave = window.dashboardLayoutManager.saveLayout.bind(window.dashboardLayoutManager);
@@ -812,37 +816,6 @@ document.addEventListener('DOMContentLoaded', function () {
       origSave();
       if (typeof toastr !== 'undefined') toastr.success('Dashboard layout saved.');
     };
-
-    // Bind toolbar buttons
-    var btnEdit = document.getElementById('btn-layout-edit');
-    var btnSave = document.getElementById('btn-layout-save');
-    var btnReset = document.getElementById('btn-layout-reset');
-
-    if (btnEdit) {
-      btnEdit.addEventListener('click', function () {
-        window.dashboardLayoutManager.toggleEditMode();
-        btnEdit.classList.toggle('editing');
-        btnSave.classList.toggle('d-none', !window.dashboardLayoutManager.isEditMode);
-      });
-    }
-
-    if (btnSave) {
-      btnSave.addEventListener('click', function () {
-        window.dashboardLayoutManager.saveLayout();
-        btnSave.classList.add('d-none');
-        btnEdit.classList.remove('editing');
-      });
-    }
-
-    if (btnReset) {
-      btnReset.addEventListener('click', function () {
-        if (confirm('Reset dashboard layout to default?')) {
-          window.dashboardLayoutManager.resetLayout();
-          btnSave.classList.add('d-none');
-          btnEdit.classList.remove('editing');
-        }
-      });
-    }
   }
 });
 </script>
