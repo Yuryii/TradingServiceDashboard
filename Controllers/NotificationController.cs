@@ -37,8 +37,14 @@ public class NotificationController : Controller
         var userId = GetUserId();
         if (string.IsNullOrEmpty(userId)) return Unauthorized();
 
-        var count = await _notificationService.GetUnreadCountAsync(userId);
-        return Json(new { count });
+        var stats = await _notificationService.GetNotificationCountsAsync(userId);
+        return Json(new
+        {
+            count = stats.Unread,
+            total = stats.Total,
+            critical = stats.Critical,
+            today = stats.Today
+        });
     }
 
     public async Task<IActionResult> MarkAsRead(int id)

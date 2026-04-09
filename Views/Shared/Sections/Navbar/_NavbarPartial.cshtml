@@ -2,7 +2,7 @@
 @if (ViewData["navbarFull"] != null)
 {
 <div class="navbar-brand app-brand demo d-none d-xl-flex py-0 me-4">
-  <a asp-controller="Dashboards" asp-action="Index" class="app-brand-link gap-2">
+  <a href="javascript:void(0);" class="app-brand-link gap-2 eoh-home-link" onclick="navigateToUserDashboard()">
       <span class="app-brand-logo demo">
         @await Html.PartialAsync("../_Partials/_Macros")
       </span>
@@ -32,23 +32,22 @@
 
 <div class="navbar-nav-right d-flex align-items-center justify-content-end" id="navbar-collapse">
 
-  <!-- Global search -->
+  <!-- AI Assistant -->
     <div class="navbar-nav align-items-center me-auto flex-grow-1 flex-xl-grow-0" style="min-width: 0; max-width: 100%;">
       <div class="nav-item w-100 w-xl-auto">
         <button type="button"
                 class="btn btn-text-secondary border-0 rounded-pill px-2 px-sm-3 py-2 d-flex align-items-center gap-2 w-100 text-start"
                 style="max-width: 420px;"
-                data-bs-toggle="modal"
-                data-bs-target="#globalSearchModal"
-                title="Search data and dashboards (Ctrl+K)">
-          <i class="icon-base bx bx-search icon-md flex-shrink-0"></i>
-          <span class="text-body-secondary flex-grow-1 text-truncate d-none d-sm-inline">Search data & dashboards…</span>
-          <span class="text-body-secondary flex-grow-1 text-truncate d-sm-none">Search…</span>
+                onclick="toggleAIPanel()"
+                title="AI Assistant (Ctrl+K)">
+          <i class="icon-base bx bx-bot icon-md flex-shrink-0"></i>
+          <span class="text-body-secondary flex-grow-1 text-truncate d-none d-sm-inline">AI Assistant</span>
+          <span class="text-body-secondary flex-grow-1 text-truncate d-sm-none">AI</span>
           <kbd class="d-none d-md-inline badge bg-label-secondary border fw-normal px-1">Ctrl K</kbd>
         </button>
       </div>
     </div>
-  <!-- /Global search -->
+  <!-- /AI Assistant -->
 
   <ul class="navbar-nav flex-row align-items-center ms-md-auto">
     <!-- Notification -->

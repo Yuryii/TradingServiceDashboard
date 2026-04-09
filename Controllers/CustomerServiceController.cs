@@ -21,6 +21,7 @@ public class CustomerServiceController : Controller
     public async Task<IActionResult> Index(DateTime? from, DateTime? to)
     {
         ViewData["CurrentPage"] = "CustomerService";
+        ViewData["AIDepartment"] = "CSKH";
         var vm = await _service.GetDashboardDataAsync(from, to);
         return View(vm);
     }

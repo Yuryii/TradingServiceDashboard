@@ -21,6 +21,7 @@ public class SalesController : Controller
     public async Task<IActionResult> Index(DateTime? from, DateTime? to)
     {
         ViewData["CurrentPage"] = "Sales";
+        ViewData["AIDepartment"] = "Sales";
         var vm = await _service.GetDashboardDataAsync(from, to);
         return View(vm);
     }

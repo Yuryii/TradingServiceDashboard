@@ -184,7 +184,7 @@
 
             if (!response.ok) {
                 list.innerHTML =
-                    '<div class="cgpt-session-empty">Không thể tải danh sách phiên. Vui lòng tải lại trang.</div>';
+                    '<div class="cgpt-session-empty">Unable to load session list. Please reload the page.</div>';
                 return;
             }
 
@@ -203,7 +203,7 @@
                 const timeStr = date.toLocaleDateString("vi-VN", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" });
                 const isActive =
                     Number(s.sessionId) === Number(currentSessionId) ? "active" : "";
-                const safeTitle = escapeHtml(s.title || ("Phiên " + s.sessionId));
+                const safeTitle = escapeHtml(s.title || ("Session " + s.sessionId));
 
                 html += `<div class="session-item ${isActive}" role="button" tabindex="0" data-session-id="${s.sessionId}" onclick="selectSession(${s.sessionId})">
                     <i class="icon-base bx bx-message-rounded-dots cgpt-session-item-icon"></i>
@@ -213,7 +213,7 @@
             });
 
             if (!html) {
-                html = '<div class="cgpt-session-empty">Chưa có cuộc trò chuyện nào cho phòng ban này.</div>';
+                html = '<div class="cgpt-session-empty">No conversations for this department yet.</div>';
             }
 
             list.innerHTML = html;
@@ -239,7 +239,7 @@
             container.innerHTML =
                 '<div id="aiHistoryLoading" class="ai-chat-empty" style="flex-direction:row;gap:8px;">' +
                 '<div class="spinner-border spinner-border-sm text-secondary" role="status"></div>' +
-                '<span style="font-size:13px;color:var(--bs-secondary-color);">Đang tải lịch sử…</span></div>';
+                '<span style="font-size:13px;color:var(--bs-secondary-color);">Loading history...</span></div>';
         }
 
         try {
@@ -258,8 +258,8 @@
                         '<div class="ai-chat-empty cgpt-empty" id="aiEmptyState">' +
                         '<div class="cgpt-empty-inner">' +
                         '<div class="cgpt-empty-icon"><i class="icon-base bx bx-chat"></i></div>' +
-                        '<h2 class="cgpt-empty-title">Chưa có tin nhắn</h2>' +
-                        '<p class="cgpt-empty-sub">Bắt đầu cuộc trò chuyện mới.</p>' +
+                        '<h2 class="cgpt-empty-title">No messages yet</h2>' +
+                        '<p class="cgpt-empty-sub">Start a new conversation.</p>' +
                         '</div></div>';
                 }
                 if (quickActions) quickActions.style.display = "";
@@ -286,8 +286,8 @@
                     '<div class="ai-chat-empty cgpt-empty">' +
                     '<div class="cgpt-empty-inner">' +
                     '<div class="cgpt-empty-icon"><i class="icon-base bx bx-wifi-exclamation"></i></div>' +
-                    '<h2 class="cgpt-empty-title">Lỗi kết nối</h2>' +
-                    '<p class="cgpt-empty-sub">Không thể tải lịch sử. Vui lòng thử lại.</p>' +
+                    '<h2 class="cgpt-empty-title">Connection error</h2>' +
+                    '<p class="cgpt-empty-sub">Unable to load history. Please try again.</p>' +
                     '</div></div>';
             }
         }
@@ -578,8 +578,8 @@
             '<div class="ai-chat-empty cgpt-empty" id="aiEmptyState">' +
             '<div class="cgpt-empty-inner">' +
             '<div class="cgpt-empty-icon"><i class="icon-base bx ' + getDeptIcon(dept) + '"></i></div>' +
-            '<h2 class="cgpt-empty-title">Đã xóa lịch sử</h2>' +
-            '<p class="cgpt-empty-sub">Nhập câu hỏi bên dưới để bắt đầu cuộc trò chuyện mới.</p>' +
+            '<h2 class="cgpt-empty-title">History cleared</h2>' +
+            '<p class="cgpt-empty-sub">Type a question below to start a new conversation.</p>' +
             '</div></div>';
 
         if (quickActions) quickActions.style.display = "";

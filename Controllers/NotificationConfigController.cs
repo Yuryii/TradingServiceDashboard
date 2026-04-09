@@ -13,13 +13,16 @@ public class NotificationConfigController : Controller
 {
     private readonly ApplicationDbContext _context;
     private readonly INotificationConfigCache _configCache;
+    private readonly IJobSchedulerService _jobScheduler;
 
     public NotificationConfigController(
         ApplicationDbContext context,
-        INotificationConfigCache configCache)
+        INotificationConfigCache configCache,
+        IJobSchedulerService jobScheduler)
     {
         _context = context;
         _configCache = configCache;
+        _jobScheduler = jobScheduler;
     }
 
     public async Task<IActionResult> Index()
@@ -106,7 +109,8 @@ public class NotificationConfigController : Controller
                 IconBgClass = c.IconBgClass,
                 ActionUrl = c.ActionUrl,
                 Description = c.Description,
-                AllowedRoles = c.AllowedRoles
+                AllowedRoles = c.AllowedRoles,
+                CronExpression = c.CronExpression
             })
             .ToListAsync();
 
@@ -132,7 +136,8 @@ public class NotificationConfigController : Controller
             IconClass = config.IconClass,
             IconBgClass = config.IconBgClass,
             ActionUrl = config.ActionUrl,
-            Description = config.Description
+            Description = config.Description,
+            CronExpression = config.CronExpression
         };
 
         ViewBag.Roles = new[] { "Executive", "Finance", "Sales", "Marketing", "Inventory", "HumanResources", "CustomerService" };
@@ -169,12 +174,14 @@ public class NotificationConfigController : Controller
         config.IconBgClass = model.IconBgClass;
         config.ActionUrl = model.ActionUrl;
         config.Description = model.Description;
+        config.CronExpression = model.CronExpression;
         config.UpdatedAt = DateTime.UtcNow;
 
         await _context.SaveChangesAsync();
 
         // Invalidate cache so jobs pick up new config
         await _configCache.InvalidateAsync();
+        await _jobScheduler.RegisterAllJobsAsync();
 
         TempData["SuccessMessage"] = $"Cau hinh '{config.NotificationName}' da duoc cap nhat.";
         return RedirectToAction(nameof(List));
@@ -191,14 +198,15 @@ public class NotificationConfigController : Controller
         await _context.SaveChangesAsync();
 
         await _configCache.InvalidateAsync();
+        await _jobScheduler.RegisterAllJobsAsync();
 
         return Json(new
         {
             success = true,
             isEnabled = config.IsEnabled,
             message = config.IsEnabled
-                ? $"'{config.NotificationName}' da duoc bat"
-                : $"'{config.NotificationName}' da duoc tat"
+                ? $"'{config.NotificationName}' has been enabled"
+                : $"'{config.NotificationName}' has been disabled"
         });
     }
 
@@ -206,7 +214,7 @@ public class NotificationConfigController : Controller
     public async Task<IActionResult> BulkToggle([FromBody] BulkToggleRequest request)
     {
         if (request?.Ids == null || request.Ids.Length == 0)
-            return Json(new { success = false, message = "Khong co muc nao duoc chon." });
+            return Json(new { success = false, message = "No items selected." });
 
         var configs = await _context.NotificationConfigs
             .Where(c => request.Ids.Contains(c.ConfigID))
@@ -220,9 +228,10 @@ public class NotificationConfigController : Controller
 
         await _context.SaveChangesAsync();
         await _configCache.InvalidateAsync();
+        await _jobScheduler.RegisterAllJobsAsync();
 
-        var action = request.Enable ? "bat" : "tat";
-        return Json(new { success = true, message = $"{configs.Count} muc da duoc {action}." });
+        var action = request.Enable ? "enabled" : "disabled";
+        return Json(new { success = true, message = $"{configs.Count} items have been {action}." });
     }
 
     [HttpPost]
@@ -239,48 +248,119 @@ public class NotificationConfigController : Controller
         _context.NotificationConfigs.AddRange(defaultConfigs);
         await _context.SaveChangesAsync();
         await _configCache.InvalidateAsync();
+        await _jobScheduler.RegisterAllJobsAsync();
 
-        TempData["SuccessMessage"] = $"Da reset {defaultConfigs.Count} cau hinh ve mac dinh.";
+        TempData["SuccessMessage"] = $"Reset {defaultConfigs.Count} configurations to defaults.";
         return RedirectToAction(nameof(List));
+    }
+
+    [HttpPost]
+    public async Task<IActionResult> UpdateJobStatus([FromBody] JobStatusUpdateRequest request)
+    {
+        if (request == null || request.ConfigId <= 0)
+            return Json(new { success = false, message = "Invalid config ID." });
+
+        var config = await _context.NotificationConfigs.FindAsync(request.ConfigId);
+        if (config == null)
+            return Json(new { success = false, message = "Configuration not found." });
+
+        config.IsEnabled = request.IsEnabled;
+        config.UpdatedAt = DateTime.UtcNow;
+        await _context.SaveChangesAsync();
+
+        await _configCache.InvalidateAsync();
+        await _jobScheduler.RegisterAllJobsAsync();
+
+        return Json(new
+        {
+            success = true,
+            isEnabled = config.IsEnabled,
+            message = $"'{config.NotificationName}' has been {(config.IsEnabled ? "enabled" : "disabled")}"
+        });
+    }
+
+    [HttpPost]
+    public async Task<IActionResult> UpdateCron([FromBody] CronUpdateRequest request)
+    {
+        if (request == null || request.ConfigId <= 0)
+            return Json(new { success = false, message = "Invalid config ID." });
+
+        if (string.IsNullOrWhiteSpace(request.CronExpression))
+            return Json(new { success = false, message = "Cron expression cannot be empty." });
+
+        var config = await _context.NotificationConfigs.FindAsync(request.ConfigId);
+        if (config == null)
+            return Json(new { success = false, message = "Configuration not found." });
+
+        config.CronExpression = request.CronExpression;
+        config.UpdatedAt = DateTime.UtcNow;
+        await _context.SaveChangesAsync();
+
+        await _configCache.InvalidateAsync();
+        await _jobScheduler.RegisterAllJobsAsync();
+
+        return Json(new
+        {
+            success = true,
+            cronExpression = config.CronExpression,
+            message = $"Cron schedule for '{config.NotificationName}' updated to '{config.CronExpression}'"
+        });
+    }
+
+    [HttpPost]
+    public async Task<IActionResult> TriggerJobNow([FromBody] TriggerJobRequest request)
+    {
+        if (request == null || string.IsNullOrWhiteSpace(request.JobId))
+            return Json(new { success = false, message = "Invalid job ID." });
+
+        try
+        {
+            _jobScheduler.TriggerJob(request.JobId);
+            return Json(new { success = true, message = $"Job '{request.JobId}' triggered successfully." });
+        }
+        catch (Exception ex)
+        {
+            return Json(new { success = false, message = $"Failed to trigger job: {ex.Message}" });
+        }
     }
 
     private static List<NotificationConfig> GetDefaultConfigs() => new()
     {
-        new() { NotificationCode = "FIN_OVERDUE_30D",      NotificationName = "Cong no qua han 30 ngay",         Category = "Finance",           Severity = "Critical", IsEnabled = true,  CheckIntervalMinutes = 5,   DelayHours = 720,     IconClass = "bx-error-circle",    IconBgClass = "bg-label-danger",  ActionUrl = "/Finance",        AllowedRoles = "Finance,Executive" },
-        new() { NotificationCode = "FIN_EXPENSE_PENDING",  NotificationName = "Chi phi cho phe duyet",          Category = "Finance",           Severity = "Warning",  IsEnabled = true,  CheckIntervalMinutes = 5,   IconClass = "bx-receipt",         IconBgClass = "bg-label-warning", ActionUrl = "/Finance",        AllowedRoles = "Finance,Executive" },
-        new() { NotificationCode = "FIN_OVER_BUDGET",     NotificationName = "Chi phi vuot ngan sach",         Category = "Finance",           Severity = "Warning",  IsEnabled = true,  CheckIntervalMinutes = 5,   ThresholdValue = 0,      IconClass = "bx-wallet",          IconBgClass = "bg-label-warning", ActionUrl = "/Finance",        AllowedRoles = "Finance,Executive" },
-        new() { NotificationCode = "FIN_NEW_PAYMENT",      NotificationName = "Thanh toan moi tu KH",            Category = "Finance",           Severity = "Info",     IsEnabled = true,  CheckIntervalMinutes = 5,   DelayHours = 24,        IconClass = "bx-money",           IconBgClass = "bg-label-success",  ActionUrl = "/Finance",        AllowedRoles = "Finance,Sales" },
-        new() { NotificationCode = "FIN_CASHFLOW_LOW",     NotificationName = "Dong tien bat thuong",            Category = "Finance",           Severity = "Critical", IsEnabled = true,  CheckIntervalMinutes = 5,   IconClass = "bx-trending-down",   IconBgClass = "bg-label-danger",  ActionUrl = "/Finance",        AllowedRoles = "Finance,Executive" },
-        new() { NotificationCode = "FIN_LARGE_INVOICE",   NotificationName = "Hoa don lon chua thanh toan",    Category = "Finance",           Severity = "Warning",  IsEnabled = true,  CheckIntervalMinutes = 5,   ThresholdValue = 50000000m, IconClass = "bx-file",            IconBgClass = "bg-label-warning", ActionUrl = "/Finance",        AllowedRoles = "Finance,Executive" },
-        new() { NotificationCode = "INV_LOW_STOCK",         NotificationName = "Ton kho thap",                   Category = "Inventory",         Severity = "Warning",  IsEnabled = true,  CheckIntervalMinutes = 5,   IconClass = "bx-box",             IconBgClass = "bg-label-warning", ActionUrl = "/Inventory",      AllowedRoles = "Inventory,Executive" },
-        new() { NotificationCode = "INV_OUT_OF_STOCK",      NotificationName = "Het hang",                        Category = "Inventory",         Severity = "Critical", IsEnabled = true,  CheckIntervalMinutes = 5,   IconClass = "bx-x-circle",        IconBgClass = "bg-label-danger",  ActionUrl = "/Inventory",      AllowedRoles = "Inventory,Executive" },
-        new() { NotificationCode = "INV_PO_PENDING",        NotificationName = "Don mua hang cho phe duyet",     Category = "Inventory",         Severity = "Warning",  IsEnabled = true,  CheckIntervalMinutes = 5,   IconClass = "bx-cart",             IconBgClass = "bg-label-warning", ActionUrl = "/Inventory",      AllowedRoles = "Inventory,Executive" },
-        new() { NotificationCode = "INV_NEW_RECEIPT",       NotificationName = "Nhap kho moi",                   Category = "Inventory",         Severity = "Info",     IsEnabled = true,  CheckIntervalMinutes = 5,   DelayHours = 24,        IconClass = "bx-package",         IconBgClass = "bg-label-primary", ActionUrl = "/Inventory",      AllowedRoles = "Inventory" },
-        new() { NotificationCode = "HR_LEAVE_PENDING",      NotificationName = "Don nghi phep cho PD",           Category = "HumanResources",    Severity = "Warning",  IsEnabled = true,  CheckIntervalMinutes = 30,  IconClass = "bx-calendar",        IconBgClass = "bg-label-warning", ActionUrl = "/HumanResources",  AllowedRoles = "HumanResources,Executive" },
-        new() { NotificationCode = "HR_PROBATION_ENDING",   NotificationName = "Nhan vien sap het thu viec",     Category = "HumanResources",    Severity = "Warning",  IsEnabled = true,  CheckIntervalMinutes = 30,  DelayHours = 168,        IconClass = "bx-user-check",       IconBgClass = "bg-label-warning", ActionUrl = "/HumanResources",  AllowedRoles = "HumanResources,Executive" },
-        new() { NotificationCode = "HR_HIGH_TURNOVER",      NotificationName = "Ty le nghi viec cao",           Category = "HumanResources",    Severity = "Critical", IsEnabled = true,  CheckIntervalMinutes = 30,  ThresholdValue = 5,         IconClass = "bx-user-minus",     IconBgClass = "bg-label-danger",  ActionUrl = "/HumanResources",  AllowedRoles = "HumanResources,Executive" },
-        new() { NotificationCode = "HR_NEW_APPLICANT",      NotificationName = "Ung vien moi",                   Category = "HumanResources",    Severity = "Info",     IsEnabled = true,  CheckIntervalMinutes = 30,  DelayHours = 24,        IconClass = "bx-user-plus",       IconBgClass = "bg-label-success",  ActionUrl = "/HumanResources",  AllowedRoles = "HumanResources" },
-        new() { NotificationCode = "HR_BIRTHDAY",           NotificationName = "Sinh nhat nhan vien",            Category = "HumanResources",    Severity = "Info",     IsEnabled = true,  CheckIntervalMinutes = 30,  IconClass = "bx-gift",             IconBgClass = "bg-label-success",  ActionUrl = "/HumanResources",  AllowedRoles = "*" },
-        new() { NotificationCode = "HR_NEW_EMPLOYEE",       NotificationName = "Nhan vien moi nhan viec",        Category = "HumanResources",    Severity = "Info",     IsEnabled = true,  CheckIntervalMinutes = 30,  DelayHours = 168,        IconClass = "bx-user",             IconBgClass = "bg-label-primary", ActionUrl = "/HumanResources",  AllowedRoles = "HumanResources" },
-        new() { NotificationCode = "SAL_NEW_ORDER",         NotificationName = "Don hang moi",                   Category = "Sales",             Severity = "Info",     IsEnabled = true,  CheckIntervalMinutes = 10,  DelayHours = 1,         IconClass = "bx-shopping-bag",     IconBgClass = "bg-label-primary", ActionUrl = "/Sales",           AllowedRoles = "Sales,Executive" },
-        new() { NotificationCode = "SAL_LARGE_ORDER",       NotificationName = "Don hang lon",                     Category = "Sales",             Severity = "Warning",  IsEnabled = true,  CheckIntervalMinutes = 10,  ThresholdValue = 100000000m, IconClass = "bx-error",          IconBgClass = "bg-label-warning", ActionUrl = "/Sales",           AllowedRoles = "Sales,Executive" },
-        new() { NotificationCode = "SAL_DELIVERY_DELAYED",  NotificationName = "Don cho giao > 3 ngay",          Category = "Sales",             Severity = "Warning",  IsEnabled = true,  CheckIntervalMinutes = 10,  DelayHours = 72,         IconClass = "bx-truck",            IconBgClass = "bg-label-warning", ActionUrl = "/Sales",           AllowedRoles = "Sales,Inventory" },
-        new() { NotificationCode = "SAL_OPP_STAGE_CHANGED", NotificationName = "Co hoi chuyen stage",             Category = "Sales",             Severity = "Info",     IsEnabled = true,  CheckIntervalMinutes = 10,  DelayHours = 1,         IconClass = "bx-git-branch",       IconBgClass = "bg-label-primary", ActionUrl = "/Sales",           AllowedRoles = "Sales,Executive" },
-        new() { NotificationCode = "SAL_TARGET_ACHIEVED",   NotificationName = "Dat muc tieu thang/quy",         Category = "Sales",             Severity = "Info",     IsEnabled = true,  CheckIntervalMinutes = 10,  IconClass = "bx-trophy",           IconBgClass = "bg-label-success",  ActionUrl = "/Sales",           AllowedRoles = "Sales,Executive" },
-        new() { NotificationCode = "SAL_NEW_CUSTOMER",      NotificationName = "Khach hang moi",                  Category = "Sales",             Severity = "Info",     IsEnabled = true,  CheckIntervalMinutes = 10,  DelayHours = 24,        IconClass = "bx-user-circle",      IconBgClass = "bg-label-primary", ActionUrl = "/Sales",           AllowedRoles = "Sales" },
-        new() { NotificationCode = "CS_NEW_TICKET",          NotificationName = "Ticket moi",                     Category = "CustomerService",   Severity = "Info",     IsEnabled = true,  CheckIntervalMinutes = 5,   DelayHours = 1,         IconClass = "bx-support",          IconBgClass = "bg-label-primary", ActionUrl = "/CustomerService",AllowedRoles = "CustomerService" },
-        new() { NotificationCode = "CS_HIGH_PRIORITY",       NotificationName = "Ticket uu tien cao",            Category = "CustomerService",   Severity = "Critical", IsEnabled = true,  CheckIntervalMinutes = 5,   IconClass = "bx-error-circle",    IconBgClass = "bg-label-danger",  ActionUrl = "/CustomerService",AllowedRoles = "CustomerService,Executive" },
-        new() { NotificationCode = "CS_TICKET_SLA_BREACH",  NotificationName = "Ticket qua han SLA",            Category = "CustomerService",   Severity = "Critical", IsEnabled = true,  CheckIntervalMinutes = 5,   DelayHours = 24,        IconClass = "bx-time-five",        IconBgClass = "bg-label-danger",  ActionUrl = "/CustomerService",AllowedRoles = "CustomerService,Executive" },
-        new() { NotificationCode = "CS_TICKET_NO_RESPONSE", NotificationName = "Ticket cho phan hoi",           Category = "CustomerService",   Severity = "Warning",  IsEnabled = true,  CheckIntervalMinutes = 5,   DelayHours = 4,         IconClass = "bx-message-rounded", IconBgClass = "bg-label-warning", ActionUrl = "/CustomerService",AllowedRoles = "CustomerService" },
-        new() { NotificationCode = "CS_LOW_SATISFACTION",   NotificationName = "KH khong hai long",             Category = "CustomerService",   Severity = "Warning",  IsEnabled = true,  CheckIntervalMinutes = 5,   IconClass = "bx-sad",             IconBgClass = "bg-label-warning", ActionUrl = "/CustomerService",AllowedRoles = "CustomerService,Executive" },
-        new() { NotificationCode = "MKT_BUDGET_80",         NotificationName = "Ngan sach campaign sap het",     Category = "Marketing",         Severity = "Warning",  IsEnabled = true,  CheckIntervalMinutes = 30,  ThresholdValue = 80m,     IconClass = "bx-trending-up",      IconBgClass = "bg-label-warning", ActionUrl = "/Marketing",      AllowedRoles = "Marketing,Executive" },
-        new() { NotificationCode = "MKT_BUDGET_EXCEEDED",   NotificationName = "Campaign vuot ngan sach",        Category = "Marketing",         Severity = "Critical", IsEnabled = true,  CheckIntervalMinutes = 30,  IconClass = "bx-warning",          IconBgClass = "bg-label-danger",  ActionUrl = "/Marketing",      AllowedRoles = "Marketing,Executive" },
-        new() { NotificationCode = "MKT_NEW_LEAD",          NotificationName = "Lead moi",                       Category = "Marketing",         Severity = "Info",     IsEnabled = true,  CheckIntervalMinutes = 30,  DelayHours = 24,        IconClass = "bx-user-plus",       IconBgClass = "bg-label-primary", ActionUrl = "/Marketing",      AllowedRoles = "Marketing,Sales" },
-        new() { NotificationCode = "MKT_LEAD_CONVERTED",   NotificationName = "Lead duoc chuyen doi",           Category = "Marketing",         Severity = "Info",     IsEnabled = true,  CheckIntervalMinutes = 30,  DelayHours = 24,        IconClass = "bx-check-circle",    IconBgClass = "bg-label-success",  ActionUrl = "/Marketing",      AllowedRoles = "Marketing,Sales" },
-        new() { NotificationCode = "MKT_LOW_ROAS",           NotificationName = "ROAS thap",                      Category = "Marketing",         Severity = "Warning",  IsEnabled = true,  CheckIntervalMinutes = 30,  ThresholdValue = 1m,       IconClass = "bx-line-chart",       IconBgClass = "bg-label-warning", ActionUrl = "/Marketing",      AllowedRoles = "Marketing,Executive" },
-        new() { NotificationCode = "EXE_DAILY_REPORT",       NotificationName = "Bao cao ngay san sang",         Category = "Executive",         Severity = "Info",     IsEnabled = true,  CheckIntervalMinutes = 1440, IconClass = "bx-file",            IconBgClass = "bg-label-info",    ActionUrl = "/Executive",      AllowedRoles = "Executive" },
-        new() { NotificationCode = "EXE_KPI_ANOMALY",        NotificationName = "Canh bao KPI bat thuong",      Category = "Executive",         Severity = "Warning",  IsEnabled = true,  CheckIntervalMinutes = 1440, ThresholdValue = 20m,     IconClass = "bx-alert",            IconBgClass = "bg-label-warning", ActionUrl = "/Executive",      AllowedRoles = "Executive" },
-        new() { NotificationCode = "EXE_DAILY_DIGEST",      NotificationName = "Tom tat hoat dong ngay",        Category = "Executive",         Severity = "Info",     IsEnabled = true,  CheckIntervalMinutes = 1440, IconClass = "bx-news",            IconBgClass = "bg-label-info",    ActionUrl = "/Executive",      AllowedRoles = "Executive" },
+        new() { NotificationCode = "FIN_OVERDUE_30D",      NotificationName = "Overdue receivables 30 days",      Category = "Finance",           Severity = "Critical", IsEnabled = true,  CheckIntervalMinutes = 5,   DelayHours = 720,     IconClass = "bx-error-circle",    IconBgClass = "bg-label-danger",  ActionUrl = "/Finance",        AllowedRoles = "Finance,Executive", CronExpression = "*/5 * * * *" },
+        new() { NotificationCode = "FIN_EXPENSE_PENDING",  NotificationName = "Expenses pending approval",       Category = "Finance",           Severity = "Warning",  IsEnabled = true,  CheckIntervalMinutes = 5,   IconClass = "bx-receipt",         IconBgClass = "bg-label-warning", ActionUrl = "/Finance",        AllowedRoles = "Finance,Executive", CronExpression = "*/5 * * * *" },
+        new() { NotificationCode = "FIN_OVER_BUDGET",     NotificationName = "Expenses over budget",              Category = "Finance",           Severity = "Warning",  IsEnabled = true,  CheckIntervalMinutes = 5,   ThresholdValue = 0,      IconClass = "bx-wallet",          IconBgClass = "bg-label-warning", ActionUrl = "/Finance",        AllowedRoles = "Finance,Executive", CronExpression = "*/5 * * * *" },
+        new() { NotificationCode = "FIN_NEW_PAYMENT",      NotificationName = "New payment from customer",       Category = "Finance",           Severity = "Info",     IsEnabled = true,  CheckIntervalMinutes = 5,   DelayHours = 24,        IconClass = "bx-money",           IconBgClass = "bg-label-success",  ActionUrl = "/Finance",        AllowedRoles = "Finance,Sales", CronExpression = "*/5 * * * *" },
+        new() { NotificationCode = "FIN_CASHFLOW_LOW",     NotificationName = "Abnormal cash flow",              Category = "Finance",           Severity = "Critical", IsEnabled = true,  CheckIntervalMinutes = 5,   IconClass = "bx-trending-down",   IconBgClass = "bg-label-danger",  ActionUrl = "/Finance",        AllowedRoles = "Finance,Executive", CronExpression = "*/5 * * * *" },
+        new() { NotificationCode = "FIN_LARGE_INVOICE",   NotificationName = "Large unpaid invoices",           Category = "Finance",           Severity = "Warning",  IsEnabled = true,  CheckIntervalMinutes = 5,   ThresholdValue = 50000000m, IconClass = "bx-file",            IconBgClass = "bg-label-warning", ActionUrl = "/Finance",        AllowedRoles = "Finance,Executive", CronExpression = "*/5 * * * *" },
+        new() { NotificationCode = "INV_LOW_STOCK",        NotificationName = "Low inventory",                  Category = "Inventory",         Severity = "Warning",  IsEnabled = true,  CheckIntervalMinutes = 5,   IconClass = "bx-box",             IconBgClass = "bg-label-warning", ActionUrl = "/Inventory",      AllowedRoles = "Inventory,Executive", CronExpression = "*/5 * * * *" },
+        new() { NotificationCode = "INV_OUT_OF_STOCK",     NotificationName = "Out of stock",                   Category = "Inventory",         Severity = "Critical", IsEnabled = true,  CheckIntervalMinutes = 5,   IconClass = "bx-x-circle",        IconBgClass = "bg-label-danger",  ActionUrl = "/Inventory",      AllowedRoles = "Inventory,Executive", CronExpression = "*/5 * * * *" },
+        new() { NotificationCode = "INV_PO_PENDING",       NotificationName = "Purchase order pending approval",Category = "Inventory",         Severity = "Warning",  IsEnabled = true,  CheckIntervalMinutes = 5,   IconClass = "bx-cart",            IconBgClass = "bg-label-warning", ActionUrl = "/Inventory",      AllowedRoles = "Inventory,Executive", CronExpression = "*/5 * * * *" },
+        new() { NotificationCode = "INV_NEW_RECEIPT",      NotificationName = "New stock receipt",              Category = "Inventory",         Severity = "Info",     IsEnabled = true,  CheckIntervalMinutes = 5,   DelayHours = 24,        IconClass = "bx-package",         IconBgClass = "bg-label-primary", ActionUrl = "/Inventory",      AllowedRoles = "Inventory", CronExpression = "*/5 * * * *" },
+        new() { NotificationCode = "HR_LEAVE_PENDING",     NotificationName = "Leave request pending approval",Category = "HumanResources",    Severity = "Warning",  IsEnabled = true,  CheckIntervalMinutes = 30,  IconClass = "bx-calendar",        IconBgClass = "bg-label-warning", ActionUrl = "/HumanResources",  AllowedRoles = "HumanResources,Executive", CronExpression = "*/30 * * * *" },
+        new() { NotificationCode = "HR_PROBATION_ENDING",  NotificationName = "Employee ending probation",       Category = "HumanResources",    Severity = "Warning",  IsEnabled = true,  CheckIntervalMinutes = 30,  DelayHours = 168,        IconClass = "bx-user-check",       IconBgClass = "bg-label-warning", ActionUrl = "/HumanResources",  AllowedRoles = "HumanResources,Executive", CronExpression = "*/30 * * * *" },
+        new() { NotificationCode = "HR_HIGH_TURNOVER",     NotificationName = "High turnover rate",             Category = "HumanResources",    Severity = "Critical", IsEnabled = true,  CheckIntervalMinutes = 30,  ThresholdValue = 5,         IconClass = "bx-user-minus",     IconBgClass = "bg-label-danger",  ActionUrl = "/HumanResources",  AllowedRoles = "HumanResources,Executive", CronExpression = "*/30 * * * *" },
+        new() { NotificationCode = "HR_NEW_APPLICANT",     NotificationName = "New applicant",                 Category = "HumanResources",    Severity = "Info",     IsEnabled = true,  CheckIntervalMinutes = 30,  DelayHours = 24,        IconClass = "bx-user-plus",       IconBgClass = "bg-label-success",  ActionUrl = "/HumanResources",  AllowedRoles = "HumanResources", CronExpression = "*/30 * * * *" },
+        new() { NotificationCode = "HR_BIRTHDAY",          NotificationName = "Employee birthday",              Category = "HumanResources",    Severity = "Info",     IsEnabled = true,  CheckIntervalMinutes = 30,  IconClass = "bx-gift",             IconBgClass = "bg-label-success",  ActionUrl = "/HumanResources",  AllowedRoles = "*", CronExpression = "*/30 * * * *" },
+        new() { NotificationCode = "HR_NEW_EMPLOYEE",      NotificationName = "New employee onboarded",         Category = "HumanResources",    Severity = "Info",     IsEnabled = true,  CheckIntervalMinutes = 30,  DelayHours = 168,        IconClass = "bx-user",             IconBgClass = "bg-label-primary", ActionUrl = "/HumanResources",  AllowedRoles = "HumanResources", CronExpression = "*/30 * * * *" },
+        new() { NotificationCode = "SAL_NEW_ORDER",        NotificationName = "New order",                      Category = "Sales",             Severity = "Info",     IsEnabled = true,  CheckIntervalMinutes = 10,  DelayHours = 1,         IconClass = "bx-shopping-bag",     IconBgClass = "bg-label-primary", ActionUrl = "/Sales",           AllowedRoles = "Sales,Executive", CronExpression = "*/10 * * * *" },
+        new() { NotificationCode = "SAL_LARGE_ORDER",      NotificationName = "Large order",                   Category = "Sales",             Severity = "Warning",  IsEnabled = true,  CheckIntervalMinutes = 10,  ThresholdValue = 100000000m, IconClass = "bx-error",          IconBgClass = "bg-label-warning", ActionUrl = "/Sales",           AllowedRoles = "Sales,Executive", CronExpression = "*/10 * * * *" },
+        new() { NotificationCode = "SAL_DELIVERY_DELAYED",NotificationName = "Order delivery delayed",         Category = "Sales",             Severity = "Warning",  IsEnabled = true,  CheckIntervalMinutes = 10,  DelayHours = 72,         IconClass = "bx-truck",            IconBgClass = "bg-label-warning", ActionUrl = "/Sales",           AllowedRoles = "Sales,Inventory", CronExpression = "*/10 * * * *" },
+        new() { NotificationCode = "SAL_OPP_STAGE_CHANGED",NotificationName = "Opportunity stage changed",     Category = "Sales",             Severity = "Info",     IsEnabled = true,  CheckIntervalMinutes = 10,  DelayHours = 1,         IconClass = "bx-git-branch",       IconBgClass = "bg-label-primary", ActionUrl = "/Sales",           AllowedRoles = "Sales,Executive", CronExpression = "*/10 * * * *" },
+        new() { NotificationCode = "SAL_TARGET_ACHIEVED",  NotificationName = "Target achieved",               Category = "Sales",             Severity = "Info",     IsEnabled = true,  CheckIntervalMinutes = 10,  IconClass = "bx-trophy",           IconBgClass = "bg-label-success",  ActionUrl = "/Sales",           AllowedRoles = "Sales,Executive", CronExpression = "*/10 * * * *" },
+        new() { NotificationCode = "SAL_NEW_CUSTOMER",     NotificationName = "New customer",                  Category = "Sales",             Severity = "Info",     IsEnabled = true,  CheckIntervalMinutes = 10,  DelayHours = 24,        IconClass = "bx-user-circle",      IconBgClass = "bg-label-primary", ActionUrl = "/Sales",           AllowedRoles = "Sales", CronExpression = "*/10 * * * *" },
+        new() { NotificationCode = "CS_NEW_TICKET",        NotificationName = "New ticket",                    Category = "CustomerService",   Severity = "Info",     IsEnabled = true,  CheckIntervalMinutes = 5,   DelayHours = 1,         IconClass = "bx-support",          IconBgClass = "bg-label-primary", ActionUrl = "/CustomerService",AllowedRoles = "CustomerService", CronExpression = "*/5 * * * *" },
+        new() { NotificationCode = "CS_HIGH_PRIORITY",     NotificationName = "High priority ticket",          Category = "CustomerService",   Severity = "Critical", IsEnabled = true,  CheckIntervalMinutes = 5,   IconClass = "bx-error-circle",    IconBgClass = "bg-label-danger",  ActionUrl = "/CustomerService",AllowedRoles = "CustomerService,Executive", CronExpression = "*/5 * * * *" },
+        new() { NotificationCode = "CS_TICKET_SLA_BREACH",NotificationName = "Ticket SLA breach",             Category = "CustomerService",   Severity = "Critical", IsEnabled = true,  CheckIntervalMinutes = 5,   DelayHours = 24,        IconClass = "bx-time-five",        IconBgClass = "bg-label-danger",  ActionUrl = "/CustomerService",AllowedRoles = "CustomerService,Executive", CronExpression = "*/5 * * * *" },
+        new() { NotificationCode = "CS_TICKET_NO_RESPONSE",NotificationName = "Ticket awaiting response",     Category = "CustomerService",   Severity = "Warning",  IsEnabled = true,  CheckIntervalMinutes = 5,   DelayHours = 4,         IconClass = "bx-message-rounded", IconBgClass = "bg-label-warning", ActionUrl = "/CustomerService",AllowedRoles = "CustomerService", CronExpression = "*/5 * * * *" },
+        new() { NotificationCode = "CS_LOW_SATISFACTION", NotificationName = "Customer dissatisfaction",       Category = "CustomerService",   Severity = "Warning",  IsEnabled = true,  CheckIntervalMinutes = 5,   IconClass = "bx-sad",             IconBgClass = "bg-label-warning", ActionUrl = "/CustomerService",AllowedRoles = "CustomerService,Executive", CronExpression = "*/5 * * * *" },
+        new() { NotificationCode = "MKT_BUDGET_80",       NotificationName = "Campaign budget almost exhausted", Category = "Marketing",   Severity = "Warning",  IsEnabled = true,  CheckIntervalMinutes = 30,  ThresholdValue = 80m,     IconClass = "bx-trending-up",      IconBgClass = "bg-label-warning", ActionUrl = "/Marketing",      AllowedRoles = "Marketing,Executive", CronExpression = "*/30 * * * *" },
+        new() { NotificationCode = "MKT_BUDGET_EXCEEDED",  NotificationName = "Campaign exceeded budget",      Category = "Marketing",         Severity = "Critical", IsEnabled = true,  CheckIntervalMinutes = 30,  IconClass = "bx-warning",          IconBgClass = "bg-label-danger",  ActionUrl = "/Marketing",      AllowedRoles = "Marketing,Executive", CronExpression = "*/30 * * * *" },
+        new() { NotificationCode = "MKT_NEW_LEAD",         NotificationName = "New lead",                     Category = "Marketing",         Severity = "Info",     IsEnabled = true,  CheckIntervalMinutes = 30,  DelayHours = 24,        IconClass = "bx-user-plus",       IconBgClass = "bg-label-primary", ActionUrl = "/Marketing",      AllowedRoles = "Marketing,Sales", CronExpression = "*/30 * * * *" },
+        new() { NotificationCode = "MKT_LEAD_CONVERTED",  NotificationName = "Lead converted",                Category = "Marketing",         Severity = "Info",     IsEnabled = true,  CheckIntervalMinutes = 30,  DelayHours = 24,        IconClass = "bx-check-circle",    IconBgClass = "bg-label-success",  ActionUrl = "/Marketing",      AllowedRoles = "Marketing,Sales", CronExpression = "*/30 * * * *" },
+        new() { NotificationCode = "MKT_LOW_ROAS",         NotificationName = "Low ROAS",                     Category = "Marketing",         Severity = "Warning",  IsEnabled = true,  CheckIntervalMinutes = 30,  ThresholdValue = 1m,       IconClass = "bx-line-chart",       IconBgClass = "bg-label-warning", ActionUrl = "/Marketing",      AllowedRoles = "Marketing,Executive", CronExpression = "*/30 * * * *" },
+        new() { NotificationCode = "EXE_DAILY_REPORT",     NotificationName = "Daily report ready",           Category = "Executive",         Severity = "Info",     IsEnabled = true,  CheckIntervalMinutes = 1440, IconClass = "bx-file",            IconBgClass = "bg-label-info",    ActionUrl = "/Executive",      AllowedRoles = "Executive", CronExpression = "0 8 * * *" },
+        new() { NotificationCode = "EXE_KPI_ANOMALY",      NotificationName = "KPI anomaly warning",           Category = "Executive",         Severity = "Warning",  IsEnabled = true,  CheckIntervalMinutes = 1440, ThresholdValue = 20m,     IconClass = "bx-alert",            IconBgClass = "bg-label-warning", ActionUrl = "/Executive",      AllowedRoles = "Executive", CronExpression = "0 8 * * *" },
+        new() { NotificationCode = "EXE_DAILY_DIGEST",    NotificationName = "Daily activity summary",         Category = "Executive",         Severity = "Info",     IsEnabled = true,  CheckIntervalMinutes = 1440, IconClass = "bx-news",            IconBgClass = "bg-label-info",    ActionUrl = "/Executive",      AllowedRoles = "Executive", CronExpression = "0 8 * * *" },
     };
 }
 
@@ -288,4 +368,21 @@ public class BulkToggleRequest
 {
     public int[] Ids { get; set; } = Array.Empty<int>();
     public bool Enable { get; set; }
+}
+
+public class JobStatusUpdateRequest
+{
+    public int ConfigId { get; set; }
+    public bool IsEnabled { get; set; }
+}
+
+public class CronUpdateRequest
+{
+    public int ConfigId { get; set; }
+    public string CronExpression { get; set; } = string.Empty;
+}
+
+public class TriggerJobRequest
+{
+    public string JobId { get; set; } = string.Empty;
 }

@@ -32,6 +32,17 @@ window.dashboardCharts.channelRegionHeatmap = @Html.Raw(Json.Serialize(Model.Cha
 window.dashboardCharts.monthlyTargetVsActual = @Html.Raw(Json.Serialize(Model.MonthlyTargetVsActualChart));
 window.dashboardCharts.revenueByBranch = @Html.Raw(Json.Serialize(Model.RevenueByBranchChart));
 window.dashboardCharts.executiveMonthlyRevenue = @Html.Raw(Json.Serialize(Model.RevenueByChannelChart));
+
+// Normalize series: ensure each item has data as array, filter bad items
+window._normalizeSeries = function(raw) {
+  if (!Array.isArray(raw)) return [];
+  return raw.map(function(s) {
+    // Accept {name, data:[1,2]} or {data:[1,2]}
+    if (Array.isArray(s)) return { data: s };
+    if (s && typeof s === 'object' && Array.isArray(s.data)) return s;
+    return { data: [] };
+  });
+};
 </script>
 @section PageScripts {
 <script src="~/js/dashboards-analytics.js"></script>
@@ -766,6 +777,72 @@ window.dashboardCharts.executiveMonthlyRevenue = @Html.Raw(Json.Serialize(Model.
       </div>
     </div>
 
+    </div>
+
+    @* ============================================================
+       PART 2b: Job & Notification Management Widget
+       ============================================================ *@
+    <div class="grid-stack-item" data-gs-x="0" data-gs-y="48" data-gs-width="12" data-gs-height="10" data-widget-id="job-management">
+      <div class="grid-stack-item-content">
+        <div class="card h-100" id="job-management">
+          <div class="card-header d-flex align-items-center justify-content-between">
+            <div class="card-title mb-0">
+              <h5 class="m-0 me-2"><i class="icon-base bx bx-clock text-primary me-1"></i> Job & Notification Management</h5>
+              <p class="card-subtitle mb-0 text-body-secondary small">Tick to enable/disable and set cron schedule for each notification job</p>
+            </div>
+            <div class="d-flex gap-2 align-items-center">
+              <div class="btn-group btn-group-sm" role="group">
+                <button type="button" class="btn btn-outline-primary" onclick="filterJobTable('all')">All</button>
+                <button type="button" class="btn btn-outline-primary" onclick="filterJobTable('enabled')">Enabled</button>
+                <button type="button" class="btn btn-outline-primary" onclick="filterJobTable('disabled')">Disabled</button>
+              </div>
+              <button type="button" class="btn btn-sm btn-icon btn-outline-secondary" onclick="refreshJobTable()" title="Refresh">
+                <i class="icon-base bx bx-refresh"></i>
+              </button>
+            </div>
+          </div>
+          <div class="card-body pt-2">
+            <div class="table-responsive">
+              <table class="table table-sm table-hover mb-0" id="jobConfigTable" style="width:100%;">
+                <thead class="table-light">
+                  <tr>
+                    <th style="width:40px;">
+                      <input class="form-check-input" type="checkbox" id="checkAllJobs" onchange="toggleAllJobs(this.checked)" />
+                    </th>
+                    <th style="width:50px;">Status</th>
+                    <th>Notification Name</th>
+                    <th style="width:130px;">Category</th>
+                    <th style="width:160px;">Schedule (Cron)</th>
+                    <th style="width:80px;">Interval</th>
+                    <th style="width:80px;">Severity</th>
+                    <th style="width:90px;">Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="jobConfigTableBody">
+                  <tr>
+                    <td colspan="8" class="text-center text-muted py-4">
+                      <i class="icon-base bx bx-loader-alt bx-spin me-1"></i> Loading job configurations...
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="d-flex justify-content-between align-items-center mt-3">
+              <div class="d-flex gap-2">
+                <button class="btn btn-sm btn-success" onclick="bulkEnableSelected()">
+                  <i class="icon-base bx bx-check me-1"></i> Enable Selected
+                </button>
+                <button class="btn btn-sm btn-secondary" onclick="bulkDisableSelected()">
+                  <i class="icon-base bx bx-x me-1"></i> Disable Selected
+                </button>
+              </div>
+              <small class="text-muted" id="jobCountLabel">-- notifications</small>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
   </div>@* end grid-stack *@
 </div>@* end dashboard-grid-container *@
 
@@ -792,7 +869,7 @@ document.addEventListener('DOMContentLoaded', function () {
       xaxis: { categories: chartData.categories || [], labels: { style: { fontSize: '13px', fontFamily: 'Plus Jakarta Sans', colors: '#a1acb8' } }, axisTicks: { show: false }, axisBorder: { show: false } },
       yaxis: { labels: { style: { fontSize: '13px', fontFamily: 'Plus Jakarta Sans', colors: '#a1acb8' } } },
       states: { hover: { filter: { type: 'none' } }, active: { filter: { type: 'none' } } },
-      series: chartData.series || []
+      series: window._normalizeSeries(chartData.series)
     };
     var chart = new ApexCharts(chartEl, options);
     chart.render().then(function() {
@@ -825,7 +902,7 @@ document.addEventListener('DOMContentLoaded', function () {
       yaxis: { labels: { style: { fontSize: '13px', fontFamily: 'Plus Jakarta Sans', colors: '#a1acb8' }, formatter: function(val) { return typeof val === 'number' ? (val >= 1000 ? '$' + (val/1000).toFixed(0) + 'K' : val) : val; } } },
       fill: { opacity: [0.85, 0.85], type: 'gradient', gradient: { shade: 'light', type: 'vertical', shadeIntensity: 0.5, gradientToColors: ['#71dd8844', '#ff3e1d44'], opacityFrom: 0.85, opacityTo: 0.55, stops: [0, 100] } },
       tooltip: { theme: 'dark', y: { formatter: function(val) { return typeof val === 'number' ? '$' + val.toLocaleString() : val; } } },
-      series: revProfitData.series || []
+      series: window._normalizeSeries(revProfitData.series)
     });
     chart.render().then(function() {
       var widgetId = revProfitEl.closest('.grid-stack-item')?.getAttribute('data-widget-id');
@@ -856,7 +933,7 @@ document.addEventListener('DOMContentLoaded', function () {
       xaxis: { categories: targetData.categories || [], labels: { style: { fontSize: '13px', fontFamily: 'Plus Jakarta Sans', colors: '#a1acb8' } }, axisTicks: { show: false }, axisBorder: { show: false } },
       yaxis: { labels: { style: { fontSize: '13px', fontFamily: 'Plus Jakarta Sans', colors: '#a1acb8' }, formatter: function(val) { return typeof val === 'number' ? (val >= 1000 ? '$' + (val/1000).toFixed(0) + 'K' : val) : val; } } },
       tooltip: { theme: 'dark', y: { formatter: function(val) { return typeof val === 'number' ? '$' + val.toLocaleString() : val; } } },
-      series: targetData.series || []
+      series: window._normalizeSeries(targetData.series)
     });
     chart.render().then(function() {
       var widgetId = targetEl.closest('.grid-stack-item')?.getAttribute('data-widget-id');
@@ -887,7 +964,7 @@ document.addEventListener('DOMContentLoaded', function () {
       xaxis: { categories: topProdData.categories || [], labels: { style: { fontSize: '12px', fontFamily: 'Plus Jakarta Sans', colors: '#a1acb8' }, formatter: function(val) { return typeof val === 'number' ? (val >= 1000 ? '$' + (val/1000).toFixed(0) + 'K' : val) : val; } }, axisTicks: { show: false }, axisBorder: { show: false } },
       yaxis: { labels: { style: { fontSize: '12px', fontFamily: 'Plus Jakarta Sans', colors: '#a1acb8' } } },
       tooltip: { theme: 'dark', y: { formatter: function(val) { return typeof val === 'number' ? '$' + val.toLocaleString() : val; } } },
-      series: topProdData.series || []
+      series: window._normalizeSeries(topProdData.series)
     });
     chart.render().then(function() {
       var widgetId = topProdEl.closest('.grid-stack-item')?.getAttribute('data-widget-id');
@@ -918,7 +995,7 @@ document.addEventListener('DOMContentLoaded', function () {
       xaxis: { categories: topCustData.categories || [], labels: { style: { fontSize: '12px', fontFamily: 'Plus Jakarta Sans', colors: '#a1acb8' }, formatter: function(val) { return typeof val === 'number' ? (val >= 1000 ? '$' + (val/1000).toFixed(0) + 'K' : val) : val; } }, axisTicks: { show: false }, axisBorder: { show: false } },
       yaxis: { labels: { style: { fontSize: '12px', fontFamily: 'Plus Jakarta Sans', colors: '#a1acb8' } } },
       tooltip: { theme: 'dark', y: { formatter: function(val) { return typeof val === 'number' ? '$' + val.toLocaleString() : val; } } },
-      series: topCustData.series || []
+      series: window._normalizeSeries(topCustData.series)
     });
     chart.render().then(function() {
       var widgetId = topCustEl.closest('.grid-stack-item')?.getAttribute('data-widget-id');
@@ -953,7 +1030,7 @@ document.addEventListener('DOMContentLoaded', function () {
       xaxis: { categories: bridgeData.categories || [], labels: { style: { fontSize: '12px', fontFamily: 'Plus Jakarta Sans', colors: '#a1acb8', rotate: -30 }, rotate: -30 }, axisTicks: { show: false }, axisBorder: { show: false } },
       yaxis: { labels: { style: { fontSize: '13px', fontFamily: 'Plus Jakarta Sans', colors: '#a1acb8' }, formatter: function(val) { return typeof val === 'number' ? (val >= 0 ? '+$' + (val/1000).toFixed(0) + 'K' : '-$' + (Math.abs(val)/1000).toFixed(0) + 'K') : val; } } },
       tooltip: { theme: 'dark', y: { formatter: function(val) { return typeof val === 'number' ? '$' + val.toLocaleString() : val; } } },
-      series: bridgeData.series || []
+      series: window._normalizeSeries(bridgeData.series)
     });
     chart.render().then(function() {
       var widgetId = bridgeEl.closest('.grid-stack-item')?.getAttribute('data-widget-id');
@@ -984,7 +1061,7 @@ document.addEventListener('DOMContentLoaded', function () {
       xaxis: { categories: branchData.categories || [], labels: { style: { fontSize: '13px', fontFamily: 'Plus Jakarta Sans', colors: '#a1acb8' } }, axisTicks: { show: false }, axisBorder: { show: false } },
       yaxis: { labels: { style: { fontSize: '13px', fontFamily: 'Plus Jakarta Sans', colors: '#a1acb8' }, formatter: function(val) { return typeof val === 'number' ? (val >= 1000 ? '$' + (val/1000).toFixed(0) + 'K' : val) : val; } } },
       tooltip: { theme: 'dark', y: { formatter: function(val) { return typeof val === 'number' ? '$' + val.toLocaleString() : val; } } },
-      series: branchData.series || []
+      series: window._normalizeSeries(branchData.series)
     });
     chart.render().then(function() {
       var widgetId = branchEl.closest('.grid-stack-item')?.getAttribute('data-widget-id');
@@ -1015,7 +1092,7 @@ document.addEventListener('DOMContentLoaded', function () {
       xaxis: { categories: funnelData.categories || [], labels: { style: { fontSize: '12px', fontFamily: 'Plus Jakarta Sans', colors: '#a1acb8' } }, axisTicks: { show: false }, axisBorder: { show: false } },
       yaxis: { labels: { style: { fontSize: '13px', fontFamily: 'Plus Jakarta Sans', colors: '#a1acb8' } } },
       tooltip: { theme: 'dark' },
-      series: funnelData.series || []
+      series: window._normalizeSeries(funnelData.series)
     });
     chart.render().then(function() {
       var widgetId = funnelEl.closest('.grid-stack-item')?.getAttribute('data-widget-id');
@@ -1097,7 +1174,7 @@ document.addEventListener('DOMContentLoaded', function () {
         }
       },
       tooltip: { theme: 'dark', y: { formatter: function (val) { return typeof val === 'number' ? '$' + val.toLocaleString() : val; } } },
-      series: chartData.series || []
+      series: window._normalizeSeries(chartData.series)
     });
     chart.render().then(function() {
       var widgetId = chartEl.closest('.grid-stack-item')?.getAttribute('data-widget-id');
@@ -1124,7 +1201,7 @@ document.addEventListener('DOMContentLoaded', function () {
       colors: ['#ffab00'],
       dataLabels: { enabled: false },
       stroke: { width: 5, curve: 'smooth' },
-      series: profileData.series || [],
+      series: window._normalizeSeries(profileData.series),
       xaxis: { show: false, lines: { show: false }, labels: { show: false }, axisBorder: { show: false } },
       yaxis: { show: false }
     });
@@ -1234,7 +1311,254 @@ function setRange(type) {
 }
 </script>
 
-@{
-    var aiExecModel = new Dashboard.Models.ViewModels.AIChatWidgetModel { Department = "Executive" };
-}
-<partial name="~/Views/Shared/Partials/_AIChatWidget.cshtml" model="aiExecModel" />
+@* ============================================================
+   PART 5: Job Management Table Scripts
+   ============================================================ *@
+<script>
+(function() {
+  var _jobConfigs = [];
+  var _selectedIds = new Set();
+  var _currentFilter = 'all';
+
+  var cronPresets = [
+    { label: 'Every 5 min',   value: '*/5 * * * *' },
+    { label: 'Every 10 min',  value: '*/10 * * * *' },
+    { label: 'Every 30 min',  value: '*/30 * * * *' },
+    { label: 'Every hour',    value: '0 * * * *' },
+    { label: 'Daily 8 AM',   value: '0 8 * * *' },
+    { label: 'Daily 6 PM',   value: '0 18 * * *' },
+    { label: 'Weekly Monday', value: '0 8 * * 1' },
+  ];
+
+  function severityBadge(sev) {
+    var map = { 'Critical': 'bg-label-danger', 'Warning': 'bg-label-warning', 'Info': 'bg-label-info' };
+    var cls = map[sev] || 'bg-label-secondary';
+    return '<span class="badge ' + cls + '">' + sev + '</span>';
+  }
+
+  function statusBadge(enabled) {
+    if (enabled) {
+      return '<span class="badge bg-label-success"><i class="icon-base bx bx-check-circle me-1"></i>Enabled</span>';
+    }
+    return '<span class="badge bg-label-secondary"><i class="icon-base bx bx-x-circle me-1"></i>Disabled</span>';
+  }
+
+  function buildCronSelect(selectedCron) {
+    var options = cronPresets.map(function(p) {
+      var sel = p.value === selectedCron ? ' selected' : '';
+      return '<option value="' + p.value + '"' + sel + '>' + p.value + ' — ' + p.label + '</option>';
+    }).join('');
+    return '<select class="form-select form-select-sm cron-select" data-id="' + selectedCron + '">' + options + '</select>';
+  }
+
+  function buildRow(cfg) {
+    var checked = _selectedIds.has(cfg.configID) ? ' checked' : '';
+    var severityClass = cfg.severity === 'Critical' ? 'text-danger' : (cfg.severity === 'Warning' ? 'text-warning' : 'text-body');
+    return '<tr data-id="' + cfg.configID + '" data-enabled="' + cfg.isEnabled + '">' +
+      '<td><input class="form-check-input row-check" type="checkbox" value="' + cfg.configID + '" onchange="toggleJobSelect(' + cfg.configID + ')"' + checked + ' /></td>' +
+      '<td>' + statusBadge(cfg.isEnabled) + '</td>' +
+      '<td><div class="fw-medium ' + severityClass + '">' + cfg.notificationName + '</div><small class="text-muted">' + cfg.notificationCode + '</small></td>' +
+      '<td><span class="badge bg-label-primary">' + cfg.category + '</span></td>' +
+      '<td>' + buildCronSelect(cfg.cronExpression || '') + '</td>' +
+      '<td><span class="text-muted small">' + cfg.checkIntervalMinutes + ' min</span></td>' +
+      '<td>' + severityBadge(cfg.severity) + '</td>' +
+      '<td>' +
+        '<div class="d-flex gap-1">' +
+          '<button class="btn btn-xs btn-icon btn-outline-primary" onclick="toggleJobStatus(' + cfg.configID + ', ' + !cfg.isEnabled + ')" title="' + (cfg.isEnabled ? 'Disable' : 'Enable') + '">' +
+            '<i class="icon-base bx ' + (cfg.isEnabled ? 'bx-pause' : 'bx-play') + '"></i>' +
+          '</button>' +
+          '<button class="btn btn-xs btn-icon btn-outline-info" onclick="triggerJobNow(\'' + cfg.category.toLowerCase().replace(' ', '-') + '-notifications\' or \'' + cfg.notificationCode.toLowerCase().replace(/_/g, '-') + '\')" title="Run now">' +
+            '<i class="icon-base bx bx-bolt"></i>' +
+          '</button>' +
+          '<a href="/NotificationConfig/Edit/' + cfg.configID + '" class="btn btn-xs btn-icon btn-outline-secondary" title="Edit config">' +
+            '<i class="icon-base bx bx-edit"></i>' +
+          '</a>' +
+        '</div>' +
+      '</td>' +
+    '</tr>';
+  }
+
+  function getFiltered(configs) {
+    if (_currentFilter === 'all') return configs;
+    return configs.filter(function(c) {
+      return _currentFilter === 'enabled' ? c.isEnabled : !c.isEnabled;
+    });
+  }
+
+  function renderTable(configs) {
+    var tbody = document.getElementById('jobConfigTableBody');
+    if (!tbody) return;
+    var filtered = getFiltered(configs);
+    if (filtered.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="8" class="text-center text-muted py-4"><i class="icon-base bx bx-inbox me-1"></i>No notifications found</td></tr>';
+    } else {
+      tbody.innerHTML = filtered.map(buildRow).join('');
+    }
+    var countLabel = document.getElementById('jobCountLabel');
+    if (countLabel) {
+      var en = configs.filter(function(c) { return c.isEnabled; }).length;
+      countLabel.textContent = configs.length + ' notifications (' + en + ' enabled)';
+    }
+    bindCronChanges();
+  }
+
+  function bindCronChanges() {
+    document.querySelectorAll('.cron-select').forEach(function(sel) {
+      sel.onchange = function() {
+        var id = parseInt(sel.getAttribute('data-id') || sel.closest('tr').querySelector('.row-check').value);
+        var cron = sel.value;
+        var row = sel.closest('tr');
+        updateCron(id, cron, row);
+      };
+    });
+  }
+
+  function updateCron(id, cron, row) {
+    fetch('@Url.Action("UpdateCron", "NotificationConfig")', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', '@Html.AntiForgeryToken()': '' },
+      body: JSON.stringify({ configId: id, cronExpression: cron })
+    }).then(function(r) { return r.json(); })
+      .then(function(data) {
+        if (data.success) {
+          showToast('Cron updated to: ' + cron, 'success');
+        } else {
+          showToast(data.message || 'Failed to update cron', 'error');
+        }
+      })
+      .catch(function() { showToast('Network error', 'error'); });
+  }
+
+  function showToast(msg, type) {
+    if (typeof toastr !== 'undefined') {
+      toastr[type === 'success' ? 'success' : 'error'](msg);
+    } else {
+      alert(msg);
+    }
+  }
+
+  window.loadJobConfigs = function() {
+    fetch('@Url.Action("GetJobConfigs", "Executive")')
+      .then(function(r) { return r.json(); })
+      .then(function(data) {
+        _jobConfigs = Array.isArray(data) ? data : [];
+        renderTable(_jobConfigs);
+      })
+      .catch(function() {
+        var tbody = document.getElementById('jobConfigTableBody');
+        if (tbody) tbody.innerHTML = '<tr><td colspan="8" class="text-center text-danger py-4"><i class="icon-base bx bx-error me-1"></i>Failed to load configurations</td></tr>';
+      });
+  };
+
+  window.toggleJobStatus = function(id, enable) {
+    fetch('@Url.Action("UpdateJobStatus", "NotificationConfig")', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ configId: id, isEnabled: enable })
+    }).then(function(r) { return r.json(); })
+      .then(function(data) {
+        if (data.success) {
+          var cfg = _jobConfigs.find(function(c) { return c.configID === id; });
+          if (cfg) cfg.isEnabled = data.isEnabled;
+          renderTable(_jobConfigs);
+          showToast(data.message, 'success');
+        } else {
+          showToast(data.message || 'Failed to update status', 'error');
+        }
+      })
+      .catch(function() { showToast('Network error', 'error'); });
+  };
+
+  window.toggleJobSelect = function(id) {
+    if (_selectedIds.has(id)) _selectedIds.delete(id);
+    else _selectedIds.add(id);
+    updateCheckAll();
+  };
+
+  window.toggleAllJobs = function(checked) {
+    document.querySelectorAll('.row-check').forEach(function(cb) {
+      var id = parseInt(cb.value);
+      if (checked) _selectedIds.add(id);
+      else _selectedIds.delete(id);
+      cb.checked = checked;
+    });
+  };
+
+  function updateCheckAll() {
+    var all = document.querySelectorAll('.row-check');
+    var checked = document.querySelectorAll('.row-check:checked');
+    var cbAll = document.getElementById('checkAllJobs');
+    if (cbAll) cbAll.checked = all.length > 0 && checked.length === all.length;
+  }
+
+  window.filterJobTable = function(filter) {
+    _currentFilter = filter;
+    document.querySelectorAll('[onclick^="filterJobTable"]').forEach(function(btn) {
+      if (btn.textContent.trim().toLowerCase() === filter) btn.classList.add('active');
+      else btn.classList.remove('active');
+    });
+    renderTable(_jobConfigs);
+  };
+
+  window.refreshJobTable = function() {
+    _selectedIds.clear();
+    var cbAll = document.getElementById('checkAllJobs');
+    if (cbAll) cbAll.checked = false;
+    loadJobConfigs();
+  };
+
+  window.bulkEnableSelected = function() {
+    var ids = Array.from(_selectedIds);
+    if (ids.length === 0) { showToast('No items selected', 'error'); return; }
+    ids.forEach(function(id) {
+      fetch('@Url.Action("UpdateJobStatus", "NotificationConfig")', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ configId: id, isEnabled: true })
+      }).then(function(r) { return r.json(); })
+        .then(function(data) {
+          if (data.success) {
+            var cfg = _jobConfigs.find(function(c) { return c.configID === id; });
+            if (cfg) cfg.isEnabled = true;
+          }
+        });
+    });
+    setTimeout(function() { renderTable(_jobConfigs); showToast(ids.length + ' notifications enabled', 'success'); _selectedIds.clear(); }, 500);
+  };
+
+  window.bulkDisableSelected = function() {
+    var ids = Array.from(_selectedIds);
+    if (ids.length === 0) { showToast('No items selected', 'error'); return; }
+    ids.forEach(function(id) {
+      fetch('@Url.Action("UpdateJobStatus", "NotificationConfig")', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ configId: id, isEnabled: false })
+      }).then(function(r) { return r.json(); })
+        .then(function(data) {
+          if (data.success) {
+            var cfg = _jobConfigs.find(function(c) { return c.configID === id; });
+            if (cfg) cfg.isEnabled = false;
+          }
+        });
+    });
+    setTimeout(function() { renderTable(_jobConfigs); showToast(ids.length + ' notifications disabled', 'success'); _selectedIds.clear(); }, 500);
+  };
+
+  window.triggerJobNow = function(jobId) {
+    fetch('@Url.Action("TriggerJobNow", "NotificationConfig")', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ jobId: jobId })
+    }).then(function(r) { return r.json(); })
+      .then(function(data) {
+        showToast(data.message || 'Job triggered', data.success ? 'success' : 'error');
+      })
+      .catch(function() { showToast('Network error', 'error'); });
+  };
+
+  document.addEventListener('DOMContentLoaded', function() {
+    loadJobConfigs();
+  });
+})();
+</script>

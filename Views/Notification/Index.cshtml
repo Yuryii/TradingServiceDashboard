@@ -120,26 +120,60 @@ var currentCategory = '';
 var currentSeverity = '';
 var totalItems = 0;
 
+/** System.Text.Json camelCase uses notificationID (not notificationId). */
+function normN(n) {
+    if (!n || typeof n !== 'object') return null;
+    var rawId = n.notificationID != null ? n.notificationID : (n.notificationId != null ? n.notificationId : n.NotificationID);
+    var idNum = rawId != null && rawId !== '' ? Number(rawId) : NaN;
+    return {
+        notificationID: !isNaN(idNum) ? idNum : 0,
+        title: (n.title != null ? n.title : n.Title) || '',
+        message: (n.message != null ? n.message : n.Message) || '',
+        category: (n.category != null ? n.category : n.Category) || '',
+        severity: (n.severity != null ? n.severity : n.Severity) || 'Info',
+        iconClass: (n.iconClass != null ? n.iconClass : n.IconClass) || '',
+        iconBgClass: (n.iconBgClass != null ? n.iconBgClass : n.IconBgClass) || '',
+        actionUrl: n.actionUrl != null ? n.actionUrl : n.ActionUrl,
+        isRead: !!(n.isRead != null ? n.isRead : n.IsRead),
+        createdAt: n.createdAt != null ? n.createdAt : n.CreatedAt,
+        timeAgoText: (n.timeAgo != null ? n.timeAgo : n.TimeAgo) || ''
+    };
+}
+
+function unwrapNotificationList(data) {
+    if (Array.isArray(data)) return data;
+    if (data && Array.isArray(data.items)) return data.items;
+    if (data && Array.isArray(data.notifications)) return data.notifications;
+    return [];
+}
+
+function displaySeverity(sev) {
+    var s = sev != null ? String(sev).trim() : '';
+    return s !== '' ? s : 'Info';
+}
+
 function loadNotifications() {
     var url = '/Notification/GetAll?page=' + currentPage + '&pageSize=' + pageSize;
     if (currentCategory) url += '&category=' + encodeURIComponent(currentCategory);
     if (currentSeverity) url += '&severity=' + encodeURIComponent(currentSeverity);
 
-    fetch(url)
-        .then(function(r) { return r.json(); })
-        .then(function(data) {
+    Promise.all([
+        fetch(url).then(function(r) { return r.json(); }),
+        fetch('/Notification/GetUnreadCount').then(function(r) { return r.json(); })
+    ])
+        .then(function(results) {
+            var data = unwrapNotificationList(results[0]);
+            var stats = results[1];
+            totalItems = stats && stats.total != null ? stats.total : (data && data.length) || 0;
             renderTable(data);
+            document.getElementById('unreadCount').textContent = stats && stats.count != null ? stats.count : 0;
+            document.getElementById('totalCount').textContent = stats && stats.total != null ? stats.total : 0;
+            document.getElementById('criticalCount').textContent = stats && stats.critical != null ? stats.critical : 0;
+            document.getElementById('todayCount').textContent = stats && stats.today != null ? stats.today : 0;
             updatePagination();
         })
         .catch(function(err) {
             console.error('Load notifications failed:', err);
-        });
-
-    // Load summary
-    fetch('/Notification/GetUnreadCount')
-        .then(function(r) { return r.json(); })
-        .then(function(data) {
-            document.getElementById('unreadCount').textContent = data.count;
         });
 }
 
@@ -152,35 +186,37 @@ function renderTable(notifications) {
 
     var html = '';
     notifications.forEach(function(n) {
-        var severityClass = getSeverityBadgeClass(n.Severity);
-        var iconBgClass = getIconBgClass(n.Category);
-        var readClass = n.IsRead ? 'opacity-50' : '';
-        var timeStr = formatTime(n.CreatedAt);
-        var actionUrl = n.ActionUrl ? '\'' + n.ActionUrl + '\'' : 'null';
+        var x = normN(n);
+        if (!x) return;
+        var severityClass = getSeverityBadgeClass(x.severity);
+        var iconBgClass = x.iconBgClass && String(x.iconBgClass).trim() !== '' ? x.iconBgClass : getIconBgClass(x.category);
+        var readClass = x.isRead ? 'opacity-50' : '';
+        var timeStr = formatTime(x.createdAt, x.timeAgoText);
+        var actionUrl = x.actionUrl ? '\'' + x.actionUrl + '\'' : 'null';
 
         html += '<tr class="' + readClass + '">' +
             '<td class="text-center">' +
             '  <div class="avatar ' + iconBgClass + ' avatar-sm">' +
             '    <span class="avatar-initial rounded-circle">' +
-            '      <i class="icon-base ' + getCategoryIcon(n.Category) + '"></i>' +
+            '      <i class="icon-base ' + getCategoryIcon(x.category, x.iconClass) + '"></i>' +
             '    </span>' +
             '  </div>' +
             '</td>' +
             '<td>' +
             '  <div class="d-flex flex-column">' +
-            '    <strong class="mb-1">' + escapeHtml(n.Title) + '</strong>' +
-            '    <small class="text-muted">' + escapeHtml(n.Message) + '</small>' +
+            '    <strong class="mb-1">' + escapeHtml(x.title) + '</strong>' +
+            '    <small class="text-muted">' + escapeHtml(x.message) + '</small>' +
             '  </div>' +
             '</td>' +
-            '<td><span class="badge bg-label-secondary">' + n.Category + '</span></td>' +
-            '<td><span class="badge ' + severityClass + '">' + n.Severity + '</span></td>' +
-            '<td><small class="text-muted">' + timeStr + '</small></td>' +
+            '<td><span class="badge bg-label-secondary">' + escapeHtml(x.category) + '</span></td>' +
+            '<td><span class="badge ' + severityClass + '">' + escapeHtml(displaySeverity(x.severity)) + '</span></td>' +
+            '<td><small class="text-muted">' + escapeHtml(timeStr) + '</small></td>' +
             '<td>' +
             '  <div class="d-flex gap-1">' +
-            '    <button class="btn btn-outline-primary btn-sm" onclick="goToNotification(' + n.NotificationID + ', ' + actionUrl + ')">' +
+            '    <button class="btn btn-outline-primary btn-sm" onclick="goToNotification(' + x.notificationID + ', ' + actionUrl + ')">' +
             '      <i class="icon-base bx bx-show"></i>' +
             '    </button>' +
-            '    <button class="btn btn-outline-secondary btn-sm" onclick="markSingleRead(' + n.NotificationID + ')">' +
+            '    <button class="btn btn-outline-secondary btn-sm" onclick="markSingleRead(' + x.notificationID + ')">' +
             '      <i class="icon-base bx bx-envelope-open"></i>' +
             '    </button>' +
             '  </div>' +
@@ -268,7 +304,10 @@ function getIconBgClass(category) {
     }
 }
 
-function getCategoryIcon(category) {
+function getCategoryIcon(category, iconClassFromServer) {
+    if (iconClassFromServer && String(iconClassFromServer).trim() !== '') {
+        return String(iconClassFromServer).trim();
+    }
     switch (category) {
         case 'Finance': return 'bx-dollar';
         case 'Inventory': return 'bx-box';
@@ -281,17 +320,56 @@ function getCategoryIcon(category) {
     }
 }
 
-function formatTime(isoString) {
-    var date = new Date(isoString);
+function parseNotificationDate(val) {
+    if (val == null || val === '') return null;
+    if (typeof val === 'number' && isFinite(val)) {
+        var dNum = val < 1e12 ? new Date(val * 1000) : new Date(val);
+        return isNaN(dNum.getTime()) ? null : dNum;
+    }
+    if (val instanceof Date) return isNaN(val.getTime()) ? null : val;
+    if (typeof val === 'string' && val.indexOf('/Date(') === 0) {
+        var ms = parseInt(val.replace(/\D/g, ''), 10);
+        var d = new Date(ms);
+        return isNaN(d.getTime()) ? null : d;
+    }
+    if (typeof val === 'string') {
+        var s = val.trim();
+        if (s === '' || s === 'Invalid Date') return null;
+        if (/^\d{4}-\d{2}-\d{2}[ T]\d{2}:\d{2}/.test(s) && !/[zZ]|[+\-]\d{2}:?\d{2}$/.test(s)) {
+            var isoT = s.replace(' ', 'T');
+            var dUtc = new Date(isoT.endsWith('Z') ? isoT : isoT + 'Z');
+            if (!isNaN(dUtc.getTime())) return dUtc;
+            var dLocal = new Date(isoT);
+            if (!isNaN(dLocal.getTime())) return dLocal;
+            return null;
+        }
+    }
+    var date = new Date(val);
+    return isNaN(date.getTime()) ? null : date;
+}
+
+function formatTime(isoString, serverFallback) {
+    var date = parseNotificationDate(isoString);
+    if (!date) {
+        if (serverFallback != null && String(serverFallback).trim() !== '') {
+            return String(serverFallback).trim();
+        }
+        return '';
+    }
     var now = new Date();
-    var diffMin = Math.floor((now - date) / 60000);
+    var diffMin = Math.floor((now.getTime() - date.getTime()) / 60000);
     if (diffMin < 1) return 'Vua xong';
     if (diffMin < 60) return diffMin + ' phut truoc';
     var diffHrs = Math.floor(diffMin / 60);
     if (diffHrs < 24) return diffHrs + ' gio truoc';
     var diffDays = Math.floor(diffHrs / 24);
     if (diffDays < 7) return diffDays + ' ngay truoc';
-    return date.toLocaleDateString('vi-VN') + ' ' + date.toLocaleTimeString('vi-VN', {hour:'2-digit', minute:'2-digit'});
+    var ds = date.toLocaleDateString('vi-VN');
+    var ts = date.toLocaleTimeString('vi-VN', {hour:'2-digit', minute:'2-digit'});
+    if (ds.indexOf('Invalid') >= 0 || ts.indexOf('Invalid') >= 0) {
+        return serverFallback ? String(serverFallback).trim() : '';
+    }
+    return ds + ' ' + ts;
 }
 
 function escapeHtml(text) {

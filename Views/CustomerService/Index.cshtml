@@ -773,8 +773,3 @@ function setRange(type) {
     fromInput.closest('form').submit();
 }
 </script>
-
-@{
-    var aiCsModel = new Dashboard.Models.ViewModels.AIChatWidgetModel { Department = "CSKH" };
-}
-<partial name="~/Views/Shared/Partials/_AIChatWidget.cshtml" model="aiCsModel" />

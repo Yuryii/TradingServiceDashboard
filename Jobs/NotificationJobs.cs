@@ -8,7 +8,7 @@ using Dashboard.Services.Interfaces;
 
 namespace Dashboard.Jobs;
 
-public static class NotificationJobs
+public class NotificationJobsRegistrar
 {
     private static bool _registered = false;
     private static readonly object _lock = new();
@@ -56,6 +56,25 @@ public static class NotificationJobs
                 "0 8 * * *");
         }
     }
+
+    public static void AddOrUpdateJob(string jobId, Type jobType, string cron)
+    {
+        var method = typeof(RecurringJob).GetMethod("AddOrUpdate", new[] { typeof(string), typeof(string), typeof(string) });
+        if (method != null)
+        {
+            method.MakeGenericMethod(jobType).Invoke(null, new object[] { jobId, "ExecuteAsync", cron });
+        }
+    }
+
+    public static void EnqueueJob(IServiceProvider sp, Type jobType)
+    {
+        var job = sp.GetService(jobType);
+        if (job == null) return;
+        var method = jobType.GetMethod("ExecuteAsync");
+        if (method == null) return;
+        var task = (Task?)method.Invoke(job, null);
+        if (task != null) task.GetAwaiter().GetResult();
+    }
 }
 
 public class FinanceNotificationJob
@@ -79,7 +98,7 @@ public class FinanceNotificationJob
         using var scope = _scopeFactory.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
 
-        // 1. FIN_OVERDUE_30D — Cong no qua han 30 ngay
+        // 1. FIN_OVERDUE_30D — Overdue receivables 30 days
         await CheckAndSendAsync(db, "FIN_OVERDUE_30D", async (cfg, dto) =>
         {
             var delayHours = cfg.DelayHours ?? 720;
@@ -90,12 +109,12 @@ public class FinanceNotificationJob
                 .AsNoTracking()
                 .CountAsync();
             if (overdue == 0) return false;
-            dto.Title = "Cong no qua han";
-            dto.Message = $"{overdue} don hang chua thanh toan qua {delayHours / 24} ngay";
+            dto.Title = "Overdue receivables";
+            dto.Message = $"{overdue} unpaid orders overdue {delayHours / 24} days";
             return true;
         });
 
-        // 2. FIN_EXPENSE_PENDING — Chi phi cho phe duyet
+        // 2. FIN_EXPENSE_PENDING — Expenses pending approval
         await CheckAndSendAsync(db, "FIN_EXPENSE_PENDING", async (cfg, dto) =>
         {
             var pending = await db.Expenses
@@ -103,12 +122,12 @@ public class FinanceNotificationJob
                 .AsNoTracking()
                 .CountAsync();
             if (pending == 0) return false;
-            dto.Title = "Chi phi cho phe duyet";
-            dto.Message = $"{pending} chi phi dang cho xu ly phe duyet";
+            dto.Title = "Expenses pending approval";
+            dto.Message = $"{pending} expenses awaiting approval";
             return true;
         });
 
-        // 3. FIN_OVER_BUDGET — Chi phi vuot ngan sach
+        // 3. FIN_OVER_BUDGET — Expenses over budget
         await CheckAndSendAsync(db, "FIN_OVER_BUDGET", async (cfg, dto) =>
         {
             var threshold = cfg.ThresholdValue ?? 0;
@@ -117,12 +136,12 @@ public class FinanceNotificationJob
                 .AsNoTracking()
                 .CountAsync();
             if (overBudget == 0) return false;
-            dto.Title = "Chi phi vuot ngan sach";
-            dto.Message = $"{overBudget} chi phi vuot nguong {threshold:N0} VND";
+            dto.Title = "Expenses over budget";
+            dto.Message = $"{overBudget} expenses exceeding {threshold:N0} VND threshold";
             return true;
         });
 
-        // 4. FIN_NEW_PAYMENT — Thanh toan moi tu KH
+        // 4. FIN_NEW_PAYMENT — New payment from customer
         await CheckAndSendAsync(db, "FIN_NEW_PAYMENT", async (cfg, dto) =>
         {
             var delayHours = cfg.DelayHours ?? 24;
@@ -133,12 +152,12 @@ public class FinanceNotificationJob
                 .AsNoTracking()
                 .CountAsync();
             if (payments == 0) return false;
-            dto.Title = "Thanh toan moi tu KH";
-            dto.Message = $"{payments} thanh toan moi trong {delayHours} gio qua";
+            dto.Title = "New payment from customer";
+            dto.Message = $"{payments} new payments in the past {delayHours} hours";
             return true;
         });
 
-        // 5. FIN_CASHFLOW_LOW — Dong tien bat thuong
+        // 5. FIN_CASHFLOW_LOW — Abnormal cash flow
         await CheckAndSendAsync(db, "FIN_CASHFLOW_LOW", async (cfg, dto) =>
         {
             var threshold = cfg.ThresholdValue ?? 0;
@@ -151,12 +170,12 @@ public class FinanceNotificationJob
                 .SumAsync(e => e.Amount);
             var netCash = cashIn - cashOut;
             if (netCash >= threshold) return false;
-            dto.Title = "Dong tien bat thuong";
-            dto.Message = $"Dong tien hom nay chi con {netCash:N0} VND";
+            dto.Title = "Abnormal cash flow";
+            dto.Message = $"Today's net cash is only {netCash:N0} VND";
             return true;
         });
 
-        // 6. FIN_LARGE_INVOICE — Hoa don lon chua thanh toan
+        // 6. FIN_LARGE_INVOICE — Large unpaid invoices
         await CheckAndSendAsync(db, "FIN_LARGE_INVOICE", async (cfg, dto) =>
         {
             var threshold = cfg.ThresholdValue ?? 50_000_000m;
@@ -166,8 +185,8 @@ public class FinanceNotificationJob
                 .AsNoTracking()
                 .CountAsync();
             if (largeInvoices == 0) return false;
-            dto.Title = "Hoa don lon chua thanh toan";
-            dto.Message = $"{largeInvoices} hoa don vuot {threshold:N0} VND chua thanh toan";
+            dto.Title = "Large unpaid invoices";
+            dto.Message = $"{largeInvoices} invoices exceeding {threshold:N0} VND unpaid";
             return true;
         });
     }
@@ -223,7 +242,7 @@ public class InventoryNotificationJob
         using var scope = _scopeFactory.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
 
-        // 7. INV_LOW_STOCK — Ton kho thap
+        // 7. INV_LOW_STOCK — Low inventory
         await CheckAndSendAsync(db, "INV_LOW_STOCK", async (cfg, dto) =>
         {
             var lowItems = await db.Inventories
@@ -232,12 +251,12 @@ public class InventoryNotificationJob
                 .AsNoTracking()
                 .CountAsync();
             if (lowItems == 0) return false;
-            dto.Title = "Ton kho thap";
-            dto.Message = $"{lowItems} san pham con thap hon diem dat hang";
+            dto.Title = "Low inventory";
+            dto.Message = $"{lowItems} products below reorder point";
             return true;
         });
 
-        // 8. INV_OUT_OF_STOCK — Het hang
+        // 8. INV_OUT_OF_STOCK — Out of stock
         await CheckAndSendAsync(db, "INV_OUT_OF_STOCK", async (cfg, dto) =>
         {
             var outItems = await db.Inventories
@@ -245,12 +264,12 @@ public class InventoryNotificationJob
                 .AsNoTracking()
                 .CountAsync();
             if (outItems == 0) return false;
-            dto.Title = "Het hang";
-            dto.Message = $"{outItems} san pham da het hang";
+            dto.Title = "Out of stock";
+            dto.Message = $"{outItems} products out of stock";
             return true;
         });
 
-        // 9. INV_PO_PENDING — Don mua hang cho phe duyet
+        // 9. INV_PO_PENDING — Purchase order pending approval
         await CheckAndSendAsync(db, "INV_PO_PENDING", async (cfg, dto) =>
         {
             var pending = await db.PurchaseOrders
@@ -258,12 +277,12 @@ public class InventoryNotificationJob
                 .AsNoTracking()
                 .CountAsync();
             if (pending == 0) return false;
-            dto.Title = "Don mua hang cho phe duyet";
-            dto.Message = $"{pending} don mua hang cho xu ly phe duyet";
+            dto.Title = "Purchase order pending approval";
+            dto.Message = $"{pending} purchase orders awaiting approval";
             return true;
         });
 
-        // 10. INV_NEW_RECEIPT — Nhap kho moi
+        // 10. INV_NEW_RECEIPT — New stock receipt
         await CheckAndSendAsync(db, "INV_NEW_RECEIPT", async (cfg, dto) =>
         {
             var delayHours = cfg.DelayHours ?? 24;
@@ -274,8 +293,8 @@ public class InventoryNotificationJob
                 .AsNoTracking()
                 .CountAsync();
             if (receipts == 0) return false;
-            dto.Title = "Nhap kho moi";
-            dto.Message = $"{receipts} phieu nhap kho trong {delayHours} gio qua";
+            dto.Title = "New stock receipt";
+            dto.Message = $"{receipts} stock receipts in the past {delayHours} hours";
             return true;
         });
     }
@@ -331,7 +350,7 @@ public class HumanResourcesNotificationJob
         using var scope = _scopeFactory.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
 
-        // 11. HR_LEAVE_PENDING — Don nghi phep cho phe duyet
+        // 11. HR_LEAVE_PENDING — Leave request pending approval
         await CheckAndSendAsync(db, "HR_LEAVE_PENDING", async (cfg, dto) =>
         {
             var pending = await db.LeaveRequests
@@ -339,12 +358,12 @@ public class HumanResourcesNotificationJob
                 .AsNoTracking()
                 .CountAsync();
             if (pending == 0) return false;
-            dto.Title = "Don nghi phep cho phe duyet";
-            dto.Message = $"{pending} don nghi phep dang cho xu ly";
+            dto.Title = "Leave request pending approval";
+            dto.Message = $"{pending} leave requests awaiting processing";
             return true;
         });
 
-        // 12. HR_PROBATION_ENDING — Nhan vien sap het thu viec
+        // 12. HR_PROBATION_ENDING — Employee ending probation
         await CheckAndSendAsync(db, "HR_PROBATION_ENDING", async (cfg, dto) =>
         {
             var delayHours = cfg.DelayHours ?? 168;
@@ -356,12 +375,12 @@ public class HumanResourcesNotificationJob
                 .AsNoTracking()
                 .CountAsync();
             if (probationEnding == 0) return false;
-            dto.Title = "Nhan vien sap het thu viec";
-            dto.Message = $"{probationEnding} nhan vien sap ket thuc thu viec trong 7 ngay toi";
+            dto.Title = "Employee ending probation";
+            dto.Message = $"{probationEnding} employees ending probation in next 7 days";
             return true;
         });
 
-        // 13. HR_HIGH_TURNOVER — Ty le nghi viec cao
+        // 13. HR_HIGH_TURNOVER — High turnover rate
         await CheckAndSendAsync(db, "HR_HIGH_TURNOVER", async (cfg, dto) =>
         {
             var threshold = cfg.ThresholdValue ?? 5m;
@@ -374,12 +393,12 @@ public class HumanResourcesNotificationJob
                 .CountAsync();
             var turnoverRate = (decimal)resignedThisMonth / totalEmployees * 100;
             if (turnoverRate < threshold) return false;
-            dto.Title = "Ty le nghi viec cao";
-            dto.Message = $"{resignedThisMonth} nhan vien ({turnoverRate:N1}%) nghi viec thang nay, vuot nguong {threshold}%";
+            dto.Title = "High turnover rate";
+            dto.Message = $"{resignedThisMonth} employees ({turnoverRate:N1}%) left this month, exceeding {threshold}% threshold";
             return true;
         });
 
-        // 14. HR_NEW_APPLICANT — Ung vien moi
+        // 14. HR_NEW_APPLICANT — New applicant
         await CheckAndSendAsync(db, "HR_NEW_APPLICANT", async (cfg, dto) =>
         {
             var delayHours = cfg.DelayHours ?? 24;
@@ -389,12 +408,12 @@ public class HumanResourcesNotificationJob
                 .AsNoTracking()
                 .CountAsync();
             if (newApplicants == 0) return false;
-            dto.Title = "Ung vien moi";
-            dto.Message = $"{newApplicants} ung vien moi trong {delayHours} gio qua";
+            dto.Title = "New applicant";
+            dto.Message = $"{newApplicants} new applicants in the past {delayHours} hours";
             return true;
         });
 
-        // 15. HR_BIRTHDAY — Sinh nhat nhan vien
+        // 15. HR_BIRTHDAY — Employee birthday
         await CheckAndSendAsync(db, "HR_BIRTHDAY", async (cfg, dto) =>
         {
             var today = DateTime.Today;
@@ -408,8 +427,8 @@ public class HumanResourcesNotificationJob
             if (birthdays.Count == 0) return false;
             foreach (var emp in birthdays)
             {
-                dto.Title = "Sinh nhat nhan vien";
-                dto.Message = $"Chuc mung sinh nhat {emp.FullName}!";
+                dto.Title = "Employee birthday";
+                dto.Message = $"Happy birthday {emp.FullName}!";
                 var users = await db.Users.Select(u => u.Id).ToListAsync();
                 foreach (var userId in users)
                     await _notifService.SendToUserAsync(userId, dto);
@@ -417,7 +436,7 @@ public class HumanResourcesNotificationJob
             return false;
         });
 
-        // 16. HR_NEW_EMPLOYEE — Nhan vien moi nhan viec
+        // 16. HR_NEW_EMPLOYEE — New employee onboarded
         await CheckAndSendAsync(db, "HR_NEW_EMPLOYEE", async (cfg, dto) =>
         {
             var delayHours = cfg.DelayHours ?? 168;
@@ -427,8 +446,8 @@ public class HumanResourcesNotificationJob
                 .AsNoTracking()
                 .CountAsync();
             if (newEmps == 0) return false;
-            dto.Title = "Nhan vien moi nhan viec";
-            dto.Message = $"{newEmps} nhan vien moi trong 7 ngay qua";
+            dto.Title = "New employee onboarded";
+            dto.Message = $"{newEmps} new employees in the past 7 days";
             return true;
         });
     }
@@ -484,7 +503,7 @@ public class SalesNotificationJob
         using var scope = _scopeFactory.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
 
-        // 17. SAL_NEW_ORDER — Don hang moi
+        // 17. SAL_NEW_ORDER — New order
         await CheckAndSendAsync(db, "SAL_NEW_ORDER", async (cfg, dto) =>
         {
             var delayHours = cfg.DelayHours ?? 1;
@@ -494,12 +513,12 @@ public class SalesNotificationJob
                 .AsNoTracking()
                 .CountAsync();
             if (newOrders == 0) return false;
-            dto.Title = "Don hang moi";
-            dto.Message = $"{newOrders} don hang duoc tao trong {delayHours} gio qua";
+            dto.Title = "New order";
+            dto.Message = $"{newOrders} orders created in the past {delayHours} hours";
             return true;
         });
 
-        // 18. SAL_LARGE_ORDER — Don hang lon
+        // 18. SAL_LARGE_ORDER — Large order
         await CheckAndSendAsync(db, "SAL_LARGE_ORDER", async (cfg, dto) =>
         {
             var threshold = cfg.ThresholdValue ?? 100_000_000m;
@@ -512,8 +531,8 @@ public class SalesNotificationJob
             if (largeOrders.Count == 0) return false;
             foreach (var order in largeOrders)
             {
-                dto.Title = "Don hang lon";
-                dto.Message = $"Don #{order.OrderNumber} voi so tien {order.TotalAmount:N0} VND";
+                dto.Title = "Large order";
+                dto.Message = $"Order #{order.OrderNumber} with amount {order.TotalAmount:N0} VND";
                 var users = await db.Users
                     .Where(u => db.UserRoles.Any(ur => ur.UserId == u.Id
                         && db.Roles.Any(r => r.Name == "Sales" || r.Name == "Executive")))
@@ -525,7 +544,7 @@ public class SalesNotificationJob
             return false;
         });
 
-        // 19. SAL_DELIVERY_DELAYED — Don cho giao > 3 ngay
+        // 19. SAL_DELIVERY_DELAYED — Order delivery delayed > 3 days
         await CheckAndSendAsync(db, "SAL_DELIVERY_DELAYED", async (cfg, dto) =>
         {
             var delayDays = (cfg.DelayHours ?? 72) / 24;
@@ -537,12 +556,12 @@ public class SalesNotificationJob
                 .AsNoTracking()
                 .CountAsync();
             if (delayed == 0) return false;
-            dto.Title = "Don cho giao qua han";
-            dto.Message = $"{delayed} don hang da thanh toan nhung cho giao qua {delayDays} ngay";
+            dto.Title = "Order delivery delayed";
+            dto.Message = $"{delayed} paid orders pending delivery for over {delayDays} days";
             return true;
         });
 
-        // 20. SAL_OPP_STAGE_CHANGED — Co hoi chuyen stage
+        // 20. SAL_OPP_STAGE_CHANGED — Opportunity stage changed
         await CheckAndSendAsync(db, "SAL_OPP_STAGE_CHANGED", async (cfg, dto) =>
         {
             var delayHours = cfg.DelayHours ?? 1;
@@ -553,12 +572,12 @@ public class SalesNotificationJob
                 .AsNoTracking()
                 .CountAsync();
             if (changed == 0) return false;
-            dto.Title = "Co hoi chuyen stage";
-            dto.Message = $"{changed} co hoi ban hang thay doi stage trong {delayHours} gio qua";
+            dto.Title = "Opportunity stage changed";
+            dto.Message = $"{changed} sales opportunities changed stage in the past {delayHours} hours";
             return true;
         });
 
-        // 21. SAL_TARGET_ACHIEVED — Dat muc tieu thang/quy
+        // 21. SAL_TARGET_ACHIEVED — Target achieved monthly/quarterly
         await CheckAndSendAsync(db, "SAL_TARGET_ACHIEVED", async (cfg, dto) =>
         {
             var today = DateTime.Today;
@@ -589,12 +608,12 @@ public class SalesNotificationJob
                     achieved.Add($"{target.KpiName} ({actualRevenue:N0}/{target.TargetValue:N0})");
             }
             if (achieved.Count == 0) return false;
-            dto.Title = "Dat muc tieu";
-            dto.Message = $"Da dat: {string.Join(", ", achieved)}";
+            dto.Title = "Target achieved";
+            dto.Message = $"Achieved: {string.Join(", ", achieved)}";
             return true;
         });
 
-        // 22. SAL_NEW_CUSTOMER — Khach hang moi
+        // 22. SAL_NEW_CUSTOMER — New customer
         await CheckAndSendAsync(db, "SAL_NEW_CUSTOMER", async (cfg, dto) =>
         {
             var delayHours = cfg.DelayHours ?? 24;
@@ -604,8 +623,8 @@ public class SalesNotificationJob
                 .AsNoTracking()
                 .CountAsync();
             if (newCust == 0) return false;
-            dto.Title = "Khach hang moi";
-            dto.Message = $"{newCust} khach hang moi trong {delayHours} gio qua";
+            dto.Title = "New customer";
+            dto.Message = $"{newCust} new customers in the past {delayHours} hours";
             return true;
         });
     }
@@ -661,7 +680,7 @@ public class CustomerServiceNotificationJob
         using var scope = _scopeFactory.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
 
-        // 23. CS_NEW_TICKET — Ticket moi
+        // 23. CS_NEW_TICKET — New ticket
         await CheckAndSendAsync(db, "CS_NEW_TICKET", async (cfg, dto) =>
         {
             var delayHours = cfg.DelayHours ?? 1;
@@ -671,12 +690,12 @@ public class CustomerServiceNotificationJob
                 .AsNoTracking()
                 .CountAsync();
             if (newTickets == 0) return false;
-            dto.Title = "Ticket moi";
-            dto.Message = $"{newTickets} ticket duoc tao trong {delayHours} gio qua";
+            dto.Title = "New ticket";
+            dto.Message = $"{newTickets} tickets created in the past {delayHours} hours";
             return true;
         });
 
-        // 24. CS_HIGH_PRIORITY — Ticket uu tien cao
+        // 24. CS_HIGH_PRIORITY — High priority ticket
         await CheckAndSendAsync(db, "CS_HIGH_PRIORITY", async (cfg, dto) =>
         {
             var highPriority = await db.SupportTickets
@@ -684,12 +703,12 @@ public class CustomerServiceNotificationJob
                 .AsNoTracking()
                 .CountAsync();
             if (highPriority == 0) return false;
-            dto.Title = "Ticket uu tien cao";
-            dto.Message = $"{highPriority} ticket uu tien cao chua duoc xu ly";
+            dto.Title = "High priority ticket";
+            dto.Message = $"{highPriority} high priority tickets not yet processed";
             return true;
         });
 
-        // 25. CS_TICKET_SLA_BREACH — Ticket qua han SLA
+        // 25. CS_TICKET_SLA_BREACH — Ticket SLA breach
         await CheckAndSendAsync(db, "CS_TICKET_SLA_BREACH", async (cfg, dto) =>
         {
             var delayHours = cfg.DelayHours ?? 24;
@@ -699,12 +718,12 @@ public class CustomerServiceNotificationJob
                 .AsNoTracking()
                 .CountAsync();
             if (overdue == 0) return false;
-            dto.Title = "Ticket qua han SLA";
-            dto.Message = $"{overdue} ticket vuot qua {delayHours} gio ma chua giai quyet";
+            dto.Title = "Ticket SLA breach";
+            dto.Message = $"{overdue} tickets overdue {delayHours} hours unresolved";
             return true;
         });
 
-        // 26. CS_TICKET_NO_RESPONSE — Ticket cho phan hoi
+        // 26. CS_TICKET_NO_RESPONSE — Ticket awaiting response
         await CheckAndSendAsync(db, "CS_TICKET_NO_RESPONSE", async (cfg, dto) =>
         {
             var delayHours = cfg.DelayHours ?? 4;
@@ -714,12 +733,12 @@ public class CustomerServiceNotificationJob
                 .AsNoTracking()
                 .CountAsync();
             if (waiting == 0) return false;
-            dto.Title = "Ticket cho phan hoi";
-            dto.Message = $"{waiting} ticket cho phan hoi qua {delayHours} gio";
+            dto.Title = "Ticket awaiting response";
+            dto.Message = $"{waiting} tickets awaiting response for over {delayHours} hours";
             return true;
         });
 
-        // 27. CS_LOW_SATISFACTION — KH khong hai long
+        // 27. CS_LOW_SATISFACTION — Customer dissatisfaction
         await CheckAndSendAsync(db, "CS_LOW_SATISFACTION", async (cfg, dto) =>
         {
             var cutoff = DateTime.Now.AddHours(-24);
@@ -730,8 +749,8 @@ public class CustomerServiceNotificationJob
                 .AsNoTracking()
                 .CountAsync();
             if (lowSat == 0) return false;
-            dto.Title = "KH khong hai long";
-            dto.Message = $"{lowSat} ticket duoc giai quyet trong 24 gio qua, vui long kiem tra phan hoi KH";
+            dto.Title = "Customer dissatisfaction";
+            dto.Message = $"{lowSat} tickets resolved in the past 24 hours, please check customer feedback";
             return true;
         });
     }
@@ -787,7 +806,7 @@ public class MarketingNotificationJob
         using var scope = _scopeFactory.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
 
-        // 28. MKT_BUDGET_80 — Ngan sach campaign sap het
+        // 28. MKT_BUDGET_80 — Campaign budget almost exhausted
         await CheckAndSendAsync(db, "MKT_BUDGET_80", async (cfg, dto) =>
         {
             var campaigns = await db.MarketingCampaigns
@@ -798,12 +817,12 @@ public class MarketingNotificationJob
                 .AsNoTracking()
                 .ToListAsync();
             if (campaigns.Count == 0) return false;
-            dto.Title = "Ngan sach campaign sap het";
-            dto.Message = $"{campaigns.Count} campaign da su dung tren 80% ngan sach";
+            dto.Title = "Campaign budget almost exhausted";
+            dto.Message = $"{campaigns.Count} campaigns using over 80% of budget";
             return true;
         });
 
-        // 29. MKT_BUDGET_EXCEEDED — Campaign vuot ngan sach
+        // 29. MKT_BUDGET_EXCEEDED — Campaign exceeded budget
         await CheckAndSendAsync(db, "MKT_BUDGET_EXCEEDED", async (cfg, dto) =>
         {
             var exceeded = await db.MarketingCampaigns
@@ -813,12 +832,12 @@ public class MarketingNotificationJob
                 .AsNoTracking()
                 .CountAsync();
             if (exceeded == 0) return false;
-            dto.Title = "Campaign vuot ngan sach";
-            dto.Message = $"{exceeded} campaign da vuot ngan sach duoc phep";
+            dto.Title = "Campaign exceeded budget";
+            dto.Message = $"{exceeded} campaigns exceeded allocated budget";
             return true;
         });
 
-        // 30. MKT_NEW_LEAD — Lead moi
+        // 30. MKT_NEW_LEAD — New lead
         await CheckAndSendAsync(db, "MKT_NEW_LEAD", async (cfg, dto) =>
         {
             var delayHours = cfg.DelayHours ?? 24;
@@ -828,12 +847,12 @@ public class MarketingNotificationJob
                 .AsNoTracking()
                 .CountAsync();
             if (newLeads == 0) return false;
-            dto.Title = "Lead moi";
-            dto.Message = $"{newLeads} lead moi trong {delayHours} gio qua";
+            dto.Title = "New lead";
+            dto.Message = $"{newLeads} new leads in the past {delayHours} hours";
             return true;
         });
 
-        // 31. MKT_LEAD_CONVERTED — Lead duoc chuyen doi
+        // 31. MKT_LEAD_CONVERTED — Lead converted
         await CheckAndSendAsync(db, "MKT_LEAD_CONVERTED", async (cfg, dto) =>
         {
             var delayHours = cfg.DelayHours ?? 24;
@@ -843,12 +862,12 @@ public class MarketingNotificationJob
                 .AsNoTracking()
                 .CountAsync();
             if (converted == 0) return false;
-            dto.Title = "Lead duoc chuyen doi";
-            dto.Message = $"{converted} lead duoc chuyen doi trong {delayHours} gio qua";
+            dto.Title = "Lead converted";
+            dto.Message = $"{converted} leads converted in the past {delayHours} hours";
             return true;
         });
 
-        // 32. MKT_LOW_ROAS — ROAS thap
+        // 32. MKT_LOW_ROAS — Low ROAS
         await CheckAndSendAsync(db, "MKT_LOW_ROAS", async (cfg, dto) =>
         {
             var threshold = cfg.ThresholdValue ?? 1m;
@@ -859,8 +878,8 @@ public class MarketingNotificationJob
                 .ToListAsync();
             var lowROAS = recentSpends.Count(s => s.CPA.HasValue && s.CPA > threshold);
             if (lowROAS == 0) return false;
-            dto.Title = "ROAS thap";
-            dto.Message = $"{lowROAS} campaign co ROAS thap hon {threshold} hom qua";
+            dto.Title = "Low ROAS";
+            dto.Message = $"{lowROAS} campaigns with ROAS below {threshold} yesterday";
             return true;
         });
     }
@@ -918,7 +937,7 @@ public class ExecutiveSummaryJob
         var today = DateTime.Today;
         var yesterday = today.AddDays(-1);
 
-        // 33. EXE_DAILY_DIGEST — Tom tat hoat dong ngay
+        // 33. EXE_DAILY_DIGEST — Daily activity summary
         await CheckAndSendAsync(db, "EXE_DAILY_DIGEST", async (cfg, dto) =>
         {
             var orders = await db.SalesOrders
@@ -933,20 +952,20 @@ public class ExecutiveSummaryJob
             var expenses = await db.Expenses
                 .Where(e => e.ExpenseDate >= yesterday && e.Status == "Pending")
                 .CountAsync();
-            dto.Title = "Tom tat hoat dong ngay";
-            dto.Message = $"Don hang: {orders} | Doanh thu: {revenue:N0} VND | Ticket: {tickets} | Chi phi cho duyet: {expenses}";
+            dto.Title = "Daily activity summary";
+            dto.Message = $"Orders: {orders} | Revenue: {revenue:N0} VND | Tickets: {tickets} | Expenses pending: {expenses}";
             return true;
         });
 
-        // 34. EXE_DAILY_REPORT — Bao cao ngay san sang
+        // 34. EXE_DAILY_REPORT — Daily report ready
         await CheckAndSendAsync(db, "EXE_DAILY_REPORT", async (cfg, dto) =>
         {
-            dto.Title = "Bao cao ngay san sang";
-            dto.Message = $"Bao cao ngay {today:dd/MM/yyyy} da san sang. Vui long kiem tra tai /Executive.";
+            dto.Title = "Daily report ready";
+            dto.Message = $"Daily report for {today:dd/MM/yyyy} is ready. Please check at /Executive.";
             return true;
         });
 
-        // 35. EXE_KPI_ANOMALY — Canh bao KPI bat thuong
+        // 35. EXE_KPI_ANOMALY — KPI anomaly warning
         await CheckAndSendAsync(db, "EXE_KPI_ANOMALY", async (cfg, dto) =>
         {
             var threshold = cfg.ThresholdValue ?? 20m;
@@ -965,12 +984,12 @@ public class ExecutiveSummaryJob
                 {
                     var deviation = Math.Abs((actual - target.TargetValue) / target.TargetValue * 100);
                     if (deviation >= threshold)
-                        anomalies.Add($"{target.KpiName} (lech {deviation:N0}%)");
+                        anomalies.Add($"{target.KpiName} (deviation {deviation:N0}%)");
                 }
             }
             if (anomalies.Count == 0) return false;
-            dto.Title = "Canh bao KPI bat thuong";
-            dto.Message = $"KPI bat thuong: {string.Join(", ", anomalies)}";
+            dto.Title = "KPI anomaly warning";
+            dto.Message = $"Abnormal KPIs: {string.Join(", ", anomalies)}";
             return true;
         });
     }

@@ -45,6 +45,17 @@
 </head>
 
 <body>
+  <!-- User role for EOH home navigation -->
+  @if (User.Identity?.IsAuthenticated == true)
+  {
+    var userRoles = User.Claims
+      .Where(c => c.Type == System.Security.Claims.ClaimTypes.Role)
+      .Select(c => c.Value)
+      .ToList();
+    var primaryRole = userRoles.FirstOrDefault(r => r != "Executive") ?? userRoles.FirstOrDefault() ?? "";
+    <div id="current-user-role" data-role="@primaryRole"></div>
+  }
+
   <!-- User ID for SignalR -->
   @if (User.Identity?.IsAuthenticated == true)
   {
@@ -114,6 +125,24 @@
   <script src="~/js/notification-client.js"></script>
   <!-- AI Chat Client -->
   <script src="~/js/ai-chat-client.js"></script>
+  <!-- AI Chat Widget (rendered at layout level for global access from navbar button) -->
+  @{
+      var aiDept = ViewData["AIDepartment"] as string ?? User.Claims.FirstOrDefault(c => c.Type == System.Security.Claims.ClaimTypes.Role)?.Value ?? "";
+      if (string.IsNullOrEmpty(aiDept)) aiDept = "sales";
+      var aiDeptNormalized = aiDept.ToLower() switch {
+          "sales" => "Sales",
+          "finance" => "Finance",
+          "marketing" => "Marketing",
+          "inventory" => "Inventory",
+          "hr" => "HR",
+          "cskh" => "CSKH",
+          "executive" => "Executive",
+          _ => "Sales"
+      };
+      var aiModel = new Dashboard.Models.ViewModels.AIChatWidgetModel { Department = aiDeptNormalized };
+  }
+  <partial name="~/Views/Shared/Partials/_AIChatWidget.cshtml" model="aiModel" />
+
 </body>
 
 </html>

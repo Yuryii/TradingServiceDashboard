@@ -41,57 +41,56 @@
     var quickActions = department.ToLower() switch
     {
         "sales" => new[] {
-            new { label = "Doanh số tuần này?", icon = "bx-line-chart" },
-            new { label = "Top 5 khách hàng", icon = "bx-star" },
-            new { label = "Cơ hội chậm trễ", icon = "bx-alarm-exclamation" },
-            new { label = "Pipeline hiện tại", icon = "bx-filter-alt" }
+            new { label = "This week's sales?", icon = "bx-line-chart" },
+            new { label = "Top 5 customers", icon = "bx-star" },
+            new { label = "Delayed opportunities", icon = "bx-alarm-exclamation" },
+            new { label = "Current pipeline", icon = "bx-filter-alt" }
         },
         "finance" => new[] {
-            new { label = "Chi phí tháng này?", icon = "bx-coin-stack" },
-            new { label = "Dòng tiền", icon = "bx-trending-down" },
+            new { label = "This month's expenses?", icon = "bx-coin-stack" },
+            new { label = "Cash flow", icon = "bx-trending-down" },
             new { label = "AR/AP aging", icon = "bx-time-five" },
-            new { label = "Lợi nhuận ròng", icon = "bx-dollar" }
+            new { label = "Net profit", icon = "bx-dollar" }
         },
         "marketing" => new[] {
-            new { label = "Hiệu suất chiến dịch?", icon = "bx-megaphone" },
+            new { label = "Campaign performance?", icon = "bx-megaphone" },
             new { label = "Top leads", icon = "bx-user-plus" },
-            new { label = "ROI chiến dịch", icon = "bx-trending-up" },
-            new { label = "Chi phí CPL", icon = "bx-coin" }
+            new { label = "Campaign ROI", icon = "bx-trending-up" },
+            new { label = "CPL cost", icon = "bx-coin" }
         },
         "inventory" => new[] {
-            new { label = "Tồn kho hiện tại?", icon = "bx-package" },
-            new { label = "Sản phẩm sắp hết", icon = "bx-alert-circle" },
-            new { label = "Nhập kho gần đây", icon = "bx-log-in" },
-            new { label = "Vòng quay kho", icon = "bx-refresh" }
+            new { label = "Current inventory?", icon = "bx-package" },
+            new { label = "Products running low", icon = "bx-alert-circle" },
+            new { label = "Recent receipts", icon = "bx-log-in" },
+            new { label = "Inventory turnover", icon = "bx-refresh" }
         },
         "hr" => new[] {
-            new { label = "Tổng nhân sự?", icon = "bx-group" },
-            new { label = "Tỷ lệ nghỉ việc", icon = "bx-user-x" },
-            new { label = "Vị trí đang tuyển", icon = "bx-briefcase" },
-            new { label = "Đơn nghỉ phép", icon = "bx-calendar-x" }
+            new { label = "Total headcount?", icon = "bx-group" },
+            new { label = "Turnover rate", icon = "bx-user-x" },
+            new { label = "Open positions", icon = "bx-briefcase" },
+            new { label = "Leave requests", icon = "bx-calendar-x" }
         },
         "cskh" => new[] {
-            new { label = "Tickets đang mở?", icon = "bx-ticket" },
+            new { label = "Open tickets?", icon = "bx-ticket" },
             new { label = "CSAT score", icon = "bx-star" },
             new { label = "SLA compliance", icon = "bx-check-circle" },
             new { label = "Top agent", icon = "bx-medal" }
         },
         "executive" => new[] {
-            new { label = "Tổng quan công ty?", icon = "bx-bar-chart" },
-            new { label = "Top phòng ban", icon = "bx-building" },
-            new { label = "Cảnh báo", icon = "bx-alert-triangle" },
-            new { label = "Các hoạt động gần đây", icon = "bx-activity" }
+            new { label = "Company overview?", icon = "bx-bar-chart" },
+            new { label = "Top departments", icon = "bx-building" },
+            new { label = "Alerts", icon = "bx-alert-triangle" },
+            new { label = "Recent activities", icon = "bx-activity" }
         },
         _ => new[] {
-            new { label = "Tổng quan", icon = "bx-pie-chart-alt" },
+            new { label = "Overview", icon = "bx-pie-chart-alt" },
             new { label = "Top KPIs", icon = "bx-trending-up" },
-            new { label = "Dữ liệu gần đây", icon = "bx-history" }
+            new { label = "Recent data", icon = "bx-history" }
         }
     };
 }
 
 <style>
-    /* Above .layout-navbar at z-index 1080 on smaller breakpoints (theme) */
     #ai-chat-fab {
         position: fixed;
         bottom: 24px;
@@ -99,33 +98,38 @@
         z-index: 1090;
         width: 56px;
         height: 56px;
+        background: linear-gradient(135deg, #7367f0 0%, #9e95f5 100%);
+        color: white;
         border-radius: 50%;
-        background: linear-gradient(135deg, @accentColor 0%, #7367f0 100%);
-        border: none;
-        box-shadow: 0 4px 20px rgba(115, 103, 240, 0.4);
         display: flex;
         align-items: center;
         justify-content: center;
         cursor: pointer;
-        transition: all 0.3s ease;
-        color: white;
+        box-shadow: 0 4px 16px rgba(115, 103, 240, 0.4);
+        transition: transform 0.2s, box-shadow 0.2s;
     }
 
     #ai-chat-fab:hover {
         transform: scale(1.1);
-        box-shadow: 0 6px 28px rgba(115, 103, 240, 0.5);
+        box-shadow: 0 6px 20px rgba(115, 103, 240, 0.5);
     }
 
-    #ai-chat-fab .fab-badge {
+    .fab-badge {
         position: absolute;
-        top: -2px;
-        right: -2px;
-        width: 14px;
-        height: 14px;
+        top: -4px;
+        right: -4px;
+        min-width: 18px;
+        height: 18px;
         background: #ea5455;
-        border-radius: 50%;
+        color: white;
+        font-size: 10px;
+        font-weight: 700;
+        border-radius: 9px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0 4px;
         border: 2px solid white;
-        animation: pulse 2s infinite;
     }
 
     @@keyframes pulse {
@@ -597,7 +601,7 @@
             </div>
         </div>
         <div class="ai-chat-header-actions">
-            <button onclick="createNewSession()" title="Phiên mới">
+            <button onclick="createNewSession()" title="New session">
                 <i class="icon-base bx bx-plus"></i>
             </button>
             <button onclick="toggleAIPanel()" title="Dong">

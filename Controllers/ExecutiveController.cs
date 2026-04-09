@@ -11,16 +11,22 @@ public class ExecutiveController : Controller
 {
     private readonly IExecutiveDashboardService _service;
     private readonly IPdfReportService _pdfService;
+    private readonly IJobSchedulerService _jobScheduler;
 
-    public ExecutiveController(IExecutiveDashboardService service, IPdfReportService pdfService)
+    public ExecutiveController(
+        IExecutiveDashboardService service,
+        IPdfReportService pdfService,
+        IJobSchedulerService jobScheduler)
     {
         _service = service;
         _pdfService = pdfService;
+        _jobScheduler = jobScheduler;
     }
 
     public async Task<IActionResult> Index(DateTime? from, DateTime? to)
     {
         ViewData["CurrentPage"] = "Executive";
+        ViewData["AIDepartment"] = "Executive";
         var vm = await _service.GetDashboardDataAsync(from, to);
         return View(vm);
     }
@@ -36,5 +42,11 @@ public class ExecutiveController : Controller
     {
         var vm = await _service.GetDashboardDataAsync(from, to);
         return Json(vm.RevenueProfitAreaChart);
+    }
+
+    public async Task<IActionResult> GetJobConfigs()
+    {
+        var configs = await _jobScheduler.GetAllJobConfigsAsync();
+        return Json(configs);
     }
 }

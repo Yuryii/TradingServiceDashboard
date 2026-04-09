@@ -53,6 +53,9 @@ public class NotificationConfig
     [MaxLength(500)]
     public string AllowedRoles { get; set; } = "*";
 
+    [MaxLength(50)]
+    public string? CronExpression { get; set; }
+
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
     public DateTime? UpdatedAt { get; set; }

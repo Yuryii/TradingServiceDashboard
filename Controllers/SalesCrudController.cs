@@ -5,6 +5,7 @@ using Dashboard.Data;
 using Dashboard.Models;
 using Dashboard.Models.ViewModels;
 using Dashboard.Services;
+using Dashboard.Services.Interfaces;
 
 namespace Dashboard.Controllers;
 
@@ -13,11 +14,16 @@ public class SalesCrudController : Controller
 {
     private readonly ApplicationDbContext _context;
     private readonly ExcelCrudService _excelService;
+    private readonly INotificationService _notificationService;
 
-    public SalesCrudController(ApplicationDbContext context, ExcelCrudService excelService)
+    public SalesCrudController(
+        ApplicationDbContext context,
+        ExcelCrudService excelService,
+        INotificationService notificationService)
     {
         _context = context;
         _excelService = excelService;
+        _notificationService = notificationService;
     }
 
     // GET: /SalesCrud
@@ -95,6 +101,19 @@ public class SalesCrudController : Controller
 
         _context.Customers.Add(entity);
         await _context.SaveChangesAsync();
+
+        // 立即发送通知给 Executive
+        await _notificationService.SendToRoleAsync("Executive", new NotificationSignalDto
+        {
+            Title = "New customer",
+            Message = $"New customer \"{model.CustomerName}\" was created by {User.Identity?.Name}",
+            Category = "Sales",
+            Severity = "Info",
+            IconClass = "bx-user-plus",
+            IconBgClass = "bg-label-success",
+            ActionUrl = "/SalesCrud/Customers"
+        });
+
         TempData["SuccessMessage"] = "Customer created successfully.";
         return RedirectToAction(nameof(Customers));
     }

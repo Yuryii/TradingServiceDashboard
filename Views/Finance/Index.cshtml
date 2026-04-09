@@ -788,11 +788,6 @@ Object.assign(window.dashboardCharts, {
   </script>
 }
 
-@{
-    var aiFinanceModel = new Dashboard.Models.ViewModels.AIChatWidgetModel { Department = "Finance" };
-}
-<partial name="~/Views/Shared/Partials/_AIChatWidget.cshtml" model="aiFinanceModel" />
-
 <script>
 document.addEventListener('DOMContentLoaded', function () {
   var el = document.getElementById('finance-dashboard-grid');

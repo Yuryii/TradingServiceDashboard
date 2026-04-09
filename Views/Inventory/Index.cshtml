@@ -974,11 +974,6 @@ window.dashboardCharts.inventoryAccuracyHeatmap = @Html.Raw(Json.Serialize(Model
   </script>
 }
 
-@{
-    var aiInventoryModel = new Dashboard.Models.ViewModels.AIChatWidgetModel { Department = "Inventory" };
-}
-<partial name="~/Views/Shared/Partials/_AIChatWidget.cshtml" model="aiInventoryModel" />
-
 <script>
 document.addEventListener('DOMContentLoaded', function () {
   var el = document.getElementById('inventory-dashboard-grid');

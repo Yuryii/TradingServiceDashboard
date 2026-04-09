@@ -27,9 +27,12 @@ document.addEventListener('DOMContentLoaded', function (e) {
   const orderAreaChartEl = document.querySelector('#orderChart');
   if (typeof orderAreaChartEl !== 'undefined' && orderAreaChartEl !== null) {
     const orderData = serverCharts.orderChart;
-    const orderSeries = orderData && orderData.series && orderData.series.length
-      ? orderData.series
-      : [{ data: [180, 175, 275, 140, 205, 190, 295] }];
+    let orderSeries = [{ data: [180, 175, 275, 140, 205, 190, 295] }];
+    if (orderData && Array.isArray(orderData.series) && orderData.series.length > 0) {
+      orderSeries = orderData.series.map(function(s) {
+        return { data: Array.isArray(s.data) ? s.data : [] };
+      });
+    }
 
     const orderAreaChartConfig = {
       chart: {
@@ -46,7 +49,7 @@ document.addEventListener('DOMContentLoaded', function (e) {
         discrete: [{
           fillColor: cardColor,
           seriesIndex: 0,
-          dataPointIndex: orderSeries[0].data.length - 1,
+          dataPointIndex: Array.isArray(orderSeries[0] && orderSeries[0].data) ? orderSeries[0].data.length - 1 : 6,
           strokeColor: '#71dd88',
           strokeWidth: 2,
           size: 6,
@@ -213,15 +216,16 @@ document.addEventListener('DOMContentLoaded', function (e) {
   const incomeChartEl = document.querySelector('#incomeChart');
   if (typeof incomeChartEl !== 'undefined' && incomeChartEl !== null) {
     const incomeData = serverCharts.incomeChart;
-    const incomeSeries = incomeData && incomeData.series && incomeData.series.length
-      ? incomeData.series
-      : [{ data: [21, 30, 22, 42, 26, 35, 29] }];
-    const incomeCats = incomeData && incomeData.categories && incomeData.categories.length
-      ? incomeData.categories
-      : ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul'];
-    const lastIncomeVal = incomeSeries[0] && incomeSeries[0].data && incomeSeries[0].data.length
-      ? incomeSeries[0].data[incomeSeries[0].data.length - 1]
-      : 29;
+    let incomeSeries = [{ data: [21, 30, 22, 42, 26, 35, 29] }];
+    if (incomeData && Array.isArray(incomeData.series) && incomeData.series.length > 0) {
+      incomeSeries = incomeData.series.map(function(s) {
+        return { data: Array.isArray(s.data) ? s.data : [] };
+      });
+    }
+      const incomeCats = Array.isArray(incomeData && incomeData.categories) && incomeData.categories.length
+        ? incomeData.categories
+        : ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul'];
+      const incomeLastIdx = incomeSeries[0] && Array.isArray(incomeSeries[0].data) ? incomeSeries[0].data.length - 1 : 6;
 
     const incomeChartConfig = {
       series: incomeSeries,
@@ -243,7 +247,7 @@ document.addEventListener('DOMContentLoaded', function (e) {
         discrete: [{
           fillColor: '#ffffff',
           seriesIndex: 0,
-          dataPointIndex: incomeSeries[0].data.length - 1,
+          dataPointIndex: incomeLastIdx,
           strokeColor: '#6965fd',
           strokeWidth: 2,
           size: 6,

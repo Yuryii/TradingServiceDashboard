@@ -126,3 +126,19 @@ document.addEventListener('DOMContentLoaded', function () {
 function isMacOS() {
   return /Mac|iPod|iPhone|iPad/.test(navigator.userAgent);
 }
+
+// Navigate EOH icon to the user's own dashboard based on their role
+function navigateToUserDashboard() {
+  var role = document.getElementById('current-user-role')?.dataset?.role || '';
+  var redirectMap = {
+    'Executive': '/Executive',
+    'Sales': '/Sales',
+    'Marketing': '/Marketing',
+    'Finance': '/Finance',
+    'Inventory': '/Inventory',
+    'HumanResources': '/HumanResources',
+    'CustomerService': '/CustomerService'
+  };
+  var targetUrl = redirectMap[role] || '/Dashboards';
+  window.location.href = targetUrl;
+}

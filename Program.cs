@@ -75,8 +75,12 @@ builder.Services.ConfigureApplicationCookie(options => {
     options.SlidingExpiration = true;
 });
 
-// Configure SignalR
-builder.Services.AddSignalR();
+// Configure SignalR (camelCase matches MVC JSON so clients can share property resolution)
+builder.Services.AddSignalR()
+    .AddJsonProtocol(options =>
+    {
+        options.PayloadSerializerOptions.PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase;
+    });
 
 // Configure Hangfire with SQL Server storage
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")!;
@@ -120,6 +124,7 @@ builder.Services.AddScoped<GlobalSearchService>();
 // Register Notification Services
 builder.Services.AddScoped<INotificationService, NotificationService>();
 builder.Services.AddSingleton<INotificationConfigCache, NotificationConfigCache>();
+builder.Services.AddSingleton<IJobSchedulerService, JobSchedulerService>();
 
 // Register AI Chat Services
 builder.Services.AddHttpClient("AIChat");
@@ -178,6 +183,22 @@ app.UseHangfireDashboard("/hangfire", new Hangfire.DashboardOptions
 });
 
 // Start Hangfire recurring jobs
-NotificationJobs.RegisterJobs();
+NotificationJobsRegistrar.RegisterJobs();
+
+// Seed CronExpression for existing NotificationConfigs
+using (var scope = app.Services.CreateScope())
+{
+    var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+    var nullCron = db.NotificationConfigs.Where(c => c.CronExpression == null).ToList();
+    if (nullCron.Any())
+    {
+        var defaults = NotificationConfigDefaults.CronDefaults;
+        foreach (var cfg in nullCron)
+        {
+            cfg.CronExpression = defaults.GetValueOrDefault(cfg.NotificationCode, "*/5 * * * *");
+        }
+        db.SaveChanges();
+    }
+}
 
 app.Run();

@@ -5,6 +5,38 @@
     var userId = document.querySelector('meta[name="userId"]')?.content;
     var pollingInterval = null;
 
+    /** Normalize API / SignalR payloads. System.Text.Json camelCase uses notificationID (not notificationId). */
+    function normN(n) {
+        if (!n || typeof n !== 'object') return null;
+        var rawId = n.notificationID != null ? n.notificationID : (n.notificationId != null ? n.notificationId : n.NotificationID);
+        var idNum = rawId != null && rawId !== '' ? Number(rawId) : NaN;
+        return {
+            notificationID: !isNaN(idNum) ? idNum : 0,
+            title: (n.title != null ? n.title : n.Title) || '',
+            message: (n.message != null ? n.message : n.Message) || '',
+            category: (n.category != null ? n.category : n.Category) || '',
+            severity: (n.severity != null ? n.severity : n.Severity) || 'Info',
+            iconClass: (n.iconClass != null ? n.iconClass : n.IconClass) || '',
+            iconBgClass: (n.iconBgClass != null ? n.iconBgClass : n.IconBgClass) || '',
+            actionUrl: n.actionUrl != null ? n.actionUrl : n.ActionUrl,
+            isRead: !!(n.isRead != null ? n.isRead : n.IsRead),
+            createdAt: n.createdAt != null ? n.createdAt : n.CreatedAt,
+            timeAgoText: (n.timeAgo != null ? n.timeAgo : n.TimeAgo) || ''
+        };
+    }
+
+    function unwrapNotificationList(data) {
+        if (Array.isArray(data)) return data;
+        if (data && Array.isArray(data.items)) return data.items;
+        if (data && Array.isArray(data.notifications)) return data.notifications;
+        return [];
+    }
+
+    function displaySeverity(sev) {
+        var s = sev != null ? String(sev).trim() : '';
+        return s !== '' ? s : 'Info';
+    }
+
     function init() {
         if (!userId) return;
         connectSignalR();
@@ -79,7 +111,7 @@
         fetch('/Notification/GetAll?pageSize=10')
             .then(function (r) { return r.json(); })
             .then(function (notifications) {
-                renderNotificationList(notifications);
+                renderNotificationList(unwrapNotificationList(notifications));
             })
             .catch(function (err) {
                 console.warn('Failed to load notifications:', err);
@@ -100,30 +132,32 @@
 
         var html = '';
         notifications.forEach(function (n) {
-            var severityClass = getSeverityClass(n.Severity);
-            var iconBgClass = getIconBgClass(n.Category);
-            var readClass = n.IsRead ? 'opacity-50' : '';
-            var timeAgo = formatTimeAgo(n.CreatedAt);
+            var x = normN(n);
+            if (!x) return;
+            var severityClass = getSeverityClass(x.severity);
+            var iconBgClass = x.iconBgClass && String(x.iconBgClass).trim() !== '' ? x.iconBgClass : getIconBgClass(x.category);
+            var readClass = x.isRead ? 'opacity-50' : '';
+            var timeAgo = formatTimeAgo(x.createdAt, x.timeAgoText);
 
             html +=
                 '<li class="list-group-item list-group-item-action dropdown-notifications-item ' + readClass + '" ' +
-                '    data-id="' + n.NotificationID + '" ' +
-                '    onclick="window.markNotificationRead(' + n.NotificationID + ', \'' + (n.ActionUrl || '') + '\')">' +
+                '    data-id="' + x.notificationID + '" ' +
+                '    onclick="window.markNotificationRead(' + x.notificationID + ', \'' + (x.actionUrl || '') + '\')">' +
                 '  <div class="d-flex">' +
                 '    <div class="flex-shrink-0 me-3">' +
                 '      <div class="avatar ' + iconBgClass + '">' +
                 '        <span class="avatar-initial rounded-circle">' +
-                '          <i class="icon-base ' + getCategoryIcon(n.Category) + '"></i>' +
+                '          <i class="icon-base ' + getCategoryIcon(x.category, x.iconClass) + '"></i>' +
                 '        </span>' +
                 '      </div>' +
                 '    </div>' +
                 '    <div class="flex-grow-1">' +
-                '      <h6 class="mb-1 small">' + escapeHtml(n.Title) + '</h6>' +
-                '      <p class="mb-0 small text-muted">' + escapeHtml(n.Message) + '</p>' +
-                '      <small class="text-muted">' + timeAgo + '</small>' +
+                '      <h6 class="mb-1 small">' + escapeHtml(x.title) + '</h6>' +
+                '      <p class="mb-0 small text-muted">' + escapeHtml(x.message) + '</p>' +
+                '      <small class="text-muted">' + escapeHtml(timeAgo) + '</small>' +
                 '    </div>' +
                 '    <div class="flex-shrink-0">' +
-                '      <span class="badge ' + severityClass + '">' + n.Severity + '</span>' +
+                '      <span class="badge ' + severityClass + '">' + escapeHtml(displaySeverity(x.severity)) + '</span>' +
                 '    </div>' +
                 '  </div>' +
                 '</li>';
@@ -139,31 +173,34 @@
 
         if (noItem) noItem.style.display = 'none';
 
-        var severityClass = getSeverityClass(notification.Severity);
-        var iconBgClass = getIconBgClass(notification.Category);
-        var timeAgo = formatTimeAgo(notification.CreatedAt);
+        var x = normN(notification);
+        if (!x) return;
+
+        var severityClass = getSeverityClass(x.severity);
+        var iconBgClass = x.iconBgClass && String(x.iconBgClass).trim() !== '' ? x.iconBgClass : getIconBgClass(x.category);
+        var timeAgo = formatTimeAgo(x.createdAt, x.timeAgoText);
 
         var item = document.createElement('li');
         item.className = 'list-group-item list-group-item-action dropdown-notifications-item';
-        item.dataset.id = notification.NotificationID;
+        item.dataset.id = x.notificationID;
         item.style.animation = 'slideDown 0.3s ease';
 
         item.innerHTML =
-            '<div class="d-flex" onclick="window.markNotificationRead(' + notification.NotificationID + ', \'' + (notification.ActionUrl || '') + '\')">' +
+            '<div class="d-flex" onclick="window.markNotificationRead(' + x.notificationID + ', \'' + (x.actionUrl || '') + '\')">' +
             '  <div class="flex-shrink-0 me-3">' +
             '    <div class="avatar ' + iconBgClass + '">' +
             '      <span class="avatar-initial rounded-circle">' +
-            '        <i class="icon-base ' + getCategoryIcon(notification.Category) + '"></i>' +
+            '        <i class="icon-base ' + getCategoryIcon(x.category, x.iconClass) + '"></i>' +
             '      </span>' +
             '    </div>' +
             '  </div>' +
             '  <div class="flex-grow-1">' +
-            '    <h6 class="mb-1 small">' + escapeHtml(notification.Title) + '</h6>' +
-            '    <p class="mb-0 small text-muted">' + escapeHtml(notification.Message) + '</p>' +
-            '    <small class="text-muted">' + timeAgo + '</small>' +
+            '    <h6 class="mb-1 small">' + escapeHtml(x.title) + '</h6>' +
+            '    <p class="mb-0 small text-muted">' + escapeHtml(x.message) + '</p>' +
+            '    <small class="text-muted">' + escapeHtml(timeAgo) + '</small>' +
             '  </div>' +
             '  <div class="flex-shrink-0">' +
-            '    <span class="badge ' + severityClass + '">' + notification.Severity + '</span>' +
+            '    <span class="badge ' + severityClass + '">' + escapeHtml(displaySeverity(x.severity)) + '</span>' +
             '  </div>' +
             '</div>';
 
@@ -231,22 +268,25 @@
         var container = document.getElementById('toastContainer') || createToastContainer();
         var toastId = 'toast-' + Date.now();
 
-        var severityClass = getSeverityClass(notification.Severity);
-        var iconBgClass = getIconBgClass(notification.Category);
+        var x = normN(notification);
+        if (!x) return;
+
+        var severityClass = getSeverityClass(x.severity);
+        var iconBgClass = x.iconBgClass && String(x.iconBgClass).trim() !== '' ? x.iconBgClass : getIconBgClass(x.category);
 
         var toast =
             '<div id="' + toastId + '" class="toast" role="alert" aria-live="assertive" aria-atomic="true" data-bs-autohide="true" data-bs-delay="5000">' +
             '  <div class="toast-header ' + severityClass + '"> ' +
             '    <div class="avatar ' + iconBgClass + ' me-2">' +
             '      <span class="avatar-initial rounded-circle">' +
-            '        <i class="icon-base ' + getCategoryIcon(notification.Category) + '"></i>' +
+            '        <i class="icon-base ' + getCategoryIcon(x.category, x.iconClass) + '"></i>' +
             '      </span>' +
             '    </div>' +
-            '    <strong class="me-auto">' + escapeHtml(notification.Title) + '</strong>' +
-            '    <small>' + notification.Severity + '</small>' +
+            '    <strong class="me-auto">' + escapeHtml(x.title) + '</strong>' +
+            '    <small>' + escapeHtml(x.severity) + '</small>' +
             '    <button type="button" class="btn-close btn-close-white ms-2" data-bs-dismiss="toast"></button>' +
             '  </div>' +
-            '  <div class="toast-body">' + escapeHtml(notification.Message) + '</div>' +
+            '  <div class="toast-body">' + escapeHtml(x.message) + '</div>' +
             '</div>';
 
         container.insertAdjacentHTML('beforeend', toast);
@@ -291,7 +331,10 @@
         }
     }
 
-    function getCategoryIcon(category) {
+    function getCategoryIcon(category, iconClassFromServer) {
+        if (iconClassFromServer && String(iconClassFromServer).trim() !== '') {
+            return String(iconClassFromServer).trim();
+        }
         switch (category) {
             case 'Finance': return 'bx-dollar';
             case 'Inventory': return 'bx-box';
@@ -304,10 +347,45 @@
         }
     }
 
-    function formatTimeAgo(isoString) {
-        var date = new Date(isoString);
+    function parseNotificationDate(val) {
+        if (val == null || val === '') return null;
+        if (typeof val === 'number' && isFinite(val)) {
+            var dNum = val < 1e12 ? new Date(val * 1000) : new Date(val);
+            return isNaN(dNum.getTime()) ? null : dNum;
+        }
+        if (val instanceof Date) return isNaN(val.getTime()) ? null : val;
+        if (typeof val === 'string' && val.indexOf('/Date(') === 0) {
+            var ms = parseInt(val.replace(/\D/g, ''), 10);
+            var d = new Date(ms);
+            return isNaN(d.getTime()) ? null : d;
+        }
+        if (typeof val === 'string') {
+            var s = val.trim();
+            if (s === '' || s === 'Invalid Date') return null;
+            // SQL / .NET "o" without offset: treat as UTC first (CreatedAt is UTC in DB)
+            if (/^\d{4}-\d{2}-\d{2}[ T]\d{2}:\d{2}/.test(s) && !/[zZ]|[+\-]\d{2}:?\d{2}$/.test(s)) {
+                var isoT = s.replace(' ', 'T');
+                var dUtc = new Date(isoT.endsWith('Z') ? isoT : isoT + 'Z');
+                if (!isNaN(dUtc.getTime())) return dUtc;
+                var dLocal = new Date(isoT);
+                if (!isNaN(dLocal.getTime())) return dLocal;
+                return null;
+            }
+        }
+        var date = new Date(val);
+        return isNaN(date.getTime()) ? null : date;
+    }
+
+    function formatTimeAgo(isoString, serverFallback) {
+        var date = parseNotificationDate(isoString);
+        if (!date) {
+            if (serverFallback != null && String(serverFallback).trim() !== '') {
+                return String(serverFallback).trim();
+            }
+            return '';
+        }
         var now = new Date();
-        var diffMs = now - date;
+        var diffMs = now.getTime() - date.getTime();
         var diffMin = Math.floor(diffMs / 60000);
 
         if (diffMin < 1) return 'Vua xong';
@@ -316,7 +394,8 @@
         if (diffHrs < 24) return diffHrs + ' gio truoc';
         var diffDays = Math.floor(diffHrs / 24);
         if (diffDays < 7) return diffDays + ' ngay truoc';
-        return date.toLocaleDateString('vi-VN');
+        var localeStr = date.toLocaleDateString('vi-VN');
+        return localeStr.indexOf('Invalid') >= 0 ? (serverFallback ? String(serverFallback).trim() : '') : localeStr;
     }
 
     function escapeHtml(text) {

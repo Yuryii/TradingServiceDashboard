@@ -9,6 +9,7 @@ public interface INotificationService
     Task SendToRoleAsync(string role, NotificationSignalDto notification);
     Task<List<NotificationListItemDto>> GetUserNotificationsAsync(string userId, int page = 1, int pageSize = 20);
     Task<int> GetUnreadCountAsync(string userId);
+    Task<NotificationCountsDto> GetNotificationCountsAsync(string userId);
     Task<NotificationListItemDto?> GetByIdAsync(int notificationId);
     Task MarkAsReadAsync(int notificationId, string userId);
     Task MarkAllAsReadAsync(string userId);

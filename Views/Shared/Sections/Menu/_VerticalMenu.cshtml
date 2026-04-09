@@ -8,7 +8,7 @@
 
   @* ! Hide app brand if navbar-full *@
   <div class='app-brand demo @((@ViewData["navbarFull"] != null && Convert.ToBoolean(@ViewData["navbarFull"])) ? "d-xl-none" : "")'>
-    <a asp-controller="Dashboards" asp-action="Index" class="app-brand-link">
+    <a href="javascript:void(0);" class="app-brand-link eoh-home-link" onclick="navigateToUserDashboard()">
       <span class="app-brand-logo demo">
         @await Html.PartialAsync("../_Partials/_Macros")
       </span>
@@ -50,6 +50,14 @@
         <i class="menu-icon icon-base bx bx-bar-chart-alt-2"></i>
         <div class="text-truncate">Executive</div>
         <div class="badge rounded-pill bg-label-primary text-uppercase fs-tiny ms-auto">Overview</div>
+      </a>
+    </li>
+    <!-- Job Management (Executive Only) -->
+    <li class='menu-item@(currentPage.StartsWith("/Executive/JobManagement") ? " active" : "")'>
+      <a href="@Url.Action("Index", "Executive")" class="menu-link" onclick="setTimeout(function(){var el=document.getElementById('job-management');if(el)el.scrollIntoView({behavior:'smooth'});},200)">
+        <i class="menu-icon icon-base bx bx-clock"></i>
+        <div class="text-truncate">Job Management</div>
+        <div class="badge rounded-pill bg-label-warning text-uppercase fs-tiny ms-auto">New</div>
       </a>
     </li>
     }

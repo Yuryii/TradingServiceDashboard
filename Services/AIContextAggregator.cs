@@ -85,7 +85,7 @@ public class AIContextAggregator
                 "hr" => await BuildHrKpiSummaryAsync(from, to),
                 "cskh" => await BuildCsKpiSummaryAsync(from, to),
                 "executive" => await BuildExecutiveKpiSummaryAsync(from, to),
-                _ => "Dữ liệu tổng hợp từ nhiều phòng ban."
+                _ => "Aggregated data from multiple departments."
             };
 
             context.TopItemsSummary = department.ToLower() switch
@@ -129,7 +129,7 @@ public class AIContextAggregator
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error building AI context for department {Department}", department);
-            context.KpiSummary = "Dữ liệu đang được cập nhật. Vui lòng thử lại sau.";
+            context.KpiSummary = "Data is being updated. Please try again later.";
         }
 
         return context;
@@ -141,17 +141,17 @@ public class AIContextAggregator
     {
         var sb = new StringBuilder();
         var totalSales = await _salesService.GetTotalSalesAsync(from, to);
-        sb.AppendLine($"- Tổng doanh số: {totalSales.FormattedValue} (tăng {totalSales.GrowthPercent:+0;-0;0}% so với kỳ trước)");
+        sb.AppendLine($"- Total revenue: {totalSales.FormattedValue} (up {totalSales.GrowthPercent:+0;-0;0}% vs previous period)");
         var totalOrders = await _salesService.GetTotalOrdersAsync(from, to);
-        sb.AppendLine($"- Tổng đơn hàng: {totalOrders.FormattedValue} ({totalOrders.GrowthPercent:+0;-0;0}%)");
+        sb.AppendLine($"- Total orders: {totalOrders.FormattedValue} ({totalOrders.GrowthPercent:+0;-0;0}%)");
         var winRate = await _salesService.GetWinRateAsync(from, to);
-        sb.AppendLine($"- Tỷ lệ thắng: {winRate.FormattedValue}");
+        sb.AppendLine($"- Win rate: {winRate.FormattedValue}");
         var margin = await _salesService.GetGrossMarginAsync(from, to);
-        sb.AppendLine($"- Biên lợi nhuận gộp: {margin.FormattedValue}");
+        sb.AppendLine($"- Gross margin: {margin.FormattedValue}");
         var newCustomers = await _salesService.GetNewCustomersAsync(from, to);
-        sb.AppendLine($"- Khách hàng mới: {newCustomers.FormattedValue}");
+        sb.AppendLine($"- New customers: {newCustomers.FormattedValue}");
         var pendingDeals = await _salesService.GetPendingDealsAsync(from, to);
-        sb.AppendLine($"- Cơ hội đang chờ: {pendingDeals.FormattedValue}");
+        sb.AppendLine($"- Pending deals: {pendingDeals.FormattedValue}");
         return sb.ToString();
     }
 
@@ -161,19 +161,19 @@ public class AIContextAggregator
         var topProducts = await _salesService.GetTopProductsAsync(5, from, to);
         if (topProducts.Any())
         {
-            sb.AppendLine("Top 5 sản phẩm bán chạy:");
+            sb.AppendLine("Top 5 best-selling products:");
             foreach (var p in topProducts) sb.AppendLine($"  - {p.Name}: {p.FormattedValue}");
         }
         var topSalespersons = await _salesService.GetTopSalespersonsAsync(5, from, to);
         if (topSalespersons.Any())
         {
-            sb.AppendLine("Top 5 nhân viên xuất sắc:");
+            sb.AppendLine("Top 5 outstanding employees:");
             foreach (var s in topSalespersons) sb.AppendLine($"  - {s.Name}: {s.FormattedValue}");
         }
         var pareto = await _salesService.GetParetoByCustomerAsync(5, from, to);
         if (pareto.Any())
         {
-            sb.AppendLine("Top 5 khách hàng doanh thu cao nhất:");
+            sb.AppendLine("Top 5 highest revenue customers:");
             foreach (var c in pareto) sb.AppendLine($"  - {c.Name}: {c.FormattedValue}");
         }
         return sb.ToString();
@@ -185,13 +185,13 @@ public class AIContextAggregator
         var recentOrders = await _salesService.GetRecentOrdersAsync(5, from, to);
         if (recentOrders.Any())
         {
-            sb.AppendLine("5 đơn hàng gần nhất:");
+            sb.AppendLine("5 most recent orders:");
             foreach (var o in recentOrders) sb.AppendLine($"  - {o.Column1}");
         }
         var funnel = await _salesService.GetSalesFunnelAsync(from, to);
         if (funnel.Any())
         {
-            sb.AppendLine("Pipeline bán hàng:");
+            sb.AppendLine("Sales pipeline:");
             foreach (var f in funnel) sb.AppendLine($"  - {f.Stage}: {f.Count} ({f.ConversionRate}%)");
         }
         return sb.ToString();
@@ -203,14 +203,14 @@ public class AIContextAggregator
         var overviewChart = await _salesService.GetSalesOverviewChartAsync(from, to);
         if (overviewChart.Categories.Any())
         {
-            sb.AppendLine($"Xu hướng doanh số ({overviewChart.Categories.First()} - {overviewChart.Categories.Last()}):");
+            sb.AppendLine($"Sales trend ({overviewChart.Categories.First()} - {overviewChart.Categories.Last()}):");
             foreach (var series in overviewChart.Series)
                 sb.AppendLine($"  - {series.Name}: {string.Join(", ", series.Data.Take(3))}...");
         }
         var channelChart = await _salesService.GetRevenueByChannelChartAsync(from, to);
         if (channelChart.Categories.Any())
         {
-            sb.AppendLine("Doanh thu theo kênh:");
+            sb.AppendLine("Revenue by channel:");
             for (int i = 0; i < channelChart.Categories.Count && i < channelChart.Series[0].Data.Count; i++)
                 sb.AppendLine($"  - {channelChart.Categories[i]}: {channelChart.Series[0].Data[i]:N0}");
         }
@@ -223,21 +223,21 @@ public class AIContextAggregator
     {
         var sb = new StringBuilder();
         var totalIncome = await _financeService.GetTotalIncomeAsync(from, to);
-        sb.AppendLine($"- Tổng thu nhập: {totalIncome.FormattedValue} ({totalIncome.GrowthPercent:+0;-0;0}%)");
+        sb.AppendLine($"- Total income: {totalIncome.FormattedValue} ({totalIncome.GrowthPercent:+0;-0;0}%)");
         var totalExpenses = await _financeService.GetTotalExpensesAsync(from, to);
-        sb.AppendLine($"- Tổng chi phí: {totalExpenses.FormattedValue} ({totalExpenses.GrowthPercent:+0;-0;0}%)");
+        sb.AppendLine($"- Total expenses: {totalExpenses.FormattedValue} ({totalExpenses.GrowthPercent:+0;-0;0}%)");
         var netProfit = await _financeService.GetNetProfitAsync(from, to);
-        sb.AppendLine($"- Lợi nhuận ròng: {netProfit.FormattedValue} ({netProfit.GrowthPercent:+0;-0;0}%)");
+        sb.AppendLine($"- Net profit: {netProfit.FormattedValue} ({netProfit.GrowthPercent:+0;-0;0}%)");
         var cashFlow = await _financeService.GetCashFlowAsync(from, to);
-        sb.AppendLine($"- Dòng tiền: {cashFlow.FormattedValue}");
+        sb.AppendLine($"- Cash flow: {cashFlow.FormattedValue}");
         var profitMargin = await _financeService.GetProfitMarginAsync(from, to);
-        sb.AppendLine($"- Tỷ lệ lợi nhuận: {profitMargin.FormattedValue}");
+        sb.AppendLine($"- Profit margin: {profitMargin.FormattedValue}");
         var dso = await _financeService.GetDsoAsync(from, to);
-        sb.AppendLine($"- DSO (ngày thu tiền): {dso.FormattedValue}");
+        sb.AppendLine($"- DSO (Days Sales Outstanding): {dso.FormattedValue}");
         var dpo = await _financeService.GetDpoAsync(from, to);
-        sb.AppendLine($"- DPO (ngày trả tiền): {dpo.FormattedValue}");
+        sb.AppendLine($"- DPO (Days Payable Outstanding): {dpo.FormattedValue}");
         var arBalance = await _financeService.GetArBalanceAsync(from, to);
-        sb.AppendLine($"- Công nợ phải thu: {arBalance.FormattedValue}");
+        sb.AppendLine($"- Accounts receivable: {arBalance.FormattedValue}");
         return sb.ToString();
     }
 
@@ -247,13 +247,13 @@ public class AIContextAggregator
         var expenseBreakdown = await _financeService.GetExpenseBreakdownAsync(from, to);
         if (expenseBreakdown.Any())
         {
-            sb.AppendLine("Chi phí theo danh mục:");
+            sb.AppendLine("Expense by category:");
             foreach (var e in expenseBreakdown) sb.AppendLine($"  - {e.Name}: {e.FormattedValue}");
         }
         var budgetStatus = await _financeService.GetMonthlyBudgetStatusAsync(from, to);
         if (budgetStatus.Any())
         {
-            sb.AppendLine("Tình trạng ngân sách:");
+            sb.AppendLine("Budget status:");
             foreach (var b in budgetStatus) sb.AppendLine($"  - {b.Name}: {b.FormattedValue}");
         }
         return sb.ToString();
@@ -265,7 +265,7 @@ public class AIContextAggregator
         var transactions = await _financeService.GetRecentTransactionsAsync(5, from, to);
         if (transactions.Any())
         {
-            sb.AppendLine("5 giao dịch gần nhất:");
+            sb.AppendLine("5 most recent transactions:");
             foreach (var t in transactions) sb.AppendLine($"  - {t.Column1}");
         }
         return sb.ToString();
@@ -277,14 +277,14 @@ public class AIContextAggregator
         var overviewChart = await _financeService.GetFinancialOverviewChartAsync(from, to);
         if (overviewChart.Categories.Any())
         {
-            sb.AppendLine($"Xu hướng tài chính ({overviewChart.Categories.First()} - {overviewChart.Categories.Last()}):");
+            sb.AppendLine($"Financial trend ({overviewChart.Categories.First()} - {overviewChart.Categories.Last()}):");
             foreach (var series in overviewChart.Series)
                 sb.AppendLine($"  - {series.Name}: {string.Join(", ", series.Data.Take(3))}...");
         }
         var agingChart = await _financeService.GetArApAgingChartAsync(from, to);
         if (agingChart.Categories.Any())
         {
-            sb.AppendLine("Công nợ phải thu theo kỳ hạn:");
+            sb.AppendLine("Accounts receivable by aging:");
             for (int i = 0; i < agingChart.Categories.Count && i < agingChart.Series[0].Data.Count; i++)
                 sb.AppendLine($"  - {agingChart.Categories[i]}: {agingChart.Series[0].Data[i]:N0}");
         }
@@ -297,15 +297,15 @@ public class AIContextAggregator
     {
         var sb = new StringBuilder();
         var reach = await _marketingService.GetTotalReachAsync(from, to);
-        sb.AppendLine($"- Tổng Reach: {reach.FormattedValue} ({reach.GrowthPercent:+0;-0;0}%)");
+        sb.AppendLine($"- Total Reach: {reach.FormattedValue} ({reach.GrowthPercent:+0;-0;0}%)");
         var engagement = await _marketingService.GetEngagementRateAsync(from, to);
-        sb.AppendLine($"- Tỷ lệ Engagement: {engagement.FormattedValue}");
+        sb.AppendLine($"- Engagement rate: {engagement.FormattedValue}");
         var leads = await _marketingService.GetNewLeadsAsync(from, to);
-        sb.AppendLine($"- Leads mới: {leads.FormattedValue} ({leads.GrowthPercent:+0;-0;0}%)");
+        sb.AppendLine($"- New leads: {leads.FormattedValue} ({leads.GrowthPercent:+0;-0;0}%)");
         var conversions = await _marketingService.GetConversionsAsync(from, to);
         sb.AppendLine($"- Conversions: {conversions.FormattedValue} ({conversions.GrowthPercent:+0;-0;0}%)");
         var cpl = await _marketingService.GetCplAsync(from, to);
-        sb.AppendLine($"- Chi phí mỗi Lead (CPL): {cpl.FormattedValue}");
+        sb.AppendLine($"- Cost per Lead (CPL): {cpl.FormattedValue}");
         var roas = await _marketingService.GetRoasAsync(from, to);
         sb.AppendLine($"- ROAS: {roas.FormattedValue}");
         var roi = await _marketingService.GetRoiAsync(from, to);
@@ -319,13 +319,13 @@ public class AIContextAggregator
         var activeCampaigns = await _marketingService.GetActiveCampaignsAsync(5, from, to);
         if (activeCampaigns.Any())
         {
-            sb.AppendLine("Top 5 chiến dịch hiệu quả:");
+            sb.AppendLine("Top 5 most effective campaigns:");
             foreach (var c in activeCampaigns) sb.AppendLine($"  - {c.Name}: {c.FormattedValue}");
         }
         var budgetAlloc = await _marketingService.GetBudgetAllocationAsync(from, to);
         if (budgetAlloc.Any())
         {
-            sb.AppendLine("Phân bổ ngân sách:");
+            sb.AppendLine("Budget allocation:");
             foreach (var b in budgetAlloc) sb.AppendLine($"  - {b.Name}: {b.FormattedValue}");
         }
         return sb.ToString();
@@ -338,12 +338,12 @@ public class AIContextAggregator
         if (funnel.Any())
         {
             sb.AppendLine("Marketing Funnel:");
-            foreach (var f in funnel) sb.AppendLine($"  - {f.Stage}: {f.Count} ({f.ConversionRate}% chuyển đổi)");
+            foreach (var f in funnel) sb.AppendLine($"  - {f.Stage}: {f.Count} ({f.ConversionRate}% conversion)");
         }
         var social = await _marketingService.GetSocialMediaPerformanceAsync(from, to);
         if (social.Any())
         {
-            sb.AppendLine("Hiệu suất Social Media:");
+            sb.AppendLine("Social Media performance:");
             foreach (var s in social.Take(5)) sb.AppendLine($"  - {s.Column1}");
         }
         return sb.ToString();
@@ -355,16 +355,16 @@ public class AIContextAggregator
         var perfChart = await _marketingService.GetCampaignPerformanceChartAsync(from, to);
         if (perfChart.Categories.Any())
         {
-            sb.AppendLine($"Xu hướng chiến dịch ({perfChart.Categories.First()} - {perfChart.Categories.Last()}):");
+            sb.AppendLine($"Campaign trend ({perfChart.Categories.First()} - {perfChart.Categories.Last()}):");
             foreach (var series in perfChart.Series)
                 sb.AppendLine($"  - {series.Name}: {string.Join(", ", series.Data.Take(3))}...");
         }
         var spendVsRev = await _marketingService.GetSpendVsRevenueChartAsync(from, to);
         if (spendVsRev.Categories.Any())
         {
-            sb.AppendLine("Chi phí vs Doanh thu:");
+            sb.AppendLine("Cost vs Revenue:");
             for (int i = 0; i < spendVsRev.Categories.Count && i < spendVsRev.Series[0].Data.Count; i++)
-                sb.AppendLine($"  - {spendVsRev.Categories[i]}: Chi phí {spendVsRev.Series[0].Data[i]:N0}, Doanh thu {spendVsRev.Series[1].Data[i]:N0}");
+                sb.AppendLine($"  - {spendVsRev.Categories[i]}: Cost {spendVsRev.Series[0].Data[i]:N0}, Revenue {spendVsRev.Series[1].Data[i]:N0}");
         }
         return sb.ToString();
     }
@@ -375,21 +375,21 @@ public class AIContextAggregator
     {
         var sb = new StringBuilder();
         var totalItems = await _inventoryService.GetTotalItemsAsync(from, to);
-        sb.AppendLine($"- Tổng sản phẩm: {totalItems.FormattedValue}");
+        sb.AppendLine($"- Total products: {totalItems.FormattedValue}");
         var stockValue = await _inventoryService.GetStockValueAsync(from, to);
-        sb.AppendLine($"- Giá trị tồn kho: {stockValue.FormattedValue}");
+        sb.AppendLine($"- Inventory value: {stockValue.FormattedValue}");
         var inbound = await _inventoryService.GetInboundOrdersAsync(from, to);
-        sb.AppendLine($"- Đơn nhập kho: {inbound.FormattedValue}");
+        sb.AppendLine($"- Inbound orders: {inbound.FormattedValue}");
         var outbound = await _inventoryService.GetOutboundOrdersAsync(from, to);
-        sb.AppendLine($"- Đơn xuất kho: {outbound.FormattedValue}");
+        sb.AppendLine($"- Outbound orders: {outbound.FormattedValue}");
         var lowStock = await _inventoryService.GetLowStockCountAsync(from, to);
-        sb.AppendLine($"- Sản phẩm dưới điểm đặt: {lowStock.FormattedValue}");
+        sb.AppendLine($"- Products below reorder point: {lowStock.FormattedValue}");
         var utilization = await _inventoryService.GetStockUtilizationAsync(from, to);
-        sb.AppendLine($"- Tỷ lệ sử dụng kho: {utilization.FormattedValue}");
+        sb.AppendLine($"- Stock utilization rate: {utilization.FormattedValue}");
         var turnover = await _inventoryService.GetInventoryTurnoverAsync(from, to);
-        sb.AppendLine($"- Vòng quay tồn kho: {turnover.FormattedValue}");
+        sb.AppendLine($"- Inventory turnover: {turnover.FormattedValue}");
         var fillRate = await _inventoryService.GetFillRateAsync(from, to);
-        sb.AppendLine($"- Tỷ lệ lấp đầy: {fillRate.FormattedValue}");
+        sb.AppendLine($"- Fill rate: {fillRate.FormattedValue}");
         return sb.ToString();
     }
 
@@ -399,19 +399,19 @@ public class AIContextAggregator
         var lowStockItems = await _inventoryService.GetLowStockItemsAsync(5, from, to);
         if (lowStockItems.Any())
         {
-            sb.AppendLine("Top 5 sản phẩm sắp hết:");
+            sb.AppendLine("Top 5 products running low:");
             foreach (var i in lowStockItems) sb.AppendLine($"  - {i.Name}: {i.FormattedValue}");
         }
         var warehouseStatus = await _inventoryService.GetWarehouseStatusAsync(from, to);
         if (warehouseStatus.Any())
         {
-            sb.AppendLine("Tình trạng kho:");
+            sb.AppendLine("Warehouse status:");
             foreach (var w in warehouseStatus) sb.AppendLine($"  - {w.Name}: {w.FormattedValue}");
         }
         var topCats = await _inventoryService.GetTopCategoriesAsync(5, from, to);
         if (topCats.Any())
         {
-            sb.AppendLine("Top danh mục:");
+            sb.AppendLine("Top categories:");
             foreach (var c in topCats) sb.AppendLine($"  - {c.Name}: {c.FormattedValue}");
         }
         return sb.ToString();
@@ -423,7 +423,7 @@ public class AIContextAggregator
         var abc = await _inventoryService.GetAbcAnalysisAsync(5, from, to);
         if (abc.Any())
         {
-            sb.AppendLine("ABC Analysis (Top sản phẩm quan trọng):");
+            sb.AppendLine("ABC Analysis (Top important products):");
             foreach (var a in abc) sb.AppendLine($"  - {a.Name}: {a.FormattedValue}");
         }
         return sb.ToString();
@@ -435,14 +435,14 @@ public class AIContextAggregator
         var movement = await _inventoryService.GetStockMovementChartAsync(from, to);
         if (movement.Categories.Any())
         {
-            sb.AppendLine($"Xu hướng nhập/xuất kho ({movement.Categories.First()} - {movement.Categories.Last()}):");
+            sb.AppendLine($"Stock in/out trend ({movement.Categories.First()} - {movement.Categories.Last()}):");
             foreach (var series in movement.Series)
                 sb.AppendLine($"  - {series.Name}: {string.Join(", ", series.Data.Take(3))}...");
         }
         var byCategory = await _inventoryService.GetStockByCategoryChartAsync(from, to);
         if (byCategory.Categories.Any())
         {
-            sb.AppendLine("Tồn kho theo danh mục:");
+            sb.AppendLine("Stock by category:");
             for (int i = 0; i < byCategory.Categories.Count && i < byCategory.Series[0].Data.Count; i++)
                 sb.AppendLine($"  - {byCategory.Categories[i]}: {byCategory.Series[0].Data[i]:N0}");
         }
@@ -455,19 +455,19 @@ public class AIContextAggregator
     {
         var sb = new StringBuilder();
         var totalEmp = await _hrService.GetTotalEmployeesAsync(from, to);
-        sb.AppendLine($"- Tổng nhân sự: {totalEmp.FormattedValue}");
+        sb.AppendLine($"- Total headcount: {totalEmp.FormattedValue}");
         var deptCount = await _hrService.GetDepartmentsCountAsync(from, to);
-        sb.AppendLine($"- Số phòng ban: {deptCount.FormattedValue}");
+        sb.AppendLine($"- Number of departments: {deptCount.FormattedValue}");
         var newHires = await _hrService.GetNewHiresAsync(from, to);
-        sb.AppendLine($"- Nhân viên mới: {newHires.FormattedValue} ({newHires.GrowthPercent:+0;-0;0}%)");
+        sb.AppendLine($"- New hires: {newHires.FormattedValue} ({newHires.GrowthPercent:+0;-0;0}%)");
         var openPos = await _hrService.GetOpenPositionsAsync(from, to);
-        sb.AppendLine($"- Vị trí đang tuyển: {openPos.FormattedValue}");
+        sb.AppendLine($"- Open positions: {openPos.FormattedValue}");
         var retention = await _hrService.GetRetentionRateAsync(from, to);
-        sb.AppendLine($"- Tỷ lệ giữ chân: {retention.FormattedValue}");
+        sb.AppendLine($"- Retention rate: {retention.FormattedValue}");
         var turnover = await _hrService.GetTurnoverRateAsync(from, to);
-        sb.AppendLine($"- Tỷ lệ nghỉ việc: {turnover.FormattedValue}");
+        sb.AppendLine($"- Turnover rate: {turnover.FormattedValue}");
         var pendingLeave = await _hrService.GetPendingLeaveRequestsAsync(from, to);
-        sb.AppendLine($"- Đơn nghỉ phép chờ duyệt: {pendingLeave.FormattedValue}");
+        sb.AppendLine($"- Pending leave requests: {pendingLeave.FormattedValue}");
         return sb.ToString();
     }
 
@@ -477,13 +477,13 @@ public class AIContextAggregator
         var deptDist = await _hrService.GetDepartmentDistributionAsync(from, to);
         if (deptDist.Any())
         {
-            sb.AppendLine("Phân bổ nhân sự theo phòng ban:");
+            sb.AppendLine("Headcount distribution by department:");
             foreach (var d in deptDist) sb.AppendLine($"  - {d.Name}: {d.FormattedValue}");
         }
         var jobOpenings = await _hrService.GetJobOpeningsAsync(from, to);
         if (jobOpenings.Any())
         {
-            sb.AppendLine("Vị trí đang tuyển:");
+            sb.AppendLine("Open positions:");
             foreach (var j in jobOpenings) sb.AppendLine($"  - {j.Name}: {j.FormattedValue}");
         }
         return sb.ToString();
@@ -495,13 +495,13 @@ public class AIContextAggregator
         var recentHires = await _hrService.GetRecentHiresAsync(5, from, to);
         if (recentHires.Any())
         {
-            sb.AppendLine("5 nhân viên mới gần nhất:");
+            sb.AppendLine("5 most recent new hires:");
             foreach (var h in recentHires) sb.AppendLine($"  - {h.Column1}");
         }
         var leaveReqs = await _hrService.GetLeaveRequestsAsync(5, from, to);
         if (leaveReqs.Any())
         {
-            sb.AppendLine("Đơn nghỉ phép gần đây:");
+            sb.AppendLine("Recent leave requests:");
             foreach (var l in leaveReqs) sb.AppendLine($"  - {l.Column1}");
         }
         return sb.ToString();
@@ -513,14 +513,14 @@ public class AIContextAggregator
         var overview = await _hrService.GetWorkforceOverviewChartAsync(from, to);
         if (overview.Categories.Any())
         {
-            sb.AppendLine($"Xu hướng nhân sự ({overview.Categories.First()} - {overview.Categories.Last()}):");
+            sb.AppendLine($"Workforce trend ({overview.Categories.First()} - {overview.Categories.Last()}):");
             foreach (var series in overview.Series)
                 sb.AppendLine($"  - {series.Name}: {string.Join(", ", series.Data.Take(3))}...");
         }
         var deptDistChart = await _hrService.GetDepartmentDistributionChartAsync(from, to);
         if (deptDistChart.Categories.Any())
         {
-            sb.AppendLine("Phân bổ theo phòng ban:");
+            sb.AppendLine("Distribution by department:");
             for (int i = 0; i < deptDistChart.Categories.Count && i < deptDistChart.Series[0].Data.Count; i++)
                 sb.AppendLine($"  - {deptDistChart.Categories[i]}: {deptDistChart.Series[0].Data[i]:N0}");
         }
@@ -533,19 +533,19 @@ public class AIContextAggregator
     {
         var sb = new StringBuilder();
         var totalTickets = await _csService.GetTotalTicketsAsync(from, to);
-        sb.AppendLine($"- Tổng Tickets: {totalTickets.FormattedValue} ({totalTickets.GrowthPercent:+0;-0;0}%)");
+        sb.AppendLine($"- Total tickets: {totalTickets.FormattedValue} ({totalTickets.GrowthPercent:+0;-0;0}%)");
         var satisfaction = await _csService.GetSatisfactionAsync(from, to);
-        sb.AppendLine($"- Mức độ hài lòng (CSAT): {satisfaction.FormattedValue}");
+        sb.AppendLine($"- Satisfaction (CSAT): {satisfaction.FormattedValue}");
         var resolved = await _csService.GetResolvedTicketsAsync(from, to);
-        sb.AppendLine($"- Đã giải quyết: {resolved.FormattedValue} ({resolved.GrowthPercent:+0;-0;0}%)");
+        sb.AppendLine($"- Resolved: {resolved.FormattedValue} ({resolved.GrowthPercent:+0;-0;0}%)");
         var pending = await _csService.GetPendingTicketsAsync(from, to);
-        sb.AppendLine($"- Đang chờ: {pending.FormattedValue}");
+        sb.AppendLine($"- Pending: {pending.FormattedValue}");
         var firstResponse = await _csService.GetFirstResponseRateAsync(from, to);
-        sb.AppendLine($"- Tỷ lệ phản hồi lần đầu: {firstResponse.FormattedValue}");
+        sb.AppendLine($"- First response rate: {firstResponse.FormattedValue}");
         var avgTime = await _csService.GetAvgResolutionTimeAsync(from, to);
-        sb.AppendLine($"- Thời gian giải quyết TB: {avgTime.FormattedValue}");
+        sb.AppendLine($"- Avg resolution time: {avgTime.FormattedValue}");
         var open = await _csService.GetOpenTicketsAsync(from, to);
-        sb.AppendLine($"- Tickets đang mở: {open.FormattedValue}");
+        sb.AppendLine($"- Open tickets: {open.FormattedValue}");
         return sb.ToString();
     }
 
@@ -555,13 +555,13 @@ public class AIContextAggregator
         var topAgents = await _csService.GetTopAgentsAsync(5, from, to);
         if (topAgents.Any())
         {
-            sb.AppendLine("Top 5 nhân viên CS xuất sắc:");
+            sb.AppendLine("Top 5 outstanding CS agents:");
             foreach (var a in topAgents) sb.AppendLine($"  - {a.Name}: {a.FormattedValue}");
         }
         var rootCause = await _csService.GetRootCauseParetoAsync(5, from, to);
         if (rootCause.Any())
         {
-            sb.AppendLine("Top nguyên nhân khiếu nại:");
+            sb.AppendLine("Top complaint causes:");
             foreach (var r in rootCause) sb.AppendLine($"  - {r.Name}: {r.FormattedValue}");
         }
         return sb.ToString();
@@ -573,14 +573,14 @@ public class AIContextAggregator
         var recentTickets = await _csService.GetRecentTicketsAsync(5, from, to);
         if (recentTickets.Any())
         {
-            sb.AppendLine("5 tickets gần nhất:");
+            sb.AppendLine("5 most recent tickets:");
             foreach (var t in recentTickets) sb.AppendLine($"  - {t.Column1}");
         }
         var funnel = await _csService.GetTicketFunnelAsync(from, to);
         if (funnel.Any())
         {
-            sb.AppendLine("Ticket Funnel:");
-            foreach (var f in funnel) sb.AppendLine($"  - {f.Stage}: {f.Count} ({f.ConversionRate}% chuyển đổi)");
+            sb.AppendLine("Ticket funnel:");
+            foreach (var f in funnel) sb.AppendLine($"  - {f.Stage}: {f.Count} ({f.ConversionRate}% conversion)");
         }
         return sb.ToString();
     }
@@ -591,14 +591,14 @@ public class AIContextAggregator
         var overview = await _csService.GetSupportOverviewChartAsync(from, to);
         if (overview.Categories.Any())
         {
-            sb.AppendLine($"Xu hướng tickets ({overview.Categories.First()} - {overview.Categories.Last()}):");
+            sb.AppendLine($"Ticket trend ({overview.Categories.First()} - {overview.Categories.Last()}):");
             foreach (var series in overview.Series)
                 sb.AppendLine($"  - {series.Name}: {string.Join(", ", series.Data.Take(3))}...");
         }
         var channelMix = await _csService.GetChannelMixChartAsync(from, to);
         if (channelMix.Categories.Any())
         {
-            sb.AppendLine("Tickets theo kênh:");
+            sb.AppendLine("Tickets by channel:");
             for (int i = 0; i < channelMix.Categories.Count && i < channelMix.Series[0].Data.Count; i++)
                 sb.AppendLine($"  - {channelMix.Categories[i]}: {channelMix.Series[0].Data[i]:N0}");
         }
@@ -611,15 +611,15 @@ public class AIContextAggregator
     {
         var sb = new StringBuilder();
         var revenue = await _executiveService.GetTotalRevenueAsync(from, to);
-        sb.AppendLine($"- Tổng doanh thu: {revenue.FormattedValue} ({revenue.GrowthPercent:+0;-0;0}%)");
+        sb.AppendLine($"- Total revenue: {revenue.FormattedValue} ({revenue.GrowthPercent:+0;-0;0}%)");
         var expenses = await _executiveService.GetTotalExpensesAsync(from, to);
-        sb.AppendLine($"- Tổng chi phí: {expenses.FormattedValue} ({expenses.GrowthPercent:+0;-0;0}%)");
+        sb.AppendLine($"- Total expenses: {expenses.FormattedValue} ({expenses.GrowthPercent:+0;-0;0}%)");
         var netProfit = await _executiveService.GetNetProfitAsync(from, to);
-        sb.AppendLine($"- Lợi nhuận ròng: {netProfit.FormattedValue} ({netProfit.GrowthPercent:+0;-0;0}%)");
+        sb.AppendLine($"- Net profit: {netProfit.FormattedValue} ({netProfit.GrowthPercent:+0;-0;0}%)");
         var employees = await _executiveService.GetTotalEmployeesAsync(from, to);
-        sb.AppendLine($"- Tổng nhân sự: {employees.FormattedValue}");
+        sb.AppendLine($"- Total headcount: {employees.FormattedValue}");
         var growth = await _executiveService.GetCompanyGrowthAsync(from, to);
-        sb.AppendLine($"- Tăng trưởng công ty: {growth.FormattedValue}");
+        sb.AppendLine($"- Company growth: {growth.FormattedValue}");
         return sb.ToString();
     }
 
@@ -629,19 +629,19 @@ public class AIContextAggregator
         var deptPerf = await _executiveService.GetDepartmentPerformanceAsync(from, to);
         if (deptPerf.Any())
         {
-            sb.AppendLine("Hiệu suất phòng ban:");
+            sb.AppendLine("Department performance:");
             foreach (var d in deptPerf) sb.AppendLine($"  - {d.DepartmentName}: {d.PerformancePercent}%");
         }
         var topProducts = await _executiveService.GetTopProductsAsync(5, from, to);
         if (topProducts.Any())
         {
-            sb.AppendLine("Top 5 sản phẩm:");
+            sb.AppendLine("Top 5 products:");
             foreach (var p in topProducts) sb.AppendLine($"  - {p.Name}: {p.FormattedValue}");
         }
         var topCustomers = await _executiveService.GetTopCustomersAsync(5, from, to);
         if (topCustomers.Any())
         {
-            sb.AppendLine("Top 5 khách hàng:");
+            sb.AppendLine("Top 5 customers:");
             foreach (var c in topCustomers) sb.AppendLine($"  - {c.Name}: {c.FormattedValue}");
         }
         return sb.ToString();
@@ -653,13 +653,13 @@ public class AIContextAggregator
         var activities = await _executiveService.GetRecentActivitiesAsync(5);
         if (activities.Any())
         {
-            sb.AppendLine("5 hoạt động gần nhất:");
+            sb.AppendLine("5 most recent activities:");
             foreach (var a in activities) sb.AppendLine($"  - [{a.Category}] {a.Description}");
         }
         var alerts = await _executiveService.GetAlertsAsync(from, to);
         if (alerts.Any())
         {
-            sb.AppendLine("Cảnh báo:");
+            sb.AppendLine("Alerts:");
             foreach (var a in alerts) sb.AppendLine($"  - [{a.Severity}] {a.Message}");
         }
         return sb.ToString();
@@ -671,14 +671,14 @@ public class AIContextAggregator
         var companyPerf = await _executiveService.GetCompanyPerformanceChartAsync(from, to);
         if (companyPerf.Categories.Any())
         {
-            sb.AppendLine($"Xu hướng công ty ({companyPerf.Categories.First()} - {companyPerf.Categories.Last()}):");
+            sb.AppendLine($"Company trend ({companyPerf.Categories.First()} - {companyPerf.Categories.Last()}):");
             foreach (var series in companyPerf.Series)
                 sb.AppendLine($"  - {series.Name}: {string.Join(", ", series.Data.Take(3))}...");
         }
         var deptPerfChart = await _executiveService.GetDepartmentPerformanceAsync(from, to);
         if (deptPerfChart.Any())
         {
-            sb.AppendLine("Hiệu suất phòng ban:");
+            sb.AppendLine("Department performance:");
             foreach (var d in deptPerfChart)
                 sb.AppendLine($"  - {d.DepartmentName}: {d.PerformancePercent}%");
         }

@@ -830,11 +830,6 @@ function setRange(type) {
   </script>
 }
 
-@{
-    var aiSalesModel = new Dashboard.Models.ViewModels.AIChatWidgetModel { Department = "Sales" };
-}
-<partial name="~/Views/Shared/Partials/_AIChatWidget.cshtml" model="aiSalesModel" />
-
 <script>
 document.addEventListener('DOMContentLoaded', function () {
   var el = document.getElementById('sales-dashboard-grid');

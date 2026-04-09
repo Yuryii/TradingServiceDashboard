@@ -91,32 +91,48 @@ public class NotificationService : INotificationService
 
     public async Task<List<NotificationListItemDto>> GetUserNotificationsAsync(string userId, int page = 1, int pageSize = 20)
     {
-        return await _context.Notifications
+        var list = await _context.Notifications
+            .AsNoTracking()
             .Where(n => n.UserId == userId)
             .OrderByDescending(n => n.CreatedAt)
             .Skip((page - 1) * pageSize)
             .Take(pageSize)
-            .Select(n => new NotificationListItemDto
-            {
-                NotificationID = n.NotificationID,
-                Title = n.Title,
-                Message = n.Message,
-                Category = n.Category,
-                Severity = n.Severity,
-                IconClass = n.IconClass,
-                IconBgClass = n.IconBgClass,
-                ActionUrl = n.ActionUrl,
-                IsRead = n.IsRead,
-                CreatedAt = n.CreatedAt,
-                TimeAgo = n.CreatedAt.ToLocalTime().ToString("yyyy-MM-ddTHH:mm:ss")
-            })
             .ToListAsync();
+
+        return list.Select(n => new NotificationListItemDto
+        {
+            NotificationID = n.NotificationID,
+            Title = n.Title,
+            Message = n.Message,
+            Category = n.Category,
+            Severity = n.Severity,
+            IconClass = n.IconClass,
+            IconBgClass = n.IconBgClass,
+            ActionUrl = n.ActionUrl,
+            IsRead = n.IsRead,
+            CreatedAt = n.CreatedAt,
+            TimeAgo = GetTimeAgo(n.CreatedAt)
+        }).ToList();
     }
 
     public async Task<int> GetUnreadCountAsync(string userId)
     {
         return await _context.Notifications
             .CountAsync(n => n.UserId == userId && !n.IsRead);
+    }
+
+    public async Task<NotificationCountsDto> GetNotificationCountsAsync(string userId)
+    {
+        var todayStart = DateTime.UtcNow.Date;
+        var baseQuery = _context.Notifications.Where(n => n.UserId == userId);
+
+        return new NotificationCountsDto
+        {
+            Unread = await baseQuery.CountAsync(n => !n.IsRead),
+            Total = await baseQuery.CountAsync(),
+            Critical = await baseQuery.CountAsync(n => n.Severity == "Critical"),
+            Today = await baseQuery.CountAsync(n => n.CreatedAt >= todayStart)
+        };
     }
 
     public async Task<NotificationListItemDto?> GetByIdAsync(int notificationId)

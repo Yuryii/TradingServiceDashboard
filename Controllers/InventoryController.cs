@@ -21,6 +21,7 @@ public class InventoryController : Controller
     public async Task<IActionResult> Index(DateTime? from, DateTime? to)
     {
         ViewData["CurrentPage"] = "Inventory";
+        ViewData["AIDepartment"] = "Inventory";
         var vm = await _service.GetDashboardDataAsync(from, to);
         return View(vm);
     }

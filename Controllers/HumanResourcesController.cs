@@ -21,6 +21,7 @@ public class HumanResourcesController : Controller
     public async Task<IActionResult> Index(DateTime? from, DateTime? to)
     {
         ViewData["CurrentPage"] = "HR";
+        ViewData["AIDepartment"] = "HR";
         var vm = await _service.GetDashboardDataAsync(from, to);
         return View(vm);
     }

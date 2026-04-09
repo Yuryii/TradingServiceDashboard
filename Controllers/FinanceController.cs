@@ -21,6 +21,7 @@ public class FinanceController : Controller
     public async Task<IActionResult> Index(DateTime? from, DateTime? to)
     {
         ViewData["CurrentPage"] = "Finance";
+        ViewData["AIDepartment"] = "Finance";
         var vm = await _service.GetDashboardDataAsync(from, to);
         return View(vm);
     }
