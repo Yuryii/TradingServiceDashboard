@@ -158,9 +158,14 @@ document.addEventListener('DOMContentLoaded', function (e) {
   const chartOrderStatistics = document.querySelector('#orderStatisticsChart');
   if (typeof chartOrderStatistics !== 'undefined' && chartOrderStatistics !== null) {
     const statsData = serverCharts.orderStatistics;
-    const statsSeries = statsData && statsData.series ? statsData.series : [50, 85, 25, 40];
+    const rawStatsSeries = statsData && Array.isArray(statsData.series) && statsData.series.length
+      ? statsData.series
+      : [{ data: [50, 85, 25, 40] }];
+    const statsSeries = rawStatsSeries.map(function(s) {
+      return Array.isArray(s) ? s[0] : (s && typeof s === 'object' && typeof s.data === 'number' ? s.data : 0);
+    });
     const statsLabels = statsData && statsData.labels ? statsData.labels : ['Electronic', 'Sports', 'Decor', 'Fashion'];
-    const statsTotal = statsSeries.reduce((a, b) => a + b, 0);
+    const statsTotal = statsSeries.reduce(function(a, b) { return a + b; }, 0);
 
     const orderChartConfig = {
       chart: {
