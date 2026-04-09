@@ -76,6 +76,9 @@ window.dashboardCharts.executiveMonthlyRevenue = @Html.Raw(Json.Serialize(Model.
 <div class="d-flex align-items-center justify-content-between mb-4">
   <h5 class="mb-0"><i class="icon-base bx bx-layout text-primary"></i> Dashboard Widgets</h5>
   <div class="d-flex gap-2">
+    <a asp-action="ExportPdf" asp-route-from="@currentFrom" asp-route-to="@currentTo" class="btn btn-sm btn-danger" target="_blank">
+      <i class="icon-base bx bxs-file-pdf me-1"></i> Export PDF
+    </a>
     <button type="button" class="btn btn-sm btn-outline-primary" id="btn-layout-edit" onclick="window.dashboardLayoutManager && window.dashboardLayoutManager.toggleEditMode()">
       <i class="icon-base bx bx-edit-alt"></i> Customize Layout
     </button>

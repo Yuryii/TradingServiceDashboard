@@ -50,6 +50,9 @@ Object.assign(window.dashboardCharts, {
 
 @* Layout Toolbar *@
 <div class="d-flex align-items-center gap-2 mb-4">
+  <a asp-action="ExportPdf" asp-route-from="@currentFrom" asp-route-to="@currentTo" class="btn btn-sm btn-danger" target="_blank">
+    <i class="icon-base bx bxs-file-pdf me-1"></i> Export PDF
+  </a>
   <button type="button" class="btn-layout-action" id="btn-layout-edit"
     onclick="window.dashboardLayoutManager && window.dashboardLayoutManager.toggleEditMode()">
     <i class="icon-base bx bx-palette me-1"></i> Customize Layout

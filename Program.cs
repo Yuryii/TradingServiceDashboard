@@ -8,8 +8,13 @@ using Dashboard.Services;
 using Dashboard.Services.Interfaces;
 using Dashboard.Hubs;
 using Dashboard.Jobs;
+using QuestPDF;
+using QuestPDF.Infrastructure;
 
 var builder = WebApplication.CreateBuilder(args);
+
+// Configure QuestPDF license (Community license - free for commercial use)
+QuestPDF.Settings.License = LicenseType.Community;
 
 builder.Services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
 
@@ -107,6 +112,9 @@ CrudServiceRegistry.RegisterAll(builder.Services);
 
 // Register Excel CRUD Service
 builder.Services.AddScoped<ExcelCrudService>();
+
+// Register PDF Report Service
+builder.Services.AddScoped<IPdfReportService, PdfReportService>();
 builder.Services.AddScoped<GlobalSearchService>();
 
 // Register Notification Services
@@ -157,7 +165,7 @@ using (var scope = app.Services.CreateScope())
 
 app.MapControllerRoute(
     name: "default",
-    pattern: "{controller=Dashboards}/{action=Index}/{id?}");
+    pattern: "{controller=Home}/{action=Index}/{id?}");
 
 // SignalR Hub
 app.MapHub<NotificationHub>("/notificationHub");

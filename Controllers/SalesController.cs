@@ -10,10 +10,12 @@ namespace Dashboard.Controllers;
 public class SalesController : Controller
 {
     private readonly ISalesDashboardService _service;
+    private readonly IPdfReportService _pdfService;
 
-    public SalesController(ISalesDashboardService service)
+    public SalesController(ISalesDashboardService service, IPdfReportService pdfService)
     {
         _service = service;
+        _pdfService = pdfService;
     }
 
     public async Task<IActionResult> Index(DateTime? from, DateTime? to)
@@ -21,5 +23,12 @@ public class SalesController : Controller
         ViewData["CurrentPage"] = "Sales";
         var vm = await _service.GetDashboardDataAsync(from, to);
         return View(vm);
+    }
+
+    public async Task<IActionResult> ExportPdf(DateTime? from, DateTime? to)
+    {
+        var vm = await _service.GetDashboardDataAsync(from, to);
+        var pdfBytes = await _pdfService.GenerateSalesPdfAsync(vm, from, to);
+        return File(pdfBytes, "application/pdf", $"SalesDashboard_{DateTime.Now:yyyyMMdd}.pdf");
     }
 }

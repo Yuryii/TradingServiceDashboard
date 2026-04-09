@@ -124,6 +124,24 @@ public class AuthController : Controller
             await _userManager.AddToRoleAsync(user, SD.Role_Sales);
 
             await _signInManager.SignInAsync(user, isPersistent: false);
+            
+            // Redirect based on user role (new users default to Sales role)
+            var userRoles = await _userManager.GetRolesAsync(user);
+            if (userRoles.Contains(SD.Role_Executive))
+                return RedirectToAction("Index", "Executive");
+            if (userRoles.Contains(SD.Role_Sales))
+                return RedirectToAction("Index", "Sales");
+            if (userRoles.Contains(SD.Role_Marketing))
+                return RedirectToAction("Index", "Marketing");
+            if (userRoles.Contains(SD.Role_Inventory))
+                return RedirectToAction("Index", "Inventory");
+            if (userRoles.Contains(SD.Role_Finance))
+                return RedirectToAction("Index", "Finance");
+            if (userRoles.Contains(SD.Role_HumanResources))
+                return RedirectToAction("Index", "HumanResources");
+            if (userRoles.Contains(SD.Role_CustomerService))
+                return RedirectToAction("Index", "CustomerService");
+                
             return RedirectToAction("Index", "Dashboards");
         }
 

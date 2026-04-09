@@ -29,6 +29,9 @@ window.dashboardCharts.inventoryAccuracyHeatmap = @Html.Raw(Json.Serialize(Model
 
 @* Layout Toolbar *@
 <div class="d-flex align-items-center gap-2 mb-4 justify-content-end flex-wrap" id="layout-toolbar-inventory">
+  <a asp-action="ExportPdf" class="btn btn-sm btn-danger" target="_blank">
+    <i class="icon-base bx bxs-file-pdf me-1"></i> Export PDF
+  </a>
   <button type="button" class="btn-layout-action" id="btn-layout-edit-inventory" title="Customize Layout"
     onclick="window.dashboardLayoutManager && window.dashboardLayoutManager.toggleEditMode()">
     <i class="icon-base bx bx-palette me-1"></i> Customize Layout

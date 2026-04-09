@@ -10,10 +10,12 @@ namespace Dashboard.Controllers;
 public class HumanResourcesController : Controller
 {
     private readonly IHumanResourcesDashboardService _service;
+    private readonly IPdfReportService _pdfService;
 
-    public HumanResourcesController(IHumanResourcesDashboardService service)
+    public HumanResourcesController(IHumanResourcesDashboardService service, IPdfReportService pdfService)
     {
         _service = service;
+        _pdfService = pdfService;
     }
 
     public async Task<IActionResult> Index(DateTime? from, DateTime? to)
@@ -21,5 +23,12 @@ public class HumanResourcesController : Controller
         ViewData["CurrentPage"] = "HR";
         var vm = await _service.GetDashboardDataAsync(from, to);
         return View(vm);
+    }
+
+    public async Task<IActionResult> ExportPdf(DateTime? from, DateTime? to)
+    {
+        var vm = await _service.GetDashboardDataAsync(from, to);
+        var pdfBytes = await _pdfService.GenerateHrPdfAsync(vm, from, to);
+        return File(pdfBytes, "application/pdf", $"HRDashboard_{DateTime.Now:yyyyMMdd}.pdf");
     }
 }
