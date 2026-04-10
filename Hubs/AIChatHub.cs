@@ -35,7 +35,8 @@ public class AIChatHub : Hub
                 UserName = userName,
                 Role = userRole,
                 Department = department,
-                Message = message
+                Message = message,
+                UseText2Sql = false
             };
 
             await Clients.Caller.SendAsync("TypingIndicator", true);
@@ -59,6 +60,53 @@ public class AIChatHub : Hub
         {
             _logger.LogError(ex, "Error streaming chat for session {SessionId}", sessionId);
             await Clients.Caller.SendAsync("ReceiveError", "Đã xảy ra lỗi khi xử lý yêu cầu. Vui lòng thử lại.");
+            await Clients.Caller.SendAsync("StreamComplete");
+        }
+    }
+
+    public async Task SendMessageWithText2Sql(int sessionId, string department, string message)
+    {
+        var userId = GetUserId();
+        var userName = Context.User?.FindFirst("UserName")?.Value
+                      ?? Context.User?.FindFirst(ClaimTypes.Name)?.Value
+                      ?? "User";
+        var userRole = Context.User?.FindFirst(ClaimTypes.Role)?.Value
+                      ?? "Unknown";
+
+        try
+        {
+            var request = new AIChatRequest
+            {
+                SessionId = sessionId,
+                UserId = userId,
+                UserName = userName,
+                Role = userRole,
+                Department = department,
+                Message = message,
+                UseText2Sql = true
+            };
+
+            await Clients.Caller.SendAsync("TypingIndicator", true);
+
+            await foreach (var chunk in _chatService.StreamText2SqlResponseAsync(request, Context.ConnectionAborted))
+            {
+                if (!string.IsNullOrEmpty(chunk))
+                {
+                    await Clients.Caller.SendAsync("ReceiveChunk", chunk);
+                }
+            }
+
+            await Clients.Caller.SendAsync("StreamComplete");
+        }
+        catch (OperationCanceledException)
+        {
+            _logger.LogInformation("Text2Sql chat stream cancelled for session {SessionId}", sessionId);
+            await Clients.Caller.SendAsync("StreamComplete");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error streaming Text2Sql chat for session {SessionId}", sessionId);
+            await Clients.Caller.SendAsync("ReceiveError", "Đã xảy ra lỗi khi xử lý yêu cầu Text2SQL. Vui lòng thử lại.");
             await Clients.Caller.SendAsync("StreamComplete");
         }
     }

@@ -7,6 +7,7 @@ public interface IJobSchedulerService
     Task RegisterAllJobsAsync();
     void RegisterJob(string jobId, Type jobType, string cron);
     void RemoveJob(string jobId);
+    Task TriggerNotificationCodeAsync(string notificationCode, string? targetUserId = null);
     void TriggerJob(string jobId);
     Task<List<JobConfigDto>> GetAllJobConfigsAsync();
     Task UpdateJobStatusAsync(int configId, bool isEnabled);

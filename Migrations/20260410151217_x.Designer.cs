@@ -12,7 +12,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace TradingServiceDashboard.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20260326153537_x")]
+    [Migration("20260410151217_x")]
     partial class x
     {
         /// <inheritdoc />
@@ -24,6 +24,81 @@ namespace TradingServiceDashboard.Migrations
                 .HasAnnotation("Relational:MaxIdentifierLength", 128);
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
+
+            modelBuilder.Entity("Dashboard.Models.AIChatMessage", b =>
+                {
+                    b.Property<int>("MessageId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("MessageId"));
+
+                    b.Property<string>("Content")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Metadata")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<int>("Role")
+                        .HasColumnType("int");
+
+                    b.Property<int>("SessionId")
+                        .HasColumnType("int");
+
+                    b.HasKey("MessageId");
+
+                    b.HasIndex("CreatedAt");
+
+                    b.HasIndex("SessionId");
+
+                    b.ToTable("AIChatMessages");
+                });
+
+            modelBuilder.Entity("Dashboard.Models.AIChatSession", b =>
+                {
+                    b.Property<int>("SessionId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("SessionId"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Department")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
+
+                    b.Property<DateTime>("LastMessageAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Title")
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
+                    b.HasKey("SessionId");
+
+                    b.HasIndex("Department");
+
+                    b.HasIndex("LastMessageAt");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("AIChatSessions");
+                });
 
             modelBuilder.Entity("Dashboard.Models.Applicant", b =>
                 {
@@ -1330,6 +1405,10 @@ namespace TradingServiceDashboard.Migrations
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
+
+                    b.Property<string>("CronExpression")
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
 
                     b.Property<int?>("DelayHours")
                         .HasColumnType("int");
@@ -3161,6 +3240,28 @@ namespace TradingServiceDashboard.Migrations
                     b.ToTable("AspNetUserTokens", (string)null);
                 });
 
+            modelBuilder.Entity("Dashboard.Models.AIChatMessage", b =>
+                {
+                    b.HasOne("Dashboard.Models.AIChatSession", "Session")
+                        .WithMany("Messages")
+                        .HasForeignKey("SessionId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Session");
+                });
+
+            modelBuilder.Entity("Dashboard.Models.AIChatSession", b =>
+                {
+                    b.HasOne("Dashboard.Models.ApplicationUser", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("User");
+                });
+
             modelBuilder.Entity("Dashboard.Models.Applicant", b =>
                 {
                     b.HasOne("Dashboard.Models.JobOpening", "JobOpening")
@@ -4141,6 +4242,11 @@ namespace TradingServiceDashboard.Migrations
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+                });
+
+            modelBuilder.Entity("Dashboard.Models.AIChatSession", b =>
+                {
+                    b.Navigation("Messages");
                 });
 
             modelBuilder.Entity("Dashboard.Models.Branch", b =>

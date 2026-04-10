@@ -692,6 +692,114 @@
     flex-shrink: 0;
 }
 
+/* ===== Floating AI Chart Panel ===== */
+.ai-chart-panel {
+    position: fixed;
+    top: 0;
+    right: -520px;
+    width: 500px;
+    max-width: calc(100vw - 48px);
+    height: 100vh;
+    background: #fff;
+    box-shadow: -4px 0 20px rgba(0,0,0,0.15);
+    z-index: 2000;
+    display: flex;
+    flex-direction: column;
+    transition: right 0.3s ease;
+}
+
+.ai-chart-panel.open {
+    right: 0;
+}
+
+.ai-chart-panel-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 18px;
+    border-bottom: 1px solid #eceef1;
+    background: #f8f9fa;
+    flex-shrink: 0;
+}
+
+.ai-chart-panel-title {
+    margin: 0;
+    font-weight: 600;
+    color: #566a7f;
+    font-size: 15px;
+}
+
+.ai-chart-panel-actions {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.ai-chart-panel-close {
+    background: none;
+    border: none;
+    font-size: 22px;
+    cursor: pointer;
+    color: #697a8d;
+    padding: 4px;
+    line-height: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border-radius: 6px;
+    transition: background 0.15s;
+}
+
+.ai-chart-panel-close:hover {
+    background: #f0f0f0;
+    color: #566a7f;
+}
+
+.ai-chart-panel-body {
+    flex: 1;
+    overflow-y: auto;
+    padding: 16px;
+}
+
+.ai-chart-panel-footer {
+    padding: 8px 18px;
+    border-top: 1px solid #eceef1;
+    background: #f8f9fa;
+    text-align: center;
+    flex-shrink: 0;
+}
+
+/* Open Chart button in chat bubble */
+.ai-chart-action {
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px dashed #eceef1;
+}
+
+.ai-chart-action .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+/* Panel overlay backdrop */
+.ai-chart-panel-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.3);
+    z-index: 1999;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+}
+
+.ai-chart-panel-backdrop.visible {
+    opacity: 1;
+    pointer-events: auto;
+}
+
 @media (max-width: 991.98px) {
     .ai-chatgpt-page {
         flex-direction: column;

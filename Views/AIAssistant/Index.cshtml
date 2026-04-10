@@ -7,6 +7,13 @@
     ViewData["navbarType"] = "layout-navbar-hidden";
 }
 
+@section VendorStyles {
+    <link rel="stylesheet" href="~/vendor/libs/apex-charts/apex-charts.css" />
+}
+@section VendorScripts {
+    <script src="~/vendor/libs/apex-charts/apexcharts.js"></script>
+}
+
 @section PageStyles {
     <link rel="stylesheet" href="~/css/ai-assistant-chatgpt.css" asp-append-version="true" />
 }
@@ -59,6 +66,7 @@
 <script>
     window.AI_CHAT_DEPARTMENT = 'sales';
     window.AI_CHAT_STANDALONE = true;
+    window.AI_TEXT2SQL_MODE = false;
 
     function startNewChat() {
         var d = window.currentDept || window.AI_CHAT_DEPARTMENT || 'sales';
@@ -91,6 +99,10 @@
 
             var session = await response.json();
 
+            var modeIcon = window.AI_TEXT2SQL_MODE ? 'bx-data' : 'bx-bot';
+            var modeLabel = window.AI_TEXT2SQL_MODE ? 'Text2SQL' : 'Smart';
+            var modeBadgeClass = window.AI_TEXT2SQL_MODE ? 'bg-primary' : 'bg-success';
+
             var widgetHtml = '<div class="ai-chat-panel open ai-chatgpt-shell">' +
                 '<header class="cgpt-thread-head">' +
                 '<div class="cgpt-thread-head-left">' +
@@ -98,10 +110,21 @@
                 '<span class="cgpt-status">' +
                 '<span class="status-dot cgpt-status-dot" id="aiStatusDot"></span>' +
                 '<span id="aiStatusText">Online</span>' +
+                '</span>' +
+                '<span class="ai-mode-badge ' + modeBadgeClass + ' text-white ms-2" id="aiModeBadge" title="Chế độ xử lý">' +
+                '<i class="icon-base bx ' + modeIcon + '" style="font-size:12px;"></i> ' + modeLabel +
                 '</span></div>' +
+                '<div class="cgpt-thread-head-right d-flex align-items-center gap-2">' +
+                '<button type="button" class="ai-mode-toggle" id="aiModeToggle" onclick="toggleChatMode()" ' +
+                'title="Chuyển đổi chế độ AI" style="background:transparent;border:1px solid rgba(255,255,255,0.3);' +
+                'border-radius:6px;padding:4px 8px;cursor:pointer;color:#fff;font-size:11px;display:flex;' +
+                'align-items:center;gap:4px;white-space:nowrap;">' +
+                '<i class="icon-base bx bx-switch-horizontal" style="font-size:14px;"></i> ' +
+                (window.AI_TEXT2SQL_MODE ? 'Quick Mode' : 'Text2SQL') +
+                '</button>' +
                 '<button type="button" class="cgpt-icon-btn" onclick="clearCurrentChat()" title="Xóa cuộc trò chuyện">' +
                 '<i class="icon-base bx bx-trash"></i></button>' +
-                '</header>' +
+                '</div></header>' +
 
                 '<div class="ai-chat-messages" id="aiChatMessages">' +
                 '<div class="ai-chat-empty cgpt-empty" id="aiEmptyState">' +
@@ -140,6 +163,29 @@
             }
         } catch (err) {
             container.innerHTML = '<div class="d-flex flex-column align-items-center justify-content-center flex-grow-1 py-5 text-danger"><i class="icon-base bx bx-error-alt" style="font-size:32px;"></i><p class="mt-2 mb-0">Lỗi tạo phiên. Vui lòng thử lại.</p></div>';
+        }
+    }
+
+    function toggleChatMode() {
+        window.AI_TEXT2SQL_MODE = !window.AI_TEXT2SQL_MODE;
+        updateModeUI();
+    }
+
+    function updateModeUI() {
+        var badge = document.getElementById('aiModeBadge');
+        var toggleBtn = document.getElementById('aiModeToggle');
+        if (badge) {
+            if (window.AI_TEXT2SQL_MODE) {
+                badge.className = 'ai-mode-badge bg-primary text-white ms-2';
+                badge.innerHTML = '<i class="icon-base bx bx-data" style="font-size:12px;"></i> Text2SQL';
+            } else {
+                badge.className = 'ai-mode-badge bg-success text-white ms-2';
+                badge.innerHTML = '<i class="icon-base bx bx-bot" style="font-size:12px;"></i> Smart';
+            }
+        }
+        if (toggleBtn) {
+            toggleBtn.innerHTML = '<i class="icon-base bx bx-switch-horizontal" style="font-size:14px;"></i> ' +
+                (window.AI_TEXT2SQL_MODE ? 'Quick Mode' : 'Text2SQL');
         }
     }
 

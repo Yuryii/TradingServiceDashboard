@@ -808,7 +808,7 @@ document.addEventListener('DOMContentLoaded', function () {
     var origSave = window.dashboardLayoutManager.saveLayout.bind(window.dashboardLayoutManager);
     window.dashboardLayoutManager.saveLayout = function () {
       origSave();
-      if (typeof toastr !== 'undefined') toastr.success('Dashboard layout saved.');
+      showToast('Dashboard layout saved.', 'success');
     };
   }
 });

@@ -14,6 +14,7 @@ public class AIChatService : IAIChatService
 {
     private readonly ApplicationDbContext _context;
     private readonly AIContextAggregator _contextAggregator;
+    private readonly ITextToSqlService _textToSqlService;
     private readonly IHttpClientFactory _httpClientFactory;
     private readonly ILogger<AIChatService> _logger;
     private readonly IConfiguration _configuration;
@@ -27,12 +28,14 @@ public class AIChatService : IAIChatService
     public AIChatService(
         ApplicationDbContext context,
         AIContextAggregator contextAggregator,
+        ITextToSqlService textToSqlService,
         IHttpClientFactory httpClientFactory,
         ILogger<AIChatService> logger,
         IConfiguration configuration)
     {
         _context = context;
         _contextAggregator = contextAggregator;
+        _textToSqlService = textToSqlService;
         _httpClientFactory = httpClientFactory;
         _logger = logger;
         _configuration = configuration;
@@ -356,6 +359,53 @@ Please respond in English, professionally, with specific figures.";
         messages.Add(new { role = "user", content = currentMessage });
 
         return messages;
+    }
+
+    public async IAsyncEnumerable<string> StreamText2SqlResponseAsync(
+        AIChatRequest request,
+        [EnumeratorCancellation] CancellationToken cancellationToken = default)
+    {
+        var text2SqlRequest = new Text2SqlRequest
+        {
+            SessionId = request.SessionId,
+            UserId = request.UserId,
+            UserName = request.UserName,
+            Role = request.Role,
+            Department = request.Department,
+            Message = request.Message
+        };
+
+        await foreach (var chunk in _textToSqlService.StreamAnswerAsync(text2SqlRequest, cancellationToken))
+        {
+            if (chunk == "[STREAM_END]")
+                yield break;
+
+            yield return chunk;
+        }
+    }
+
+    public async Task<Text2SqlResponse> GetText2SqlResponseAsync(
+        AIChatRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        var text2SqlRequest = new Text2SqlRequest
+        {
+            SessionId = request.SessionId,
+            UserId = request.UserId,
+            UserName = request.UserName,
+            Role = request.Role,
+            Department = request.Department,
+            Message = request.Message
+        };
+
+        var result = await _textToSqlService.AskAsync(text2SqlRequest, cancellationToken);
+
+        if (result.Success && !string.IsNullOrEmpty(result.Result))
+        {
+            await SaveMessageAsync(request.SessionId, ChatRole.Assistant, result.Result);
+        }
+
+        return result;
     }
 
     private async Task SaveMessageAsync(int sessionId, ChatRole role, string content)

@@ -1,0 +1,202 @@
+@model IEnumerable<Dashboard.Models.ViewModels.JobConfigDto>
+@{
+    ViewData["Title"] = "Job & Notification Management";
+}
+
+@section VendorStyles {
+    <link rel="stylesheet" href="~/vendor/libs/select2/select2.css" />
+    <link rel="stylesheet" href="~/vendor/libs/animate-css/animate.css" />
+}
+
+@section PageScripts {
+    <script src="~/js/job-management.js"></script>
+}
+
+<div class="container-xxl flex-grow-1 container-p-y">
+    @* Page Header *@
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h4 class="fw-bold mb-0">
+                <i class="icon-base bx bx-clock text-primary me-2"></i>
+                Job & Notification Management
+            </h4>
+            <p class="text-muted mb-0">Quản lý và giám sát các notification jobs và scheduled tasks</p>
+        </div>
+        <div class="d-flex gap-2">
+            <button type="button" class="btn btn-primary" onclick="refreshJobTable()">
+                <i class="icon-base bx bx-refresh me-1"></i> Refresh
+            </button>
+        </div>
+    </div>
+
+    @* Statistics Cards *@
+    <div class="row g-4 mb-4">
+        <div class="col-sm-6 col-lg-3">
+            <div class="card">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <h2 class="mb-2" id="totalCount">--</h2>
+                            <p class="mb-0 text-muted small">Total Notifications</p>
+                        </div>
+                        <div class="avatar">
+                            <div class="avatar-initial bg-label-primary rounded">
+                                <i class="icon-base bx bx-bell"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-sm-6 col-lg-3">
+            <div class="card">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <h2 class="mb-2" id="enabledCount">--</h2>
+                            <p class="mb-0 text-muted small">Enabled</p>
+                        </div>
+                        <div class="avatar">
+                            <div class="avatar-initial bg-label-success rounded">
+                                <i class="icon-base bx bx-check-circle"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-sm-6 col-lg-3">
+            <div class="card">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <h2 class="mb-2" id="disabledCount">--</h2>
+                            <p class="mb-0 text-muted small">Disabled</p>
+                        </div>
+                        <div class="avatar">
+                            <div class="avatar-initial bg-label-secondary rounded">
+                                <i class="icon-base bx bx-pause-circle"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-sm-6 col-lg-3">
+            <div class="card">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <h2 class="mb-2" id="categoryCount">--</h2>
+                            <p class="mb-0 text-muted small">Categories</p>
+                        </div>
+                        <div class="avatar">
+                            <div class="avatar-initial bg-label-warning rounded">
+                                <i class="icon-base bx bx-category"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    @* Filter Bar *@
+    <div class="card mb-4">
+        <div class="card-body">
+            <div class="row g-3">
+                <div class="col-md-3">
+                    <label class="form-label">Category</label>
+                    <select class="form-select" id="filterCategory" onchange="applyFilters()">
+                        <option value="">All Categories</option>
+                        <option value="Finance">Finance</option>
+                        <option value="Inventory">Inventory</option>
+                        <option value="HumanResources">Human Resources</option>
+                        <option value="Sales">Sales</option>
+                        <option value="CustomerService">Customer Service</option>
+                        <option value="Marketing">Marketing</option>
+                        <option value="Executive">Executive</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Status</label>
+                    <select class="form-select" id="filterStatus" onchange="applyFilters()">
+                        <option value="">All Status</option>
+                        <option value="enabled">Enabled</option>
+                        <option value="disabled">Disabled</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Severity</label>
+                    <select class="form-select" id="filterSeverity" onchange="applyFilters()">
+                        <option value="">All Severity</option>
+                        <option value="Critical">Critical</option>
+                        <option value="Warning">Warning</option>
+                        <option value="Info">Info</option>
+                    </select>
+                </div>
+                <div class="col-md-3 d-flex align-items-end">
+                    <button type="button" class="btn btn-outline-secondary w-100" onclick="clearFilters()">
+                        <i class="icon-base bx bx-x me-1"></i> Clear Filters
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    @* Job Configuration Table *@
+    <div class="card">
+        <div class="card-header d-flex align-items-center justify-content-between">
+            <h5 class="mb-0">Notification Jobs</h5>
+            <div class="d-flex gap-2">
+                <div class="btn-group btn-group-sm" role="group">
+                    <button type="button" class="btn btn-outline-primary active" id="btn-filter-all" onclick="setTableFilter('all')">All</button>
+                    <button type="button" class="btn btn-outline-primary" id="btn-filter-enabled" onclick="setTableFilter('enabled')">Enabled</button>
+                    <button type="button" class="btn btn-outline-primary" id="btn-filter-disabled" onclick="setTableFilter('disabled')">Disabled</button>
+                </div>
+            </div>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover table-sm" id="jobConfigTable" style="width:100%;">
+                    <thead class="table-light">
+                        <tr>
+                            <th style="width:40px;">
+                                <input class="form-check-input" type="checkbox" id="checkAllJobs" onchange="toggleAllJobs(this.checked)" />
+                            </th>
+                            <th style="width:80px;">Status</th>
+                            <th>Notification Name</th>
+                            <th style="width:130px;">Category</th>
+                            <th style="width:100px;">Severity</th>
+                            <th style="width:160px;">Schedule (Cron)</th>
+                            <th style="width:80px;">Interval</th>
+                            <th style="width:90px;">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="jobConfigTableBody">
+                        <tr>
+                            <td colspan="8" class="text-center text-muted py-5">
+                                <div class="spinner-border spinner-border-sm text-primary me-2" role="status">
+                                    <span class="visually-hidden">Loading...</span>
+                                </div>
+                                Loading job configurations...
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        <div class="card-footer d-flex justify-content-between align-items-center">
+            <div class="d-flex gap-2">
+                <button class="btn btn-sm btn-success" onclick="bulkEnableSelected()">
+                    <i class="icon-base bx bx-check me-1"></i> Enable Selected
+                </button>
+                <button class="btn btn-sm btn-secondary" onclick="bulkDisableSelected()">
+                    <i class="icon-base bx bx-x me-1"></i> Disable Selected
+                </button>
+            </div>
+            <small class="text-muted" id="jobCountLabel">-- notifications</small>
+        </div>
+    </div>
+</div>
+

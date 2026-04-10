@@ -131,6 +131,11 @@ builder.Services.AddHttpClient("AIChat");
 builder.Services.AddScoped<AIContextAggregator>();
 builder.Services.AddScoped<IAIChatService, AIChatService>();
 
+// Register Text2SQL Services
+builder.Services.AddScoped<IDatabaseSchemaService, DatabaseSchemaService>();
+builder.Services.AddScoped<ISqlValidationService, SqlValidationService>();
+builder.Services.AddScoped<ITextToSqlService, TextToSqlService>();
+
 var app = builder.Build();
 
 if (!app.Environment.IsDevelopment())

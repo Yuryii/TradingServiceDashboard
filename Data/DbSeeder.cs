@@ -28,12 +28,6 @@ public class DbSeeder
             _logger.LogInformation("Database created. Starting seed...");
         }
 
-        if (await _context.Regions.AnyAsync())
-        {
-            _logger.LogInformation("Database already seeded. Skipping.");
-            return;
-        }
-
         _logger.LogInformation("Starting to seed all tables...");
 
         await SeedRegionsAsync();
@@ -84,13 +78,537 @@ public class DbSeeder
         await SeedOpportunityStageHistoriesAsync();
         await SeedDimDatesAsync();
         await SeedKpiTargetsAsync();
+        await SeedNotificationConfigsAsync();
+        await SeedNotificationTriggerDataAsync();
 
         await _context.SaveChangesAsync();
         _logger.LogInformation("Seeding completed successfully!");
     }
 
+    /// <summary>
+    /// Seed dữ liệu gần thời điểm hiện tại để trigger notification jobs.
+    /// Các bản ghi này có CreatedAt / UpdatedAt / ChangedAt gần DateTime.Now
+    /// để thỏa điều kiện của notification (DelayHours, threshold, v.v.)
+    /// </summary>
+    private async Task SeedNotificationTriggerDataAsync()
+    {
+        if (await _context.Notifications.AnyAsync()) { _logger.LogInformation("Notification trigger data already seeded. Skipping."); return; }
+        var customers = await _context.Customers.ToListAsync();
+        var employees = await _context.Employees.ToListAsync();
+        var products = await _context.Products.ToListAsync();
+        var branches = await _context.Branches.ToListAsync();
+        var suppliers = await _context.Suppliers.ToListAsync();
+        var warehouses = await _context.Warehouses.ToListAsync();
+        var channels = await _context.SalesChannels.ToListAsync();
+        var campaigns = await _context.MarketingCampaigns.ToListAsync();
+        var stages = await _context.OpportunityStages.ToListAsync();
+        var opportunities = await _context.Opportunities.ToListAsync();
+        var departments = await _context.Departments.ToListAsync();
+        var jobs = await _context.JobOpenings.ToListAsync();
+
+        var now = DateTime.UtcNow;
+
+        // ── SAL_NEW_ORDER: Đơn hàng mới trong 1 giờ ─────────────────────
+        var recentOrders = new List<SalesOrder>();
+        for (int i = 1; i <= 5; i++)
+        {
+            recentOrders.Add(new SalesOrder
+            {
+                OrderNumber = $"SO-NEW-{i:D3}",
+                CustomerID = customers[i % customers.Count].CustomerID,
+                BranchID = branches[i % branches.Count].BranchID,
+                SalesChannelID = channels[i % channels.Count].SalesChannelID,
+                SalesEmployeeID = employees[i % employees.Count].EmployeeID,
+                OrderDate = now.AddMinutes(-10 * i),
+                DeliveryDate = now.AddDays(5),
+                SubTotal = 5000 + (i * 1000),
+                TaxAmount = (5000 + (i * 1000)) * 0.1m,
+                TotalAmount = (5000 + (i * 1000)) * 1.1m,
+                PaymentStatus = "Pending",
+                DeliveryStatus = "Pending",
+                ShippingAddress = "123 Trigger Street",
+                ShippingCity = "Ho Chi Minh City",
+                ShippingProvince = "Ho Chi Minh",
+                ShippingCountry = "Vietnam",
+                CreatedAt = now.AddMinutes(-5 * i)
+            });
+        }
+        _context.SalesOrders.AddRange(recentOrders);
+        await _context.SaveChangesAsync();
+
+        // ── SAL_LARGE_ORDER: Đơn hàng lớn (>100M) trong 24 giờ ─────────
+        for (int i = 1; i <= 3; i++)
+        {
+            var subtotal = 100_000_000m + (i * 10_000_000m);
+            _context.SalesOrders.Add(new SalesOrder
+            {
+                OrderNumber = $"SO-LRG-{i:D3}",
+                CustomerID = customers[(i + 5) % customers.Count].CustomerID,
+                BranchID = branches[i % branches.Count].BranchID,
+                SalesChannelID = channels[i % channels.Count].SalesChannelID,
+                SalesEmployeeID = employees[i % employees.Count].EmployeeID,
+                OrderDate = now.AddHours(-i * 5),
+                DeliveryDate = now.AddDays(7),
+                SubTotal = subtotal,
+                TaxAmount = subtotal * 0.1m,
+                TotalAmount = subtotal * 1.1m,
+                PaymentStatus = "Paid",
+                DeliveryStatus = "Pending",
+                ShippingAddress = "456 Enterprise Ave",
+                ShippingCity = "Hanoi",
+                ShippingProvince = "Hanoi",
+                ShippingCountry = "Vietnam",
+                CreatedAt = now.AddHours(-i * 3)
+            });
+        }
+        await _context.SaveChangesAsync();
+
+        // ── SAL_OPP_STAGE_CHANGED: Thay đổi stage gần đây ───────────────
+        for (int i = 1; i <= 3; i++)
+        {
+            _context.OpportunityStageHistories.Add(new OpportunityStageHistory
+            {
+                OpportunityID = opportunities[i % opportunities.Count].OpportunityID,
+                FromStageID = stages[i % stages.Count].StageID,
+                ToStageID = stages[(i + 1) % stages.Count].StageID,
+                ChangedByEmployeeID = employees[i % employees.Count].EmployeeID,
+                ChangedAt = now.AddMinutes(-30 * i),
+                Note = $"Stage changed for notification trigger {i}"
+            });
+        }
+        await _context.SaveChangesAsync();
+
+        // ── SAL_NEW_CUSTOMER: Khách hàng mới trong 24 giờ ────────────────
+        for (int i = 1; i <= 5; i++)
+        {
+            _context.Customers.Add(new Customer
+            {
+                CustomerCode = $"C-NEW-{i:D3}",
+                CustomerName = $"New Customer {i} Trigger",
+                CustomerType = "B2B",
+                CustomerGroupID = customers[0].CustomerGroupID,
+                RegionID = customers[0].RegionID,
+                BranchID = branches[i % branches.Count].BranchID,
+                Industry = "Technology",
+                TaxCode = $"99{i:D9}",
+                Phone = $"+84-90{i:D2}-111-222",
+                Email = $"newcustomer{i}@email.com",
+                AddressLine = $"{100 + i} New Customer Street",
+                City = "Ho Chi Minh City",
+                Province = "Ho Chi Minh",
+                Country = "Vietnam",
+                JoinDate = now.Date,
+                CreditLimit = 50000,
+                PaymentTermDays = 30,
+                IsActive = true,
+                CreatedAt = now.AddHours(-i * 2)
+            });
+        }
+        await _context.SaveChangesAsync();
+
+        // ── FIN_NEW_PAYMENT: Thanh toán mới từ khách hàng trong 24 giờ ──
+        var orders = await _context.SalesOrders.ToListAsync();
+        for (int i = 1; i <= 5; i++)
+        {
+            _context.CustomerPayments.Add(new CustomerPayment
+            {
+                PaymentNumber = $"CP-NEW-{i:D3}",
+                CustomerID = customers[i % customers.Count].CustomerID,
+                SalesOrderID = orders[i % orders.Count].SalesOrderID,
+                ProcessedByEmployeeID = employees[i % employees.Count].EmployeeID,
+                PaymentDate = now.AddHours(-i * 3),
+                Amount = 5000 + (i * 1000),
+                PaymentMethod = "Bank Transfer",
+                ReferenceNumber = $"REF-NEW-{i:D6}",
+                CreatedAt = now.AddHours(-i * 3)
+            });
+        }
+        await _context.SaveChangesAsync();
+
+        // ── FIN_OVERDUE_30D: Đơn hàng chưa thanh toán trên 30 ngày ──────
+        for (int i = 1; i <= 5; i++)
+        {
+            _context.SalesOrders.Add(new SalesOrder
+            {
+                OrderNumber = $"SO-OVR-{i:D3}",
+                CustomerID = customers[(i + 10) % customers.Count].CustomerID,
+                BranchID = branches[i % branches.Count].BranchID,
+                SalesChannelID = channels[i % channels.Count].SalesChannelID,
+                SalesEmployeeID = employees[i % employees.Count].EmployeeID,
+                OrderDate = now.AddDays(-35 - i * 5),
+                DeliveryDate = now.AddDays(-25 - i * 5),
+                SubTotal = 3000 + (i * 500),
+                TaxAmount = (3000 + (i * 500)) * 0.1m,
+                TotalAmount = (3000 + (i * 500)) * 1.1m,
+                PaymentStatus = "Pending",
+                DeliveryStatus = "Delivered",
+                ShippingAddress = $"{200 + i} Overdue Street",
+                ShippingCity = "Da Nang",
+                ShippingProvince = "Da Nang",
+                ShippingCountry = "Vietnam",
+                CreatedAt = now.AddDays(-35 - i * 5)
+            });
+        }
+        await _context.SaveChangesAsync();
+
+        // ── FIN_EXPENSE_PENDING: Chi phí chờ phê duyệt ────────────────
+        for (int i = 1; i <= 5; i++)
+        {
+            _context.Expenses.Add(new Expense
+            {
+                ExpenseNumber = $"EX-PND-{i:D3}",
+                EmployeeID = employees[i % employees.Count].EmployeeID,
+                BranchID = branches[i % branches.Count].BranchID,
+                CategoryID = (await _context.ExpenseCategories.ToListAsync())[i % 10].ExpenseCategoryID,
+                ExpenseDate = now.AddDays(-i),
+                Amount = 500 + (i * 100),
+                Description = $"Pending expense for notification trigger {i}",
+                Status = "Pending",
+                CreatedAt = now.AddDays(-i)
+            });
+        }
+        await _context.SaveChangesAsync();
+
+        // ── FIN_OVER_BUDGET: Chi phí vượt ngưỡng ────────────────────────
+        for (int i = 1; i <= 3; i++)
+        {
+            _context.Expenses.Add(new Expense
+            {
+                ExpenseNumber = $"EX-OVR-{i:D3}",
+                EmployeeID = employees[(i + 5) % employees.Count].EmployeeID,
+                BranchID = branches[(i + 1) % branches.Count].BranchID,
+                CategoryID = (await _context.ExpenseCategories.ToListAsync())[(i + 3) % 10].ExpenseCategoryID,
+                ExpenseDate = now.AddDays(-i),
+                Amount = 10000 + (i * 5000),
+                Description = $"Over budget expense for trigger {i}",
+                Status = "Approved",
+                ApprovedByEmployeeID = employees[(i + 1) % employees.Count].EmployeeID,
+                CreatedAt = now.AddDays(-i)
+            });
+        }
+        await _context.SaveChangesAsync();
+
+        // ── FIN_LARGE_INVOICE: Hóa đơn chưa thanh toán lớn (>50M) ──────
+        for (int i = 1; i <= 3; i++)
+        {
+            var subtotal = 60_000_000m + (i * 10_000_000m);
+            _context.SalesInvoices.Add(new SalesInvoice
+            {
+                InvoiceNumber = $"INV-LRG-{i:D3}",
+                SalesOrderID = orders[i % orders.Count].SalesOrderID,
+                CustomerID = customers[(i + 8) % customers.Count].CustomerID,
+                BranchID = branches[i % branches.Count].BranchID,
+                SalesEmployeeID = employees[i % employees.Count].EmployeeID,
+                InvoiceDate = now.AddDays(-10 - i),
+                DueDate = now.AddDays(20),
+                SubTotal = subtotal,
+                TaxAmount = subtotal * 0.1m,
+                TotalAmount = subtotal * 1.1m,
+                PaidAmount = 0,
+                OutstandingAmount = subtotal * 1.1m,
+                PaymentStatus = "Pending",
+                CreatedAt = now.AddDays(-10 - i)
+            });
+        }
+        await _context.SaveChangesAsync();
+
+        // ── INV_LOW_STOCK: Tồn kho thấp (dưới reorder point) ────────────
+        var inventories = await _context.Inventories.ToListAsync();
+        for (int i = 0; i < Math.Min(5, inventories.Count); i++)
+        {
+            var inv = inventories[i];
+            inv.QuantityAvailable = 5 + i;
+            inv.QuantityOnHand = 15 + i;
+            inv.LastUpdatedAt = now;
+        }
+        _context.Inventories.UpdateRange(inventories.Take(5));
+        await _context.SaveChangesAsync();
+
+        // ── INV_OUT_OF_STOCK: Hết hàng ───────────────────────────────────
+        if (inventories.Count >= 10)
+        {
+            for (int i = 5; i < 8; i++)
+            {
+                var inv = inventories[i];
+                inv.QuantityAvailable = 0;
+                inv.QuantityOnHand = 0;
+                inv.LastUpdatedAt = now;
+            }
+            _context.Inventories.UpdateRange(inventories.Skip(5).Take(3));
+            await _context.SaveChangesAsync();
+        }
+
+        // ── INV_PO_PENDING: Purchase order chờ duyệt ────────────────────
+        for (int i = 1; i <= 3; i++)
+        {
+            _context.PurchaseOrders.Add(new PurchaseOrder
+            {
+                OrderNumber = $"PO-PND-{i:D3}",
+                SupplierID = suppliers[i % suppliers.Count].SupplierID,
+                BranchID = branches[i % branches.Count].BranchID,
+                WarehouseID = warehouses[i % warehouses.Count].WarehouseID,
+                RequestedByEmployeeID = employees[i % employees.Count].EmployeeID,
+                OrderDate = now.AddDays(-2),
+                ExpectedDeliveryDate = now.AddDays(12),
+                SubTotal = 2000 + (i * 500),
+                TaxAmount = (2000 + (i * 500)) * 0.1m,
+                TotalAmount = (2000 + (i * 500)) * 1.1m,
+                Status = "Submitted",
+                CreatedAt = now.AddDays(-2)
+            });
+        }
+        await _context.SaveChangesAsync();
+
+        // ── INV_NEW_RECEIPT: Nhập kho gần đây ───────────────────────────
+        var pos = await _context.PurchaseOrders.ToListAsync();
+        for (int i = 1; i <= 3; i++)
+        {
+            _context.PurchaseReceipts.Add(new PurchaseReceipt
+            {
+                ReceiptNumber = $"PR-NEW-{i:D3}",
+                PurchaseOrderID = pos[i % pos.Count].PurchaseOrderID,
+                SupplierID = suppliers[i % suppliers.Count].SupplierID,
+                WarehouseID = warehouses[i % warehouses.Count].WarehouseID,
+                BranchID = branches[i % branches.Count].BranchID,
+                ReceivedByEmployeeID = employees[i % employees.Count].EmployeeID,
+                ReceiptDate = now.AddHours(-i * 5),
+                TotalAmount = 3000 + (i * 500),
+                Status = "Received",
+                CreatedAt = now.AddHours(-i * 5)
+            });
+        }
+        await _context.SaveChangesAsync();
+
+        // ── HR_LEAVE_PENDING: Đơn nghỉ phép chờ duyệt ──────────────────
+        for (int i = 1; i <= 5; i++)
+        {
+            _context.LeaveRequests.Add(new LeaveRequest
+            {
+                EmployeeID = employees[i % employees.Count].EmployeeID,
+                LeaveType = "Annual",
+                StartDate = now.AddDays(i + 1),
+                EndDate = now.AddDays(i + 3),
+                TotalDays = 3,
+                Reason = $"Leave request for notification trigger {i}",
+                Status = "Pending",
+                CreatedAt = now.AddHours(-i * 2)
+            });
+        }
+        await _context.SaveChangesAsync();
+
+        // ── HR_NEW_APPLICANT: Ứng viên mới gần đây ─────────────────────
+        if (jobs.Count > 0)
+        {
+            for (int i = 1; i <= 5; i++)
+            {
+                _context.Applicants.Add(new Applicant
+                {
+                    JobOpeningID = jobs[i % jobs.Count].JobOpeningID,
+                    FullName = $"New Applicant {i} Trigger",
+                    Gender = i % 2 == 0 ? "Male" : "Female",
+                    DateOfBirth = new DateTime(1995 + (i % 10), (i % 12) + 1, (i % 28) + 1),
+                    Phone = $"+84-90{i:D2}-333-444",
+                    Email = $"newapplicant{i}@email.com",
+                    Address = $"{300 + i} Applicant Street",
+                    Status = "Applied",
+                    AppliedDate = now.AddHours(-i * 4),
+                    ReferredByEmployeeID = employees[i % employees.Count].EmployeeID,
+                    CreatedAt = now.AddHours(-i * 4)
+                });
+            }
+            await _context.SaveChangesAsync();
+        }
+
+        // ── HR_NEW_EMPLOYEE: Nhân viên mới trong 7 ngày ─────────────────
+        for (int i = 1; i <= 3; i++)
+        {
+            _context.Employees.Add(new Employee
+            {
+                EmployeeCode = $"EMP-NEW-{i:D3}",
+                FullName = $"New Employee {i} Trigger",
+                Gender = i % 2 == 0 ? "Male" : "Female",
+                DateOfBirth = new DateTime(1990 + (i % 10), (i % 12) + 1, (i % 28) + 1),
+                Phone = $"+84-90{i:D2}-555-666",
+                Email = $"newemployee{i}@company.com",
+                AddressLine = $"{400 + i} New Employee Street",
+                DepartmentID = departments[i % departments.Count].DepartmentID,
+                PositionID = (await _context.Positions.ToListAsync())[i % 10].PositionID,
+                BranchID = branches[i % branches.Count].BranchID,
+                EmploymentType = "Probation",
+                HireDate = now.AddDays(-i * 2),
+                BaseSalary = 8000 + (i * 500),
+                IsActive = true,
+                CreatedAt = now.AddDays(-i * 2)
+            });
+        }
+        await _context.SaveChangesAsync();
+
+        // ── CS_NEW_TICKET: Ticket mới trong 1 giờ ───────────────────────
+        for (int i = 1; i <= 5; i++)
+        {
+            _context.SupportTickets.Add(new SupportTicket
+            {
+                TicketNumber = $"TK-NEW-{i:D3}",
+                CustomerID = customers[i % customers.Count].CustomerID,
+                AssignedToEmployeeID = employees[i % employees.Count].EmployeeID,
+                BranchID = branches[i % branches.Count].BranchID,
+                Subject = $"New support ticket {i} for notification trigger",
+                TicketType = "Technical",
+                Priority = i % 3 == 0 ? "Critical" : (i % 2 == 0 ? "High" : "Medium"),
+                Status = "Open",
+                Description = $"Support ticket description {i}",
+                CreatedAt = now.AddMinutes(-20 * i)
+            });
+        }
+        await _context.SaveChangesAsync();
+
+        // ── CS_HIGH_PRIORITY: Ticket ưu tiên cao chưa xử lý ─────────────
+        for (int i = 1; i <= 3; i++)
+        {
+            _context.SupportTickets.Add(new SupportTicket
+            {
+                TicketNumber = $"TK-HP-{i:D3}",
+                CustomerID = customers[(i + 5) % customers.Count].CustomerID,
+                AssignedToEmployeeID = employees[i % employees.Count].EmployeeID,
+                BranchID = branches[(i + 1) % branches.Count].BranchID,
+                Subject = $"High priority ticket {i} for trigger",
+                TicketType = "Billing",
+                Priority = i % 2 == 0 ? "Critical" : "High",
+                Status = "Open",
+                Description = $"High priority description {i}",
+                CreatedAt = now.AddDays(-i)
+            });
+        }
+        await _context.SaveChangesAsync();
+
+        // ── CS_TICKET_SLA_BREACH: Ticket quá hạn >24 giờ ────────────────
+        for (int i = 1; i <= 3; i++)
+        {
+            _context.SupportTickets.Add(new SupportTicket
+            {
+                TicketNumber = $"TK-SLA-{i:D3}",
+                CustomerID = customers[(i + 8) % customers.Count].CustomerID,
+                AssignedToEmployeeID = employees[(i + 2) % employees.Count].EmployeeID,
+                BranchID = branches[(i + 2) % branches.Count].BranchID,
+                Subject = $"SLA breach ticket {i} for trigger",
+                TicketType = "General",
+                Priority = "Medium",
+                Status = "In Progress",
+                Description = $"SLA breach description {i}",
+                CreatedAt = now.AddHours(-30 - i * 5),
+                ResolvedDate = null
+            });
+        }
+        await _context.SaveChangesAsync();
+
+        // ── MKT_BUDGET_80: Campaign ngân sách gần hết (>80%) ───────────
+        if (campaigns.Count >= 3)
+        {
+            for (int i = 0; i < 3; i++)
+            {
+                var c = campaigns[i];
+                c.ActualSpend = (decimal)(c.Budget * 0.85m);
+                c.IsActive = true;
+                c.Status = "Active";
+            }
+            _context.MarketingCampaigns.UpdateRange(campaigns.Take(3));
+            await _context.SaveChangesAsync();
+        }
+
+        // ── MKT_BUDGET_EXCEEDED: Campaign vượt ngân sách ────────────────
+        if (campaigns.Count >= 5)
+        {
+            for (int i = 3; i < 5; i++)
+            {
+                var c = campaigns[i];
+                c.ActualSpend = c.Budget + 5000;
+                c.IsActive = true;
+                c.Status = "Active";
+            }
+            _context.MarketingCampaigns.UpdateRange(campaigns.Skip(3).Take(2));
+            await _context.SaveChangesAsync();
+        }
+
+        // ── MKT_NEW_LEAD: Lead mới trong 24 giờ ─────────────────────────
+        for (int i = 1; i <= 5; i++)
+        {
+            _context.MarketingLeads.Add(new MarketingLead
+            {
+                LeadCode = $"LD-NEW-{i:D3}",
+                LeadName = $"New Lead {i} Trigger",
+                CompanyName = $"New Lead Company {i}",
+                CampaignID = campaigns[i % campaigns.Count].CampaignID,
+                AssignedEmployeeID = employees[i % employees.Count].EmployeeID,
+                Status = "New",
+                Source = "Website",
+                Email = $"newlead{i}@email.com",
+                Phone = $"+84-90{i:D2}-777-888",
+                LeadScore = 50 + (i * 10),
+                CreatedDate = now.AddHours(-i * 4)
+            });
+        }
+        await _context.SaveChangesAsync();
+
+        // ── MKT_LEAD_CONVERTED: Lead được chuyển đổi gần đây ───────────
+        for (int i = 1; i <= 3; i++)
+        {
+            _context.MarketingLeads.Add(new MarketingLead
+            {
+                LeadCode = $"LD-CVT-{i:D3}",
+                LeadName = $"Converted Lead {i} Trigger",
+                CompanyName = $"Converted Company {i}",
+                CampaignID = campaigns[(i + 2) % campaigns.Count].CampaignID,
+                AssignedEmployeeID = employees[(i + 1) % employees.Count].EmployeeID,
+                Status = "Converted",
+                ConvertedDate = now.AddHours(-i * 6),
+                Source = "Referral",
+                Email = $"convertedlead{i}@email.com",
+                Phone = $"+84-90{i:D2}-999-000",
+                LeadScore = 90 + i,
+                CreatedDate = now.AddDays(-5)
+            });
+        }
+        await _context.SaveChangesAsync();
+
+        // ── MKT_LOW_ROAS: Chiến dịch ROAS thấp (hôm qua) ──────────────
+        var yesterday = DateTime.Today.AddDays(-1);
+        var spendDailies = await _context.MarketingSpendDailies.ToListAsync();
+        for (int i = 0; i < Math.Min(3, spendDailies.Count); i++)
+        {
+            spendDailies[i].SpendDate = yesterday;
+            spendDailies[i].CPA = 5.0m + (i * 2);
+        }
+        _context.MarketingSpendDailies.UpdateRange(spendDailies.Take(3));
+        await _context.SaveChangesAsync();
+
+        _logger.LogInformation("Notification trigger data seeded successfully.");
+    }
+
+    /// <summary>
+    /// Seed NotificationConfigs nếu chưa có. Đây là 37 notification jobs mặc định.
+    /// </summary>
+    private async Task SeedNotificationConfigsAsync()
+    {
+        if (await _context.NotificationConfigs.AnyAsync())
+        {
+            _logger.LogInformation("NotificationConfigs already seeded. Skipping.");
+            return;
+        }
+
+        var configs = NotificationConfigDefaults.DefaultConfigs;
+        foreach (var config in configs)
+        {
+            config.CreatedAt = DateTime.UtcNow;
+        }
+        _context.NotificationConfigs.AddRange(configs);
+        await _context.SaveChangesAsync();
+
+        _logger.LogInformation("Seeded {Count} notification configurations.", configs.Count);
+    }
+
     private async Task SeedRegionsAsync()
     {
+        if (await _context.Regions.AnyAsync()) { _logger.LogInformation("Regions already seeded. Skipping."); return; }
         var regions = new List<Region>();
         var names = new[] { "North", "South", "Central", "East", "West", "Northeast", "Northwest", "Southeast", "Southwest", "Metro" };
         for (int i = 1; i <= 10; i++)
@@ -103,6 +621,7 @@ public class DbSeeder
 
     private async Task SeedCustomerGroupsAsync()
     {
+        if (await _context.CustomerGroups.AnyAsync()) { _logger.LogInformation("CustomerGroups already seeded. Skipping."); return; }
         var groups = new List<CustomerGroup>();
         var names = new[] { "Premium", "Standard", "Basic", "VIP", "Enterprise", "SME", "Corporate", "Government", "Retail", "Wholesale" };
         for (int i = 1; i <= 10; i++)
@@ -115,6 +634,7 @@ public class DbSeeder
 
     private async Task SeedSalesChannelsAsync()
     {
+        if (await _context.SalesChannels.AnyAsync()) { _logger.LogInformation("SalesChannels already seeded. Skipping."); return; }
         var channels = new List<SalesChannel>();
         var names = new[] { "Online", "Retail", "Wholesale", "Direct", "Partner", "Distributor", "Reseller", "E-commerce", "TeleSales", "FieldSales" };
         for (int i = 1; i <= 10; i++)
@@ -127,6 +647,7 @@ public class DbSeeder
 
     private async Task SeedExpenseCategoriesAsync()
     {
+        if (await _context.ExpenseCategories.AnyAsync()) { _logger.LogInformation("ExpenseCategories already seeded. Skipping."); return; }
         var categories = new List<ExpenseCategory>();
         var names = new[] { "Travel", "Meals", "Equipment", "Software", "Utilities", "Marketing", "Training", "Office Supplies", "Communication", "Maintenance" };
         for (int i = 1; i <= 10; i++)
@@ -139,6 +660,7 @@ public class DbSeeder
 
     private async Task SeedProductCategoriesAsync()
     {
+        if (await _context.ProductCategories.AnyAsync()) { _logger.LogInformation("ProductCategories already seeded. Skipping."); return; }
         var categories = new List<ProductCategory>();
         var names = new[] { "Electronics", "Computers", "Phones", "Furniture", "Office", "Software", "Gaming", "Audio", "Accessories", "Tools" };
         for (int i = 1; i <= 10; i++)
@@ -151,6 +673,7 @@ public class DbSeeder
 
     private async Task SeedOpportunityStagesAsync()
     {
+        if (await _context.OpportunityStages.AnyAsync()) { _logger.LogInformation("OpportunityStages already seeded. Skipping."); return; }
         var stages = new List<OpportunityStage>();
         var names = new[] { "New", "Contacted", "Qualified", "Proposal", "Negotiation", "Closed Won", "Closed Lost", "On Hold", "Follow Up", "Converted" };
         for (int i = 1; i <= 10; i++)
@@ -163,6 +686,7 @@ public class DbSeeder
 
     private async Task SeedBranchesAsync()
     {
+        if (await _context.Branches.AnyAsync()) { _logger.LogInformation("Branches already seeded. Skipping."); return; }
         var regions = await _context.Regions.ToListAsync();
         var cities = new[] { "Ho Chi Minh City", "Hanoi", "Da Nang", "Can Tho", "Hai Phong", "Nha Trang", "Hue", "Vung Tau", "Bien Hoa", "Cao Lanh" };
         var branches = new List<Branch>();
@@ -189,6 +713,7 @@ public class DbSeeder
 
     private async Task SeedDepartmentsAsync()
     {
+        if (await _context.Departments.AnyAsync()) { _logger.LogInformation("Departments already seeded. Skipping."); return; }
         var departments = new List<Department>();
         var names = new[] { "Sales", "Marketing", "Finance", "HR", "IT", "Operations", "Procurement", "Legal", "Admin", "Support" };
         for (int i = 1; i <= 10; i++)
@@ -201,6 +726,7 @@ public class DbSeeder
 
     private async Task SeedPositionsAsync()
     {
+        if (await _context.Positions.AnyAsync()) { _logger.LogInformation("Positions already seeded. Skipping."); return; }
         var positions = new List<Position>();
         var levels = new[] { "Staff", "Senior", "Supervisor", "Manager", "Director", "Executive" };
         var names = new[] { "Analyst", "Specialist", "Coordinator", "Administrator", "Assistant", "Lead", "Engineer", "Consultant", "Director", "Executive" };
@@ -221,6 +747,7 @@ public class DbSeeder
 
     private async Task SeedSuppliersAsync()
     {
+        if (await _context.Suppliers.AnyAsync()) { _logger.LogInformation("Suppliers already seeded. Skipping."); return; }
         var regions = await _context.Regions.ToListAsync();
         var suppliers = new List<Supplier>();
         var types = new[] { "Goods", "Services", "Mixed" };
@@ -250,6 +777,7 @@ public class DbSeeder
 
     private async Task SeedWarehousesAsync()
     {
+        if (await _context.Warehouses.AnyAsync()) { _logger.LogInformation("Warehouses already seeded. Skipping."); return; }
         var branches = await _context.Branches.ToListAsync();
         var warehouses = new List<Warehouse>();
         for (int i = 1; i <= 10; i++)
@@ -271,6 +799,7 @@ public class DbSeeder
 
     private async Task SeedEmployeesAsync()
     {
+        if (await _context.Employees.AnyAsync()) { _logger.LogInformation("Employees already seeded. Skipping."); return; }
         var departments = await _context.Departments.ToListAsync();
         var positions = await _context.Positions.ToListAsync();
         var branches = await _context.Branches.ToListAsync();
@@ -327,6 +856,7 @@ public class DbSeeder
 
     private async Task SeedCustomersAsync()
     {
+        if (await _context.Customers.AnyAsync()) { _logger.LogInformation("Customers already seeded. Skipping."); return; }
         var customerGroups = await _context.CustomerGroups.ToListAsync();
         var regions = await _context.Regions.ToListAsync();
         var branches = await _context.Branches.ToListAsync();
@@ -366,6 +896,7 @@ public class DbSeeder
 
     private async Task SeedProductsAsync()
     {
+        if (await _context.Products.AnyAsync()) { _logger.LogInformation("Products already seeded. Skipping."); return; }
         var categories = await _context.ProductCategories.ToListAsync();
         var products = new List<Product>();
         var types = new[] { "Stock", "Service", "Bundle" };
@@ -398,6 +929,7 @@ public class DbSeeder
 
     private async Task SeedMarketingCampaignsAsync()
     {
+        if (await _context.MarketingCampaigns.AnyAsync()) { _logger.LogInformation("MarketingCampaigns already seeded. Skipping."); return; }
         var channels = new[] { "Email", "Social Media", "Print", "TV", "Radio", "Outdoor", "Event", "Webinar", "Content", "PPC" };
         var statuses = new[] { "Draft", "Active", "Paused", "Completed", "Cancelled" };
         var names = new[] { "Spring Sale", "Summer Promo", "Winter Discount", "Fall Collection", "New Year Offer", "Holiday Special", "Black Friday", "Cyber Monday", "Flash Sale", "Clearance" };
@@ -426,6 +958,7 @@ public class DbSeeder
 
     private async Task SeedMarketingLeadsAsync()
     {
+        if (await _context.MarketingLeads.AnyAsync()) { _logger.LogInformation("MarketingLeads already seeded. Skipping."); return; }
         var employees = await _context.Employees.ToListAsync();
         var campaigns = await _context.MarketingCampaigns.ToListAsync();
         var statuses = new[] { "New", "Contacted", "Qualified", "Converted", "Lost" };
@@ -460,6 +993,7 @@ public class DbSeeder
 
     private async Task SeedQuotesAsync()
     {
+        if (await _context.Quotes.AnyAsync()) { _logger.LogInformation("Quotes already seeded. Skipping."); return; }
         var customers = await _context.Customers.ToListAsync();
         var employees = await _context.Employees.ToListAsync();
         var branches = await _context.Branches.ToListAsync();
@@ -492,6 +1026,7 @@ public class DbSeeder
 
     private async Task SeedOpportunitiesAsync()
     {
+        if (await _context.Opportunities.AnyAsync()) { _logger.LogInformation("Opportunities already seeded. Skipping."); return; }
         var customers = await _context.Customers.ToListAsync();
         var leads = await _context.MarketingLeads.ToListAsync();
         var employees = await _context.Employees.ToListAsync();
@@ -531,6 +1066,7 @@ public class DbSeeder
 
     private async Task SeedSalesOrdersAsync()
     {
+        if (await _context.SalesOrders.AnyAsync()) { _logger.LogInformation("SalesOrders already seeded. Skipping."); return; }
         var customers = await _context.Customers.ToListAsync();
         var branches = await _context.Branches.ToListAsync();
         var channels = await _context.SalesChannels.ToListAsync();
@@ -581,6 +1117,7 @@ public class DbSeeder
 
     private async Task SeedSalesOrderDetailsAsync()
     {
+        if (await _context.SalesOrderDetails.AnyAsync()) { _logger.LogInformation("SalesOrderDetails already seeded. Skipping."); return; }
         var orders = await _context.SalesOrders.ToListAsync();
         var products = await _context.Products.ToListAsync();
 
@@ -607,6 +1144,7 @@ public class DbSeeder
 
     private async Task SeedSalesInvoicesAsync()
     {
+        if (await _context.SalesInvoices.AnyAsync()) { _logger.LogInformation("SalesInvoices already seeded. Skipping."); return; }
         var customers = await _context.Customers.ToListAsync();
         var branches = await _context.Branches.ToListAsync();
         var orders = await _context.SalesOrders.ToListAsync();
@@ -648,6 +1186,7 @@ public class DbSeeder
 
     private async Task SeedSalesInvoiceDetailsAsync()
     {
+        if (await _context.SalesInvoiceDetails.AnyAsync()) { _logger.LogInformation("SalesInvoiceDetails already seeded. Skipping."); return; }
         var invoices = await _context.SalesInvoices.ToListAsync();
         var products = await _context.Products.ToListAsync();
 
@@ -673,6 +1212,7 @@ public class DbSeeder
 
     private async Task SeedCustomerPaymentsAsync()
     {
+        if (await _context.CustomerPayments.AnyAsync()) { _logger.LogInformation("CustomerPayments already seeded. Skipping."); return; }
         var customers = await _context.Customers.ToListAsync();
         var invoices = await _context.SalesInvoices.ToListAsync();
         var employees = await _context.Employees.ToListAsync();
@@ -703,6 +1243,7 @@ public class DbSeeder
 
     private async Task SeedPurchaseOrdersAsync()
     {
+        if (await _context.PurchaseOrders.AnyAsync()) { _logger.LogInformation("PurchaseOrders already seeded. Skipping."); return; }
         var suppliers = await _context.Suppliers.ToListAsync();
         var branches = await _context.Branches.ToListAsync();
         var warehouses = await _context.Warehouses.ToListAsync();
@@ -742,6 +1283,7 @@ public class DbSeeder
 
     private async Task SeedPurchaseOrderDetailsAsync()
     {
+        if (await _context.PurchaseOrderDetails.AnyAsync()) { _logger.LogInformation("PurchaseOrderDetails already seeded. Skipping."); return; }
         var orders = await _context.PurchaseOrders.ToListAsync();
         var products = await _context.Products.ToListAsync();
 
@@ -768,6 +1310,7 @@ public class DbSeeder
 
     private async Task SeedPurchaseReceiptsAsync()
     {
+        if (await _context.PurchaseReceipts.AnyAsync()) { _logger.LogInformation("PurchaseReceipts already seeded. Skipping."); return; }
         var suppliers = await _context.Suppliers.ToListAsync();
         var warehouses = await _context.Warehouses.ToListAsync();
         var branches = await _context.Branches.ToListAsync();
@@ -799,6 +1342,7 @@ public class DbSeeder
 
     private async Task SeedPurchaseReceiptDetailsAsync()
     {
+        if (await _context.PurchaseReceiptDetails.AnyAsync()) { _logger.LogInformation("PurchaseReceiptDetails already seeded. Skipping."); return; }
         var receipts = await _context.PurchaseReceipts.ToListAsync();
         var products = await _context.Products.ToListAsync();
 
@@ -822,6 +1366,7 @@ public class DbSeeder
 
     private async Task SeedInventoriesAsync()
     {
+        if (await _context.Inventories.AnyAsync()) { _logger.LogInformation("Inventories already seeded. Skipping."); return; }
         var products = await _context.Products.ToListAsync();
         var warehouses = await _context.Warehouses.ToListAsync();
         var branches = await _context.Branches.ToListAsync();
@@ -851,6 +1396,7 @@ public class DbSeeder
 
     private async Task SeedSalesReturnsAsync()
     {
+        if (await _context.SalesReturns.AnyAsync()) { _logger.LogInformation("SalesReturns already seeded. Skipping."); return; }
         var customers = await _context.Customers.ToListAsync();
         var orders = await _context.SalesOrders.ToListAsync();
         var invoices = await _context.SalesInvoices.ToListAsync();
@@ -881,6 +1427,7 @@ public class DbSeeder
 
     private async Task SeedSalesReturnDetailsAsync()
     {
+        if (await _context.SalesReturnDetails.AnyAsync()) { _logger.LogInformation("SalesReturnDetails already seeded. Skipping."); return; }
         var returns = await _context.SalesReturns.ToListAsync();
         var products = await _context.Products.ToListAsync();
 
@@ -905,6 +1452,7 @@ public class DbSeeder
 
     private async Task SeedSupplierPaymentsAsync()
     {
+        if (await _context.SupplierPayments.AnyAsync()) { _logger.LogInformation("SupplierPayments already seeded. Skipping."); return; }
         var suppliers = await _context.Suppliers.ToListAsync();
         var invoices = await _context.PurchaseInvoices.ToListAsync();
         var orders = await _context.PurchaseOrders.ToListAsync();
@@ -936,6 +1484,7 @@ public class DbSeeder
 
     private async Task SeedExpensesAsync()
     {
+        if (await _context.Expenses.AnyAsync()) { _logger.LogInformation("Expenses already seeded. Skipping."); return; }
         var employees = await _context.Employees.ToListAsync();
         var branches = await _context.Branches.ToListAsync();
         var categories = await _context.ExpenseCategories.ToListAsync();
@@ -970,6 +1519,7 @@ public class DbSeeder
 
     private async Task SeedAttendancesAsync()
     {
+        if (await _context.Attendances.AnyAsync()) { _logger.LogInformation("Attendances already seeded. Skipping."); return; }
         var employees = await _context.Employees.ToListAsync();
         var statuses = new[] { "Present", "Absent", "Late", "On Leave" };
 
@@ -992,6 +1542,7 @@ public class DbSeeder
 
     private async Task SeedLeaveRequestsAsync()
     {
+        if (await _context.LeaveRequests.AnyAsync()) { _logger.LogInformation("LeaveRequests already seeded. Skipping."); return; }
         var employees = await _context.Employees.ToListAsync();
         var types = new[] { "Annual", "Sick", "Personal", "Maternity", "Paternity" };
         var statuses = new[] { "Pending", "Approved", "Rejected", "Cancelled" };
@@ -1019,6 +1570,7 @@ public class DbSeeder
 
     private async Task SeedPerformanceReviewsAsync()
     {
+        if (await _context.PerformanceReviews.AnyAsync()) { _logger.LogInformation("PerformanceReviews already seeded. Skipping."); return; }
         var employees = await _context.Employees.ToListAsync();
 
         var reviews = new List<PerformanceReview>();
@@ -1046,6 +1598,7 @@ public class DbSeeder
 
     private async Task SeedPayrollsAsync()
     {
+        if (await _context.Payrolls.AnyAsync()) { _logger.LogInformation("Payrolls already seeded. Skipping."); return; }
         var employees = await _context.Employees.ToListAsync();
         var branches = await _context.Branches.ToListAsync();
         var statuses = new[] { "Pending", "Processing", "Paid" };
@@ -1085,6 +1638,7 @@ public class DbSeeder
 
     private async Task SeedJobOpeningsAsync()
     {
+        if (await _context.JobOpenings.AnyAsync()) { _logger.LogInformation("JobOpenings already seeded. Skipping."); return; }
         var departments = await _context.Departments.ToListAsync();
         var branches = await _context.Branches.ToListAsync();
         var employees = await _context.Employees.ToListAsync();
@@ -1122,6 +1676,7 @@ public class DbSeeder
 
     private async Task SeedApplicantsAsync()
     {
+        if (await _context.Applicants.AnyAsync()) { _logger.LogInformation("Applicants already seeded. Skipping."); return; }
         var jobs = await _context.JobOpenings.ToListAsync();
         var employees = await _context.Employees.ToListAsync();
         var statuses = new[] { "Applied", "Screening", "Interview", "Offer", "Rejected", "Hired" };
@@ -1153,6 +1708,7 @@ public class DbSeeder
 
     private async Task SeedSupportTicketsAsync()
     {
+        if (await _context.SupportTickets.AnyAsync()) { _logger.LogInformation("SupportTickets already seeded. Skipping."); return; }
         var customers = await _context.Customers.ToListAsync();
         var employees = await _context.Employees.ToListAsync();
         var branches = await _context.Branches.ToListAsync();
@@ -1188,6 +1744,7 @@ public class DbSeeder
 
     private async Task SeedPurchaseInvoicesAsync()
     {
+        if (await _context.PurchaseInvoices.AnyAsync()) { _logger.LogInformation("PurchaseInvoices already seeded. Skipping."); return; }
         var suppliers = await _context.Suppliers.ToListAsync();
         var branches = await _context.Branches.ToListAsync();
         var orders = await _context.PurchaseOrders.ToListAsync();
@@ -1223,6 +1780,7 @@ public class DbSeeder
 
     private async Task SeedPurchaseInvoiceDetailsAsync()
     {
+        if (await _context.PurchaseInvoiceDetails.AnyAsync()) { _logger.LogInformation("PurchaseInvoiceDetails already seeded. Skipping."); return; }
         var invoices = await _context.PurchaseInvoices.ToListAsync();
         var products = await _context.Products.ToListAsync();
 
@@ -1248,6 +1806,7 @@ public class DbSeeder
 
     private async Task SeedMarketingSpendDailiesAsync()
     {
+        if (await _context.MarketingSpendDailies.AnyAsync()) { _logger.LogInformation("MarketingSpendDailies already seeded. Skipping."); return; }
         var campaigns = await _context.MarketingCampaigns.ToListAsync();
 
         var spends = new List<MarketingSpendDaily>();
@@ -1279,6 +1838,7 @@ public class DbSeeder
 
     private async Task SeedInventorySnapshotsAsync()
     {
+        if (await _context.InventorySnapshots.AnyAsync()) { _logger.LogInformation("InventorySnapshots already seeded. Skipping."); return; }
         var products = await _context.Products.ToListAsync();
         var warehouses = await _context.Warehouses.ToListAsync();
         var branches = await _context.Branches.ToListAsync();
@@ -1310,6 +1870,7 @@ public class DbSeeder
 
     private async Task SeedOpportunityStageHistoriesAsync()
     {
+        if (await _context.OpportunityStageHistories.AnyAsync()) { _logger.LogInformation("OpportunityStageHistories already seeded. Skipping."); return; }
         var opportunities = await _context.Opportunities.ToListAsync();
         var stages = await _context.OpportunityStages.ToListAsync();
         var employees = await _context.Employees.ToListAsync();
@@ -1334,6 +1895,7 @@ public class DbSeeder
 
     private async Task SeedDimDatesAsync()
     {
+        if (await _context.DimDates.AnyAsync()) { _logger.LogInformation("DimDates already seeded. Skipping."); return; }
         var dates = new List<DimDate>();
         var startDate = new DateTime(2026, 1, 1);
 
@@ -1363,6 +1925,7 @@ public class DbSeeder
 
     private async Task SeedKpiTargetsAsync()
     {
+        if (await _context.KpiTargets.AnyAsync()) { _logger.LogInformation("KpiTargets already seeded. Skipping."); return; }
         var employees = await _context.Employees.ToListAsync();
         var branches = await _context.Branches.ToListAsync();
         var departments = await _context.Departments.ToListAsync();

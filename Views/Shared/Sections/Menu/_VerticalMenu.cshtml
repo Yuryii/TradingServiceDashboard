@@ -36,6 +36,14 @@
       </a>
     </li>
 
+    <!-- Notifications -->
+    <li class='menu-item@(currentPage.StartsWith("/Notification") ? " active" : "")'>
+      <a asp-controller="Notification" asp-action="Index" class="menu-link">
+        <i class="menu-icon icon-base bx bx-bell"></i>
+        <div class="text-truncate">Notifications</div>
+      </a>
+    </li>
+
     <!-- Business Dashboards -->
     <li class="menu-header small text-uppercase mt-3">
       <span class="menu-header-text">Business Dashboards</span>
@@ -49,26 +57,6 @@
       <a asp-controller="Executive" asp-action="Index" class="menu-link">
         <i class="menu-icon icon-base bx bx-bar-chart-alt-2"></i>
         <div class="text-truncate">Executive</div>
-        <div class="badge rounded-pill bg-label-primary text-uppercase fs-tiny ms-auto">Overview</div>
-      </a>
-    </li>
-    <!-- Job Management (Executive Only) -->
-    <li class='menu-item@(currentPage.StartsWith("/Executive/JobManagement") ? " active" : "")'>
-      <a href="@Url.Action("Index", "Executive")" class="menu-link" onclick="setTimeout(function(){var el=document.getElementById('job-management');if(el)el.scrollIntoView({behavior:'smooth'});},200)">
-        <i class="menu-icon icon-base bx bx-clock"></i>
-        <div class="text-truncate">Job Management</div>
-        <div class="badge rounded-pill bg-label-warning text-uppercase fs-tiny ms-auto">New</div>
-      </a>
-    </li>
-    }
-
-    <!-- User Management (Executive Only) -->
-    @if (User.IsInRole(SD.Role_Executive))
-    {
-    <li class='menu-item nav-entry--dashboard@(currentPage.StartsWith("/UserManagement") ? " active" : "")'>
-      <a asp-controller="UserManagement" asp-action="Index" class="menu-link">
-        <i class="menu-icon icon-base bx bx-user-circle"></i>
-        <div class="text-truncate">User Management</div>
         <div class="badge rounded-pill bg-label-primary text-uppercase fs-tiny ms-auto">Overview</div>
       </a>
     </li>
@@ -142,6 +130,29 @@
         <i class="menu-icon icon-base bx bx-satisfied"></i>
         <div class="text-truncate">Customer Service</div>
         <div class="badge rounded-pill bg-label-primary text-uppercase fs-tiny ms-auto">Overview</div>
+      </a>
+    </li>
+    }
+
+    <!-- User & Job Management -->
+    <li class="menu-header small text-uppercase mt-3">
+      <span class="menu-header-text">User &amp; Job Management</span>
+      <span class="menu-header-hint d-block text-body-secondary text-lowercase fw-normal">Accounts &amp; Tasks</span>
+    </li>
+    @if (User.IsInRole(SD.Role_Executive))
+    {
+    <li class='menu-item nav-entry--dashboard@(currentPage.StartsWith("/UserManagement") ? " active" : "")'>
+      <a asp-controller="UserManagement" asp-action="Index" class="menu-link">
+        <i class="menu-icon icon-base bx bx-user-circle"></i>
+        <div class="text-truncate">User Management</div>
+        <div class="badge rounded-pill bg-label-primary text-uppercase fs-tiny ms-auto">Overview</div>
+      </a>
+    </li>
+    <li class='menu-item@(currentPage.StartsWith("/JobManagement") ? " active" : "")'>
+      <a asp-controller="JobManagement" asp-action="Index" class="menu-link">
+        <i class="menu-icon icon-base bx bx-clock"></i>
+        <div class="text-truncate">Job Management</div>
+        <div class="badge rounded-pill bg-label-warning text-uppercase fs-tiny ms-auto">New</div>
       </a>
     </li>
     }

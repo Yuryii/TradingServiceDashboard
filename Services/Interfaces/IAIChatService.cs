@@ -10,6 +10,7 @@ public class AIChatRequest
     public string Role { get; set; } = string.Empty;
     public string Department { get; set; } = string.Empty;
     public string Message { get; set; } = string.Empty;
+    public bool UseText2Sql { get; set; } = false;
 }
 
 public class AIChatResponse
@@ -44,5 +45,7 @@ public interface IAIChatService
     Task<List<ChatMessageDto>> GetChatHistoryAsync(int sessionId, int page = 1, int pageSize = 50);
     Task<bool> DeleteSessionAsync(int sessionId, string userId);
     IAsyncEnumerable<string> StreamResponseAsync(AIChatRequest request, CancellationToken cancellationToken = default);
+    IAsyncEnumerable<string> StreamText2SqlResponseAsync(AIChatRequest request, CancellationToken cancellationToken = default);
     Task<string> GetFullResponseAsync(AIChatRequest request, CancellationToken cancellationToken = default);
+    Task<Text2SqlResponse> GetText2SqlResponseAsync(AIChatRequest request, CancellationToken cancellationToken = default);
 }

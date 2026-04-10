@@ -265,47 +265,21 @@
     }
 
     function showToast(notification) {
-        var container = document.getElementById('toastContainer') || createToastContainer();
-        var toastId = 'toast-' + Date.now();
-
         var x = normN(notification);
         if (!x) return;
 
-        var severityClass = getSeverityClass(x.severity);
-        var iconBgClass = x.iconBgClass && String(x.iconBgClass).trim() !== '' ? x.iconBgClass : getIconBgClass(x.category);
+        var severityMap = {
+            'Critical': 'error',
+            'Warning': 'warning',
+            'Success': 'success',
+            'Info': 'info'
+        };
 
-        var toast =
-            '<div id="' + toastId + '" class="toast" role="alert" aria-live="assertive" aria-atomic="true" data-bs-autohide="true" data-bs-delay="5000">' +
-            '  <div class="toast-header ' + severityClass + '"> ' +
-            '    <div class="avatar ' + iconBgClass + ' me-2">' +
-            '      <span class="avatar-initial rounded-circle">' +
-            '        <i class="icon-base ' + getCategoryIcon(x.category, x.iconClass) + '"></i>' +
-            '      </span>' +
-            '    </div>' +
-            '    <strong class="me-auto">' + escapeHtml(x.title) + '</strong>' +
-            '    <small>' + escapeHtml(x.severity) + '</small>' +
-            '    <button type="button" class="btn-close btn-close-white ms-2" data-bs-dismiss="toast"></button>' +
-            '  </div>' +
-            '  <div class="toast-body">' + escapeHtml(x.message) + '</div>' +
-            '</div>';
+        var notyfType = severityMap[x.severity] || 'info';
+        var title = escapeHtml(x.title) || 'Notification';
+        var message = escapeHtml(x.message);
 
-        container.insertAdjacentHTML('beforeend', toast);
-
-        var bsToast = new bootstrap.Toast(document.getElementById(toastId));
-        bsToast.show();
-
-        document.getElementById(toastId)?.addEventListener('hidden.bs.toast', function () {
-            this.remove();
-        });
-    }
-
-    function createToastContainer() {
-        var container = document.createElement('div');
-        container.id = 'toastContainer';
-        container.className = 'toast-container position-fixed top-0 end-0 p-3';
-        container.style.zIndex = '11000';
-        document.body.appendChild(container);
-        return container;
+        window.showToast(title + ': ' + message, notyfType);
     }
 
     function getSeverityClass(severity) {
