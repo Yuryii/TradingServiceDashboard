@@ -32,14 +32,15 @@ Hệ thống sử dụng **SQL Server** làm cơ sở dữ liệu, **Entity Fram
 
 - **7 module phân quyền theo vai trò** — Executive, Sales, Marketing, Inventory, Finance, HR, Customer Service
 - **Dashboard tổng quan** cho từng module với biểu đồ ApexCharts
-- **50+ entity CRUD** — quản lý qua generic `CrudService<T>` registry
+- **51 entity CRUD** — quản lý qua generic `CrudService<T>` registry
 - **AI Chat Assistant thông minh** — trợ lý AI trong từng module, trả lời dựa trên dữ liệu thực tế của doanh nghiệp, hỗ trợ streaming real-time
 - **Thông báo thời gian thực** qua SignalR hub
 - **Job nền tự động** qua Hangfire (tổng hợp dữ liệu, thông báo, reminder)
 - **Import/Export Excel** cho tất cả bảng dữ liệu
 - **Identity** — xác thực, phân quyền, khóa tài khoản, quản lý user
 - **Auto-seed** — dữ liệu mẫu và tài khoản được tạo tự động khi khởi chạy
-- **Tìm kiếm toàn cầu** — Global search across all entities
+- **Tìm kiếm toàn cầu** — Global search across all entities (Text2SQL)
+- **PDF Report** — Export báo cáo ra PDF qua QuestPDF
 
 ---
 
@@ -103,9 +104,9 @@ Mở trình duyệt tại `http://localhost:<port>` và đăng nhập bằng tà
 
 ```
 TradingServiceDashboard/
-├── Controllers/              # MVC controllers (23+ controllers)
+├── Controllers/              # MVC controllers (25 controllers)
 ├── Models/
-│   ├── *.cs                 # 65+ entity models
+│   ├── *.cs                 # 51 entity models
 │   ├── ViewModels/          # View-specific models (DTOs)
 │   └── SD.cs                # Role & URL constants
 ├── Views/
@@ -129,7 +130,11 @@ TradingServiceDashboard/
 │   ├── Crud/               # Generic CRUD service registry
 │   ├── ExcelCrudService.cs  # Excel import/export
 │   ├── AIChatService.cs     # AI chat (OpenAI-compatible API)
-│   └── AIContextAggregator.cs # Context aggregation per department
+│   ├── AIContextAggregator.cs # Context aggregation per department
+│   ├── TextToSqlService.cs  # Text-to-SQL query generation (Global Search)
+│   ├── PdfReportService.cs  # PDF report generation (QuestPDF)
+│   ├── DatabaseSchemaService.cs # Database schema introspection
+│   └── SqlValidationService.cs # SQL query validation
 ├── Jobs/
 │   └── NotificationJobs.cs  # Hangfire background jobs
 ├── Hubs/
@@ -137,9 +142,10 @@ TradingServiceDashboard/
 │   └── AIChatHub.cs         # SignalR AI chat streaming
 ├── Migrations/              # EF Core migrations
 └── wwwroot/
-    ├── css/
-    ├── js/
-    └── vendor/              # Bootstrap, ApexCharts, libs
+    ├── css/                 # Custom styles (site.css, ai-assistant-chatgpt.css)
+    ├── js/                  # Client-side scripts (dashboard, AI chat, form handling)
+    ├── vendor/              # Third-party libs (Bootstrap, ApexCharts, jQuery, etc.)
+    └── assets/              # Images, fonts
 ```
 
 ---
@@ -222,21 +228,24 @@ Quản lý chăm sóc khách hàng — Support Tickets.
 | 31 | SupplierPayment | Inventory |
 | 32 | Inventory | Inventory |
 | 33 | InventorySnapshot | Inventory |
-| 34 | Expense | Finance |
-| 35 | ExpenseCategory | Finance |
-| 36 | Employee | HR |
-| 37 | Position | HR |
-| 38 | Payroll | HR |
-| 39 | LeaveRequest | HR |
-| 40 | PerformanceReview | HR |
-| 41 | JobOpening | HR |
-| 42 | Applicant | HR |
-| 43 | Attendance | HR |
-| 44 | SupportTicket | Customer Service |
-| 45 | DimDate | BI/Dashboard |
-| 46 | KpiTarget | BI/Dashboard |
-| 47 | AIChatSession | AI Chat |
-| 48 | AIChatMessage | AI Chat |
+| 34 | StockTransaction | Inventory |
+| 35 | Expense | Finance |
+| 36 | ExpenseCategory | Finance |
+| 37 | Employee | HR |
+| 38 | Position | HR |
+| 39 | Payroll | HR |
+| 40 | LeaveRequest | HR |
+| 41 | PerformanceReview | HR |
+| 42 | JobOpening | HR |
+| 43 | Applicant | HR |
+| 44 | Attendance | HR |
+| 45 | SupportTicket | Customer Service |
+| 46 | Notification | System |
+| 47 | NotificationConfig | System |
+| 48 | DimDate | BI/Dashboard |
+| 49 | KpiTarget | BI/Dashboard |
+| 50 | AIChatSession | AI Chat |
+| 51 | AIChatMessage | AI Chat |
 
 ---
 
@@ -302,8 +311,8 @@ AI Chat Assistant là trợ lý thông minh tích hợp sâu vào từng module 
 ## Đặc biệt
 
 - **RoleSeeder** — Tạo 7 vai trò + 7 tài khoản mặc định tự động khi khởi chạy.
-- **DbSeeder** — Seed 50+ bảng dữ liệu mẫu (regions, branches, employees, customers, products, orders, invoices, marketing, HR...).
-- **Generic CRUD** — `CrudServiceRegistry` quản lý CRUD cho 50+ entity types qua 7 controller.
+- **DbSeeder** — Seed 51 bảng dữ liệu mẫu (regions, branches, employees, customers, products, orders, invoices, marketing, HR...).
+- **Generic CRUD** — `CrudServiceRegistry` quản lý CRUD cho 51 entity types qua 7 controller.
 - **Excel Import/Export** — Mỗi module hỗ trợ tải lên và tải xuống file Excel.
 - **Thông báo thời gian thực** — SignalR hub gửi notification trực tiếp đến trình duyệt.
 - **Background Jobs** — Hangfire chạy tổng hợp dữ liệu định kỳ cho từng module.
